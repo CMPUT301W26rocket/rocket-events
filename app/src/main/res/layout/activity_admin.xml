@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFF3E0">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Admin Dashboard"
+            android:textSize="32sp"
+            android:textStyle="bold"
+            android:textColor="#E65100"
+            android:layout_marginTop="40dp"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Welcome Text -->
+        <TextView
+            android:id="@+id/textAdminWelcome"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Welcome, Admin!"
+            android:textSize="18sp"
+            android:textColor="#666666"
+            android:layout_marginBottom="40dp"/>
+
+        <!-- Section: Browse -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Browse and Manage"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnBrowseEvents"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="📅 Browse Events"
+            android:textSize="16sp"
+            android:backgroundTint="#FF6200EE"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnBrowseProfiles"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="👥 Browse Profiles"
+            android:textSize="16sp"
+            android:backgroundTint="#FF6200EE"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnBrowseImages"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="🖼️ Browse Event Posters"
+            android:textSize="16sp"
+            android:backgroundTint="#FF6200EE"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Section: Logs -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="System Monitoring"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="12dp"/>
+
+        <Button
+            android:id="@+id/btnViewLogs"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="📋 View Notification Logs"
+            android:textSize="16sp"
+            android:backgroundTint="#FF6200EE"
+            android:layout_marginBottom="40dp"/>
+
+        <!-- Logout -->
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Logout"
+            android:textSize="16sp"
+            android:textColor="#E65100"
+            android:backgroundTint="#FFFFFF"
+            android:strokeColor="#E65100"/>
+
+    </LinearLayout>
+</ScrollView>
