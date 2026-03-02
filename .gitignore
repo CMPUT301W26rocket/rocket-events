@@ -1,0 +1,41 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+google-services.json
+
+## most of these arent really needed but just in casies. the ones above cover everything
+# Signing
+*.jks
+*.keystore
+key.properties
+keystore.properties
+
+# Firebase Crashlytics
+fabric.properties
+
+# Profiler heap dumps
+*.hprof
+
+# Lint reports
+lint-results*
+lint/
+
+# Merge artifacts
+*.orig
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
