@@ -3,7 +3,12 @@ package com.example.eventlotteryapp;
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
+
+import com.example.eventlotteryapp.ui.fragments.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.example.eventlotteryapp.ui.fragments.CreateEventFragment;
+import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
+import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -15,6 +20,17 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         deviceId = getIntent().getStringExtra("deviceId");
+        if (deviceId == null || deviceId.isEmpty()) {
+            deviceId = "userB";
+        }
+
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_FULLSCREEN
+        );
 
         // Set up bottom navigation
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
@@ -23,11 +39,19 @@ public class MainActivity extends AppCompatActivity {
 
             int itemId = item.getItemId();
             if (itemId == R.id.nav_home) {
-                // selectedFragment = new HomeFragment();
+                HomeFragment homeFragment = new HomeFragment();
+                Bundle bundle = new Bundle();
+                bundle.putString("deviceId", deviceId);
+                homeFragment.setArguments(bundle);
+                selectedFragment = homeFragment;
+
             } else if (itemId == R.id.nav_my_events) {
-                // selectedFragment = new MyEventsFragment();
-            } else if (itemId == R.id.nav_create) {
-                // selectedFragment = new CreateEventFragment();
+                MyEventsFragment myEventsFragment = new MyEventsFragment();
+                Bundle bundle = new Bundle();
+                bundle.putString("deviceId", deviceId);
+                myEventsFragment.setArguments(bundle);
+                selectedFragment = myEventsFragment;
+
             } else if (itemId == R.id.nav_notifications) {
                 // selectedFragment = new NotificationsFragment();
             } else if (itemId == R.id.nav_profile) {
@@ -38,14 +62,22 @@ public class MainActivity extends AppCompatActivity {
                 getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment_container, selectedFragment)
                         .commit();
+                return true;
             }
 
-            return true;
+            return false;
         });
 
         // Load default fragment (Home)
-        // getSupportFragmentManager().beginTransaction()
-        //         .replace(R.id.fragment_container, new HomeFragment())
-        //         .commit();
+        if (savedInstanceState == null) {
+            HomeFragment homeFragment = new HomeFragment();
+            Bundle bundle = new Bundle();
+            bundle.putString("deviceId", deviceId);
+            homeFragment.setArguments(bundle);
+
+            getSupportFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, homeFragment)
+                    .commit();
+        }
     }
 }
