@@ -4,6 +4,8 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.example.eventlotteryapp.ui.fragments.CreateEventFragment;
+import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,9 +27,9 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 // selectedFragment = new HomeFragment();
             } else if (itemId == R.id.nav_my_events) {
-                // selectedFragment = new MyEventsFragment();
+                selectedFragment = new MyEventsFragment();
             } else if (itemId == R.id.nav_create) {
-                // selectedFragment = new CreateEventFragment();
+                selectedFragment = new CreateEventFragment();
             } else if (itemId == R.id.nav_notifications) {
                 // selectedFragment = new NotificationsFragment();
             } else if (itemId == R.id.nav_profile) {
