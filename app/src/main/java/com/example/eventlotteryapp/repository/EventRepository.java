@@ -83,6 +83,24 @@ public class EventRepository {
                 .addOnFailureListener(callback::onFailure);
     }
 
+    public void getEventsByOrganizerId(String organizerId, FirestoreCallback<List<Event>> callback) {
+        firebaseConnector.getEventsCollection()
+                .whereEqualTo("organizerId", organizerId)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<Event> events = new ArrayList<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        Event event = doc.toObject(Event.class);
+                        if (event != null) {
+                            event.setEventId(doc.getId());
+                            events.add(event);
+                        }
+                    }
+                    callback.onSuccess(events);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void deleteEvent(String eventId, FirestoreCallback<Void> callback) {
         firebaseConnector.getEventsCollection()
                 .document(eventId)

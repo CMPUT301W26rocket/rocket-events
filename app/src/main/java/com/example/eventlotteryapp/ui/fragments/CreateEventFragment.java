@@ -30,6 +30,7 @@ public class CreateEventFragment extends Fragment {
     private Button createButton;
 
     private EventRepository eventRepository;
+    private String deviceId;
 
     public CreateEventFragment() {
         // required empty public constructor
@@ -49,6 +50,10 @@ public class CreateEventFragment extends Fragment {
         hasWaitlistLimitCheckBox = view.findViewById(R.id.checkbox_has_waitlist_limit);
         geolocationRequiredCheckBox = view.findViewById(R.id.checkbox_geolocation_required);
         createButton = view.findViewById(R.id.button_create_event);
+
+        if (getArguments() != null) {
+            deviceId = getArguments().getString("deviceId");
+        }
 
         eventRepository = new EventRepository();
 
@@ -70,6 +75,11 @@ public class CreateEventFragment extends Fragment {
             return;
         }
 
+        if (TextUtils.isEmpty(deviceId)) {
+            Toast.makeText(getContext(), "Missing device ID", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         int waitlistLimit = 0;
         if (hasWaitlistLimit) {
             if (TextUtils.isEmpty(waitlistText)) {
@@ -88,7 +98,7 @@ public class CreateEventFragment extends Fragment {
         Event event = new Event();
         event.setTitle(title);
         event.setDescription(description);
-        event.setOrganizerId("temp-organizer-id");
+        event.setOrganizerId(deviceId);
         event.setPosterUrl("");
         event.setQrCodeValue("");
         event.setRegistrationOpenDate(new Date());
@@ -104,6 +114,10 @@ public class CreateEventFragment extends Fragment {
                     Toast.makeText(getContext(), "Event saved to Firestore", Toast.LENGTH_SHORT).show();
                 }
                 clearForm();
+
+                if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                    getParentFragmentManager().popBackStack();
+                }
             }
 
             @Override

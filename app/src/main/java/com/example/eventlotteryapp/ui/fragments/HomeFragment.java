@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -19,14 +20,13 @@ import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 
 import java.util.List;
 
-public class MyEventsFragment extends Fragment {
+public class HomeFragment extends Fragment {
 
-    private RecyclerView myEventsRecyclerView;
+    private RecyclerView eventsRecyclerView;
     private EventRepository eventRepository;
     private String deviceId;
 
-    public MyEventsFragment() {
-        // Required empty public constructor
+    public HomeFragment() {
     }
 
     @Nullable
@@ -35,24 +35,43 @@ public class MyEventsFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_my_events, container, false);
+        View view = inflater.inflate(R.layout.fragment_home, container, false);
 
-        myEventsRecyclerView = view.findViewById(R.id.recycler_my_events);
-        myEventsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        eventsRecyclerView = view.findViewById(R.id.recycler_events);
+        ImageButton createButton = view.findViewById(R.id.button_open_create_event);
+        ImageButton scanQrButton = view.findViewById(R.id.button_scan_qr);
 
         if (getArguments() != null) {
             deviceId = getArguments().getString("deviceId");
         }
 
+        eventsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         eventRepository = new EventRepository();
 
-        loadMyEvents();
+        createButton.setOnClickListener(v -> {
+            CreateEventFragment fragment = new CreateEventFragment();
+            Bundle bundle = new Bundle();
+            bundle.putString("deviceId", deviceId);
+            fragment.setArguments(bundle);
+
+            requireActivity().getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        scanQrButton.setOnClickListener(v ->
+                Toast.makeText(getContext(), "QR scanner coming next", Toast.LENGTH_SHORT).show()
+        );
+
+        loadAllEvents();
 
         return view;
     }
 
-    private void loadMyEvents() {
-        eventRepository.getEventsByOrganizerId(deviceId, new EventRepository.FirestoreCallback<List<Event>>() {
+    private void loadAllEvents() {
+        eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override
             public void onSuccess(List<Event> result) {
                 if (getContext() == null) {
@@ -63,17 +82,15 @@ public class MyEventsFragment extends Fragment {
                     Toast.makeText(getContext(),
                             "Open details for: " + event.getTitle(),
                             Toast.LENGTH_SHORT).show();
-
-                    // Later replace with EventDetailsFragment or EventDetailsActivity
                 });
 
-                myEventsRecyclerView.setAdapter(adapter);
+                eventsRecyclerView.setAdapter(adapter);
             }
 
             @Override
             public void onFailure(Exception e) {
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Failed to load my events", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to load events", Toast.LENGTH_SHORT).show();
                 }
             }
         });
