@@ -9,17 +9,17 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlotteryapp.R;
-import com.example.eventlotteryapp.models.User;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.eventlotteryapp.models.Event;
+import com.example.eventlotteryapp.repository.EventRepository;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class AdminOrganizerDetailActivity extends AppCompatActivity {
 
     private TextView textDeviceId, textName, textEmail, textPhone;
     private Button btnRemoveOrganizer, btnBack;
-    private FirebaseFirestore db;
     private String deviceId;
+    private EventRepository eventRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,7 +33,7 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         btnRemoveOrganizer = findViewById(R.id.btnRemoveOrganizer);
         btnBack = findViewById(R.id.btnBack);
 
-        db = FirebaseFirestore.getInstance();
+        eventRepository = new EventRepository();
 
         deviceId = getIntent().getStringExtra("deviceId");
         String name = getIntent().getStringExtra("name");
@@ -52,41 +52,66 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Organizer")
-                .setMessage("Are you sure you want to remove organizer status from this user?")
-                .setPositiveButton("Remove", (dialog, which) -> removeOrganizerStatus())
+                .setMessage("Are you sure you want to remove this organizer? This will delete all events created by this organizer.")
+                .setPositiveButton("Remove", (dialog, which) -> removeOrganizer())
                 .setNegativeButton("Cancel", null)
                 .show();
     }
 
-    private void removeOrganizerStatus() {
+    private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
-            Toast.makeText(this, "Missing device ID", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Missing organizer ID", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        db.collection("users").document(deviceId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    User user = documentSnapshot.toObject(User.class);
-                    if (user == null) {
-                        Toast.makeText(this, "User not found", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        eventRepository.getEventsByOrganizerId(deviceId, new EventRepository.FirestoreCallback<List<Event>>() {
+            @Override
+            public void onSuccess(List<Event> events) {
+                if (events.isEmpty()) {
+                    Toast.makeText(AdminOrganizerDetailActivity.this, "No events found for this organizer", Toast.LENGTH_SHORT).show();
+                    finish();
+                    return;
+                }
 
-                    user.setEventsHosting(new ArrayList<>());
+                deleteEventsSequentially(events, 0);
+            }
 
-                    db.collection("users").document(deviceId)
-                            .set(user)
-                            .addOnSuccessListener(unused -> {
-                                Toast.makeText(this, "Organizer status removed", Toast.LENGTH_SHORT).show();
-                                finish();
-                            })
-                            .addOnFailureListener(e ->
-                                    Toast.makeText(this, "Update failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                            );
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load user: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(AdminOrganizerDetailActivity.this,
+                        "Failed to load organizer events: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void deleteEventsSequentially(List<Event> events, int index) {
+        if (index >= events.size()) {
+            Toast.makeText(this, "Organizer removed", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        Event event = events.get(index);
+        String eventId = event.getEventId();
+
+        if (eventId == null || eventId.isEmpty()) {
+            deleteEventsSequentially(events, index + 1);
+            return;
+        }
+
+        eventRepository.deleteEvent(eventId, new EventRepository.FirestoreCallback<Void>() {
+            @Override
+            public void onSuccess(Void result) {
+                deleteEventsSequentially(events, index + 1);
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(AdminOrganizerDetailActivity.this,
+                        "Failed to delete event: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

@@ -14,12 +14,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.User;
 import com.google.firebase.firestore.FirebaseFirestore;
-
+import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.models.Event;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AdminBrowseOrganizersActivity extends AppCompatActivity {
-
+    private EventRepository eventRepository;
     private RecyclerView recyclerOrganizers;
     private TextView textEmptyOrganizers;
     private Button btnBack;
@@ -35,7 +38,7 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
         recyclerOrganizers = findViewById(R.id.recyclerOrganizers);
         textEmptyOrganizers = findViewById(R.id.textEmptyOrganizers);
         btnBack = findViewById(R.id.btnBack);
-
+        eventRepository = new EventRepository();
         db = FirebaseFirestore.getInstance();
         organizerList = new ArrayList<>();
 
@@ -63,39 +66,66 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     }
 
     private void loadOrganizers() {
-        db.collection("users")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+        eventRepository.getAllEvents(new EventRepository.FirestoreCallback<java.util.List<Event>>() {
+            @Override
+            public void onSuccess(java.util.List<Event> events) {
+                java.util.Set<String> organizerIds = new java.util.HashSet<>();
+
+                for (Event event : events) {
+                    if (event.getOrganizerId() != null && !event.getOrganizerId().isEmpty()) {
+                        organizerIds.add(event.getOrganizerId());
+                    }
+                }
+
+                if (organizerIds.isEmpty()) {
                     organizerList.clear();
-
-                    for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                        java.util.List<String> eventsHosting =
-                                (java.util.List<String>) document.get("eventsHosting");
-
-                        if (eventsHosting != null && !eventsHosting.isEmpty()) {
-                            User user = new User();
-                            user.setDeviceId(document.getId());
-                            user.setName(document.getString("name"));
-                            user.setEmail(document.getString("email"));
-                            user.setPhone(document.getString("phone"));
-                            user.setEventsHosting(eventsHosting);
-
-                            organizerList.add(user);
-                        }
-                    }
-
                     profileAdapter.notifyDataSetChanged();
+                    textEmptyOrganizers.setVisibility(View.VISIBLE);
+                    recyclerOrganizers.setVisibility(View.GONE);
+                    return;
+                }
 
-                    if (organizerList.isEmpty()) {
-                        textEmptyOrganizers.setVisibility(View.VISIBLE);
-                        recyclerOrganizers.setVisibility(View.GONE);
-                    } else {
-                        textEmptyOrganizers.setVisibility(View.GONE);
-                        recyclerOrganizers.setVisibility(View.VISIBLE);
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load organizers: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+                db.collection("users")
+                        .get()
+                        .addOnSuccessListener(queryDocumentSnapshots -> {
+                            organizerList.clear();
+
+                            for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
+                                String userId = document.getId();
+
+                                if (organizerIds.contains(userId)) {
+                                    User user = new User();
+                                    user.setDeviceId(userId);
+                                    user.setName(document.getString("name"));
+                                    user.setEmail(document.getString("email"));
+                                    user.setPhone(document.getString("phone"));
+                                    organizerList.add(user);
+                                }
+                            }
+
+                            profileAdapter.notifyDataSetChanged();
+
+                            if (organizerList.isEmpty()) {
+                                textEmptyOrganizers.setVisibility(View.VISIBLE);
+                                recyclerOrganizers.setVisibility(View.GONE);
+                            } else {
+                                textEmptyOrganizers.setVisibility(View.GONE);
+                                recyclerOrganizers.setVisibility(View.VISIBLE);
+                            }
+                        })
+                        .addOnFailureListener(e ->
+                                Toast.makeText(AdminBrowseOrganizersActivity.this,
+                                        "Failed to load organizers: " + e.getMessage(),
+                                        Toast.LENGTH_SHORT).show()
+                        );
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(AdminBrowseOrganizersActivity.this,
+                        "Failed to load events: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
