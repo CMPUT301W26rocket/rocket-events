@@ -26,6 +26,11 @@
         <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
         <activity android:name=".ui.admin.AdminBrowseProfilesActivity" />
         <activity android:name=".ui.admin.AdminProfileDetailActivity" />
+        <activity android:name=".ui.admin.AdminBrowseOrganizersActivity" />
+        <activity android:name=".ui.admin.AdminOrganizerDetailActivity" />
+        <activity android:name=".ui.admin.AdminBrowseEventsActivity" />
+        <activity android:name=".ui.admin.AdminEventDetailActivity" />
+
     </application>
 
 </manifest>

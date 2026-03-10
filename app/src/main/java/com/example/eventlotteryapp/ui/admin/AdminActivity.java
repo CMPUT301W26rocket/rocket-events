@@ -13,8 +13,8 @@ import com.example.eventlotteryapp.ui.auth.SplashActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class AdminActivity extends AppCompatActivity {
+    private Button btnBrowseEvents, btnBrowseProfiles, btnBrowseOrganizers, btnBrowseImages, btnViewLogs, btnLogout;
 
-    private Button btnBrowseEvents, btnBrowseProfiles, btnBrowseImages, btnViewLogs, btnLogout;
     private FirebaseFirestore db;
     private String deviceId;
 
@@ -31,7 +31,7 @@ public class AdminActivity extends AppCompatActivity {
         btnBrowseImages = findViewById(R.id.btnBrowseImages);
         btnViewLogs = findViewById(R.id.btnViewLogs);
         btnLogout = findViewById(R.id.btnLogout);
-
+        btnBrowseOrganizers = findViewById(R.id.btnBrowseOrganizers);
         btnBrowseEvents.setOnClickListener(v -> {
             Toast.makeText(this, "Browse Events screen next", Toast.LENGTH_SHORT).show();
         });
@@ -49,6 +49,11 @@ public class AdminActivity extends AppCompatActivity {
         });
 
         btnLogout.setOnClickListener(v -> logoutAdmin());
+
+        btnBrowseOrganizers.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminActivity.this, AdminBrowseOrganizersActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void logoutAdmin() {
