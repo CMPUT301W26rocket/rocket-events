@@ -5,6 +5,7 @@ import java.util.Date;
 public class Event {
     private String eventId;
     private String organizerId;
+    private String organizerName;
     private String title;
     private String description;
     private String posterUrl;
@@ -38,6 +39,7 @@ public class Event {
     // Getters
     public String getEventId() { return eventId; }
     public String getOrganizerId() { return organizerId; }
+    public String getOrganizerName() { return organizerName; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
     public String getPosterUrl() { return posterUrl; }
@@ -51,6 +53,7 @@ public class Event {
     // Setters
     public void setEventId(String eventId) { this.eventId = eventId; }
     public void setOrganizerId(String organizerId) { this.organizerId = organizerId; }
+    public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
     public void setTitle(String title) { this.title = title; }
     public void setDescription(String description) { this.description = description; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }

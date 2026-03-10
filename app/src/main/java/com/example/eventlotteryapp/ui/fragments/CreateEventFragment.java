@@ -16,7 +16,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Event;
+import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.repository.UserRepository;
 
 import java.util.Date;
 
@@ -30,6 +32,7 @@ public class CreateEventFragment extends Fragment {
     private Button createButton;
 
     private EventRepository eventRepository;
+    private UserRepository userRepository;
     private String deviceId;
 
     public CreateEventFragment() {
@@ -56,6 +59,7 @@ public class CreateEventFragment extends Fragment {
         }
 
         eventRepository = new EventRepository();
+        userRepository = new UserRepository();
 
         createButton.setOnClickListener(v -> saveEventToFirestore());
 
@@ -86,7 +90,6 @@ public class CreateEventFragment extends Fragment {
                 waitlistLimitInput.setError("Waitlist limit is required");
                 return;
             }
-
             try {
                 waitlistLimit = Integer.parseInt(waitlistText);
             } catch (NumberFormatException e) {
@@ -95,36 +98,59 @@ public class CreateEventFragment extends Fragment {
             }
         }
 
-        Event event = new Event();
-        event.setTitle(title);
-        event.setDescription(description);
-        event.setOrganizerId(deviceId);
-        event.setPosterUrl("");
-        event.setQrCodeValue("");
-        event.setRegistrationOpenDate(new Date());
-        event.setRegistrationCloseDate(new Date());
-        event.setGeolocationRequired(geolocationRequired);
-        event.setHasWaitlistLimit(hasWaitlistLimit);
-        event.setWaitlistLimit(waitlistLimit);
+        createButton.setEnabled(false);
 
-        eventRepository.addEvent(event, new EventRepository.FirestoreCallback<String>() {
+        final int finalWaitlistLimit = waitlistLimit;
+
+        // Fetch organizer name first so we can store it on the event
+        userRepository.getUser(deviceId, new UserRepository.FirestoreCallback<User>() {
             @Override
-            public void onSuccess(String result) {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Event saved to Firestore", Toast.LENGTH_SHORT).show();
-                }
-                clearForm();
+            public void onSuccess(User user) {
+                String organizerName = (user != null && user.getName() != null)
+                        ? user.getName()
+                        : "Unknown";
 
-                if (getParentFragmentManager().getBackStackEntryCount() > 0) {
-                    getParentFragmentManager().popBackStack();
-                }
+                Event event = new Event();
+                event.setTitle(title);
+                event.setDescription(description);
+                event.setOrganizerId(deviceId);
+                event.setOrganizerName(organizerName);
+                event.setPosterUrl("");
+                event.setQrCodeValue("");
+                event.setRegistrationOpenDate(new Date());
+                event.setRegistrationCloseDate(new Date());
+                event.setGeolocationRequired(geolocationRequired);
+                event.setHasWaitlistLimit(hasWaitlistLimit);
+                event.setWaitlistLimit(finalWaitlistLimit);
+
+                eventRepository.addEvent(event, new EventRepository.FirestoreCallback<String>() {
+                    @Override
+                    public void onSuccess(String result) {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Event created!", Toast.LENGTH_SHORT).show();
+                        }
+                        clearForm();
+                        if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                            getParentFragmentManager().popBackStack();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (getContext() != null) {
+                            Toast.makeText(getContext(), "Failed to save event", Toast.LENGTH_SHORT).show();
+                        }
+                        createButton.setEnabled(true);
+                    }
+                });
             }
 
             @Override
             public void onFailure(Exception e) {
                 if (getContext() != null) {
-                    Toast.makeText(getContext(), "Failed to save event", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to load your profile", Toast.LENGTH_SHORT).show();
                 }
+                createButton.setEnabled(true);
             }
         });
     }
