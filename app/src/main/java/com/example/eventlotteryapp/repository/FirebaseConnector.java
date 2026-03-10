@@ -22,6 +22,10 @@ public class FirebaseConnector {
         return db.collection("users");
     }
 
+    public CollectionReference getAdminsCollection() {
+        return db.collection("admins");
+    }
+
     public CollectionReference getHistoryCollection() {
         return db.collection("history");
     }

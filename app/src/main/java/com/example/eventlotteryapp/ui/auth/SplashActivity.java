@@ -7,23 +7,24 @@ import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventlotteryapp.MainActivity;
 import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.UserRepository;
 import com.example.eventlotteryapp.ui.admin.AdminActivity;
+import com.example.eventlotteryapp.ui.main.MainActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SplashActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
+    private UserRepository userRepository;
     private static final String TAG = "SplashActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // No layout needed, but consider adding a simple layout with a logo/spinner
-        // if Firestore checks take more than 1 second.
 
         db = FirebaseFirestore.getInstance();
+        userRepository = new UserRepository();
         startAuthFlow();
     }
 
@@ -33,7 +34,7 @@ public class SplashActivity extends AppCompatActivity {
                 Settings.Secure.ANDROID_ID
         );
 
-        // 1. Check Admin First
+        // Check admins collection first
         db.collection("admins").document(deviceId).get()
                 .addOnSuccessListener(adminDoc -> {
                     if (adminDoc.exists()) {
@@ -49,37 +50,26 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void checkRegularUser(String deviceId) {
-        db.collection("users").document(deviceId).get()
-                .addOnSuccessListener(doc -> {
-                    if (doc.exists()) {
-                        User user = doc.toObject(User.class);
-                        if (user != null && user.getName() != null && !user.getName().isEmpty()) {
-                            navigateTo(MainActivity.class, deviceId);
-                        } else {
-                            navigateTo(ProfileSetupActivity.class, deviceId);
-                        }
-                    } else {
-                        createNewUser(deviceId);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "User check failed", e);
-                    // If Firestore fails, we usually send them to setup to try again
+        userRepository.getUser(deviceId, new UserRepository.FirestoreCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null && user.getName() != null && !user.getName().isEmpty()) {
+                    navigateTo(MainActivity.class, deviceId);
+                } else {
+                    // No user doc, or profile incomplete — send to setup.
+                    // We do NOT pre-create an empty doc here; ProfileSetupActivity handles creation.
                     navigateTo(ProfileSetupActivity.class, deviceId);
-                });
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Log.e(TAG, "User check failed", e);
+                navigateTo(ProfileSetupActivity.class, deviceId);
+            }
+        });
     }
 
-    private void createNewUser(String deviceId) {
-        User newUser = new User(deviceId, "", "", "");
-        db.collection("users").document(deviceId).set(newUser)
-                .addOnSuccessListener(v -> navigateTo(ProfileSetupActivity.class, deviceId))
-                .addOnFailureListener(e -> navigateTo(ProfileSetupActivity.class, deviceId));
-    }
-
-    /**
-     * One "Clean" method to handle all navigation.
-     * This uses Flags to ensure the user can't "Go Back" to the Splash screen.
-     */
     private void navigateTo(Class<?> destinationClass, String deviceId) {
         Intent intent = new Intent(this, destinationClass);
         intent.putExtra("deviceId", deviceId);

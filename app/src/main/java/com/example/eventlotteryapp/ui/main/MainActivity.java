@@ -1,12 +1,12 @@
-package com.example.eventlotteryapp;
+package com.example.eventlotteryapp.ui.main;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.ui.fragments.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.example.eventlotteryapp.ui.fragments.CreateEventFragment;
 import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
 import android.view.View;
 
@@ -20,9 +20,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         deviceId = getIntent().getStringExtra("deviceId");
-        if (deviceId == null || deviceId.isEmpty()) {
-            deviceId = "userB";
-        }
 
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
