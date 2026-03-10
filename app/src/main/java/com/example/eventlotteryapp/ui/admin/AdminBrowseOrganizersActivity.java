@@ -69,8 +69,17 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
                     organizerList.clear();
 
                     for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                        User user = document.toObject(User.class);
-                        if (user != null && user.getEventsHosting() != null && !user.getEventsHosting().isEmpty()) {
+                        java.util.List<String> eventsHosting =
+                                (java.util.List<String>) document.get("eventsHosting");
+
+                        if (eventsHosting != null && !eventsHosting.isEmpty()) {
+                            User user = new User();
+                            user.setDeviceId(document.getId());
+                            user.setName(document.getString("name"));
+                            user.setEmail(document.getString("email"));
+                            user.setPhone(document.getString("phone"));
+                            user.setEventsHosting(eventsHosting);
+
                             organizerList.add(user);
                         }
                     }

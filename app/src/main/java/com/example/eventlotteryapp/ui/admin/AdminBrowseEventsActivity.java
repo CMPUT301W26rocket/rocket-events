@@ -13,7 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Event;
-import com.google.firebase.firestore.FirebaseFirestore;
+import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     private RecyclerView recyclerEvents;
     private TextView textEmptyEvents;
     private Button btnBack;
-    private FirebaseFirestore db;
+    private EventRepository eventRepository;
     private List<Event> eventList;
     private EventAdapter eventAdapter;
 
@@ -36,7 +37,7 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         textEmptyEvents = findViewById(R.id.textEmptyEvents);
         btnBack = findViewById(R.id.btnBack);
 
-        db = FirebaseFirestore.getInstance();
+        eventRepository = new EventRepository();
         eventList = new ArrayList<>();
 
         eventAdapter = new EventAdapter(eventList, event -> {
@@ -63,33 +64,28 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     }
 
     private void loadEvents() {
-        db.collection("events")
-                .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    eventList.clear();
+        eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
+            @Override
+            public void onSuccess(List<Event> result) {
+                eventList.clear();
+                eventList.addAll(result);
+                eventAdapter.notifyDataSetChanged();
 
-                    for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                        Event event = document.toObject(Event.class);
-                        if (event != null) {
-                            if (event.getEventId() == null || event.getEventId().isEmpty()) {
-                                event.setEventId(document.getId());
-                            }
-                            eventList.add(event);
-                        }
-                    }
+                if (eventList.isEmpty()) {
+                    textEmptyEvents.setVisibility(View.VISIBLE);
+                    recyclerEvents.setVisibility(View.GONE);
+                } else {
+                    textEmptyEvents.setVisibility(View.GONE);
+                    recyclerEvents.setVisibility(View.VISIBLE);
+                }
+            }
 
-                    eventAdapter.notifyDataSetChanged();
-
-                    if (eventList.isEmpty()) {
-                        textEmptyEvents.setVisibility(View.VISIBLE);
-                        recyclerEvents.setVisibility(View.GONE);
-                    } else {
-                        textEmptyEvents.setVisibility(View.GONE);
-                        recyclerEvents.setVisibility(View.VISIBLE);
-                    }
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Failed to load events: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                );
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(AdminBrowseEventsActivity.this,
+                        "Failed to load events: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }

@@ -65,10 +65,14 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
                     userList.clear();
 
                     for (com.google.firebase.firestore.DocumentSnapshot document : queryDocumentSnapshots) {
-                        User user = document.toObject(User.class);
-                        if (user != null) {
-                            userList.add(user);
-                        }
+                        User user = new User();
+
+                        user.setDeviceId(document.getId());
+                        user.setName(document.getString("name"));
+                        user.setEmail(document.getString("email"));
+                        user.setPhone(document.getString("phone"));
+
+                        userList.add(user);
                     }
 
                     profileAdapter.notifyDataSetChanged();
