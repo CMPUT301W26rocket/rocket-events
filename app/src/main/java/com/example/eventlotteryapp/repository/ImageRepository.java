@@ -11,6 +11,12 @@ import com.google.firebase.storage.StorageReference;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
+/**
+ * Handles uploading event poster images to Firebase Storage.
+ * Images are scaled down to at most {@code MAX_DIMENSION} pixels on the longest side
+ * and compressed to JPEG before upload.
+ * Uploaded files are stored under {@code event_posters/{deviceId}_{timestamp}.jpg}.
+ */
 public class ImageRepository {
 
     private static final int MAX_DIMENSION = 1024; // px
@@ -18,19 +24,42 @@ public class ImageRepository {
 
     private final FirebaseStorage storage;
 
+    /**
+     * Creates a new ImageRepository using the default Firebase Storage instance.
+     */
     public ImageRepository() {
         storage = FirebaseStorage.getInstance();
     }
 
+    /**
+     * Callback interface for image upload operations.
+     */
     public interface UploadCallback {
+        /**
+         * Called when the upload succeeds.
+         *
+         * @param downloadUrl the public download URL of the uploaded image
+         */
         void onSuccess(String downloadUrl);
+
+        /**
+         * Called when the upload fails.
+         *
+         * @param e the exception describing the failure
+         */
         void onFailure(Exception e);
     }
 
     /**
      * Compresses the image from the given Uri, then uploads it to Firebase Storage.
-     * Scales down to MAX_DIMENSION on the longest side and compresses to JPEG at JPEG_QUALITY.
-     * Path: event_posters/{deviceId}_{timestamp}.jpg
+     * Scales down to {@code MAX_DIMENSION} on the longest side and compresses to JPEG
+     * at {@code JPEG_QUALITY}.
+     * The storage path is {@code event_posters/{deviceId}_{timestamp}.jpg}.
+     *
+     * @param context   the Android context used to open the image URI
+     * @param deviceId  the uploader's device ID, used to namespace the filename
+     * @param imageUri  the URI of the image to upload
+     * @param callback  receives the download URL on success, or an exception on failure
      */
     public void uploadEventPoster(Context context, String deviceId, Uri imageUri,
                                   UploadCallback callback) {
@@ -55,8 +84,13 @@ public class ImageRepository {
     }
 
     /**
-     * Reads the image from Uri, scales it down if needed, and compresses to JPEG bytes.
-     * Returns null if anything goes wrong.
+     * Opens the image at the given URI, scales it down if needed using {@link #scaleBitmap},
+     * and compresses it to a JPEG byte array at {@code JPEG_QUALITY} percent quality.
+     * Returns {@code null} if the image cannot be read or processed.
+     *
+     * @param context the Android context used to open the content URI
+     * @param uri     the URI pointing to the image to compress
+     * @return the compressed JPEG image as a byte array, or {@code null} on failure
      */
     private byte[] compressImage(Context context, Uri uri) {
         try {
@@ -85,6 +119,13 @@ public class ImageRepository {
         }
     }
 
+    /**
+     * Scales a bitmap down so its longest side is at most {@code MAX_DIMENSION} pixels.
+     * If both dimensions are already within the limit, the original bitmap is returned unchanged.
+     *
+     * @param bitmap the original bitmap to scale
+     * @return a scaled-down {@link Bitmap}, or the original if no scaling was needed
+     */
     private Bitmap scaleBitmap(Bitmap bitmap) {
         int width  = bitmap.getWidth();
         int height = bitmap.getHeight();

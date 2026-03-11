@@ -20,6 +20,18 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Activity that allows a new or returning user to set up their profile.
+ *
+ * <p>Handles two flows:
+ * <ul>
+ *   <li><b>Regular user:</b> fills in name, email, and phone, then saves via
+ *       {@link UserRepository#saveUserProfile} (set+merge) and navigates to {@link MainActivity}.</li>
+ *   <li><b>Admin login:</b> a hidden link opens a password dialog; on success, an admin session
+ *       document is created in the {@code admins} collection and the user is sent to
+ *       {@link AdminActivity}. The {@code users} collection is never touched during admin login.</li>
+ * </ul>
+ */
 public class ProfileSetupActivity extends AppCompatActivity {
 
     private static final String TAG = "ProfileSetupActivity";
@@ -50,6 +62,11 @@ public class ProfileSetupActivity extends AppCompatActivity {
         textAdminLogin.setOnClickListener(v -> showAdminLoginDialog());
     }
 
+    /**
+     * Validates the name and email fields, then saves the user's profile to Firestore
+     * via {@link UserRepository#saveUserProfile}. Disables the save button during the
+     * operation to prevent duplicate submissions. Navigates to {@link MainActivity} on success.
+     */
     private void saveProfile() {
         String name = editTextName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
@@ -98,6 +115,10 @@ public class ProfileSetupActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Navigates to {@link MainActivity}, passing the device ID as an extra.
+     * Clears the back stack so the user cannot navigate back to profile setup.
+     */
     private void goToMain() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("deviceId", deviceId);
@@ -106,6 +127,11 @@ public class ProfileSetupActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Displays an {@link android.app.AlertDialog} prompting for the admin password.
+     * If the correct password is entered, calls {@link #createAdminSession()}.
+     * The {@code users} collection is never touched during this flow.
+     */
     private void showAdminLoginDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Admin Login");
@@ -130,6 +156,11 @@ public class ProfileSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Creates an admin session document in the {@code admins} Firestore collection,
+     * storing the device ID and a login timestamp. On success, navigates to {@link AdminActivity}.
+     * The {@code users} collection is not modified during this operation.
+     */
     private void createAdminSession() {
         Map<String, Object> adminData = new HashMap<>();
         adminData.put("deviceId", deviceId);
@@ -149,6 +180,10 @@ public class ProfileSetupActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Navigates to {@link AdminActivity}, passing the device ID as an extra.
+     * Clears the back stack so the user cannot navigate back to profile setup.
+     */
     private void goToAdmin() {
         Intent intent = new Intent(this, AdminActivity.class);
         intent.putExtra("deviceId", deviceId);

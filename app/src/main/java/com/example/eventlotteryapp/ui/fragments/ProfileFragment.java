@@ -20,6 +20,13 @@ import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.UserRepository;
 import com.example.eventlotteryapp.ui.auth.ProfileSetupActivity;
 
+/**
+ * Fragment that displays and allows editing of the currently logged-in user's profile.
+ * Shown on the Profile tab of {@link com.example.eventlotteryapp.ui.main.MainActivity}.
+ *
+ * <p>Loads the user's name, email, and phone from Firestore on launch. Provides buttons to
+ * save changes, toggle notification preferences, and permanently delete the profile.
+ */
 public class ProfileFragment extends Fragment {
 
     private EditText editTextName, editTextEmail, editTextPhone;
@@ -28,8 +35,18 @@ public class ProfileFragment extends Fragment {
     private String deviceId;
     private boolean notificationsEnabled = true;
 
+    /** Required empty public constructor. */
     public ProfileFragment() {}
 
+    /**
+     * Inflates the fragment layout, binds all input fields and buttons, reads the device ID
+     * from fragment arguments, and triggers the initial profile load from Firestore.
+     *
+     * @param inflater  the LayoutInflater used to inflate the fragment's view
+     * @param container the parent view that the fragment's UI will be attached to, or null
+     * @param savedInstanceState previously saved state, or null if none
+     * @return the root {@link View} of the inflated fragment layout
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -58,6 +75,11 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches the user's profile from Firestore via {@link UserRepository#getUser} and
+     * populates the name, email, and phone fields. Also syncs the notifications toggle
+     * button state to match the stored preference.
+     */
     private void loadProfile() {
         userRepository.getUser(deviceId, new UserRepository.FirestoreCallback<User>() {
             @Override
@@ -80,6 +102,11 @@ public class ProfileFragment extends Fragment {
         });
     }
 
+    /**
+     * Updates the notifications button label and tint to reflect the current
+     * {@code notificationsEnabled} state. Shows "Opt Out" when enabled and
+     * "Opt In" when disabled.
+     */
     private void updateNotificationsButton() {
         if (notificationsEnabled) {
             buttonNotifications.setText("Opt Out of Notifications");
@@ -92,6 +119,12 @@ public class ProfileFragment extends Fragment {
         }
     }
 
+    /**
+     * Shows a confirmation dialog before toggling the user's notification preference.
+     * The dialog title and message adapt based on whether the user is opting in or out.
+     * On confirmation, updates the preference in Firestore via {@link UserRepository#setNotificationsEnabled}
+     * and refreshes the button state.
+     */
     private void showNotificationsDialog() {
         boolean willEnable = !notificationsEnabled;
         String title = willEnable ? "Opt In to Notifications" : "Opt Out of Notifications";
@@ -127,6 +160,11 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Shows a confirmation dialog before permanently deleting the user's profile.
+     * On confirmation, deletes the user's document from Firestore via {@link UserRepository#deleteUser}
+     * and navigates to {@link ProfileSetupActivity}. This action cannot be undone.
+     */
     private void showDeleteProfileDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Profile")
@@ -150,6 +188,10 @@ public class ProfileFragment extends Fragment {
                 .show();
     }
 
+    /**
+     * Navigates to {@link ProfileSetupActivity}, passing the device ID as an extra.
+     * Clears the back stack so the user cannot navigate back to the main app after deletion.
+     */
     private void goToLogin() {
         Intent intent = new Intent(requireActivity(), ProfileSetupActivity.class);
         intent.putExtra("deviceId", deviceId);
@@ -157,6 +199,11 @@ public class ProfileFragment extends Fragment {
         startActivity(intent);
     }
 
+    /**
+     * Validates the name and email fields, then saves the updated profile to Firestore
+     * via {@link UserRepository#saveUserProfile}. Disables the save button during the
+     * operation to prevent duplicate submissions. Re-enables it on both success and failure.
+     */
     private void saveProfile() {
         String name = editTextName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();

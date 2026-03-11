@@ -8,24 +8,53 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles all Firestore operations for entrant subcollections stored at
+ * {@code events/{eventId}/entrants/{deviceId}}.
+ * Manages waitlist membership, status transitions, and history queries.
+ */
 public class EntrantRepository {
 
     private final FirebaseConnector firebaseConnector;
     private final FirebaseFirestore db;
 
+    /**
+     * Creates a new EntrantRepository with a default {@link FirebaseConnector}.
+     */
     public EntrantRepository() {
         firebaseConnector = new FirebaseConnector();
         db = firebaseConnector.getDb();
     }
 
+    /**
+     * Generic callback interface for asynchronous Firestore operations.
+     *
+     * @param <T> the type of the result returned on success
+     */
     public interface FirestoreCallback<T> {
+        /**
+         * Called when the operation completes successfully.
+         *
+         * @param result the result of the operation, or {@code null} if none
+         */
         void onSuccess(T result);
+
+        /**
+         * Called when the operation fails.
+         *
+         * @param e the exception describing the failure
+         */
         void onFailure(Exception e);
     }
 
     /**
      * Adds a user to an event's waitlist.
-     * Creates the entrant doc at events/{eventId}/entrants/{deviceId}.
+     * Creates the entrant doc at {@code events/{eventId}/entrants/{deviceId}}
+     * with status {@link Entrant#STATUS_WAITLIST}.
+     *
+     * @param eventId  the ID of the event to join
+     * @param deviceId the device ID of the user joining
+     * @param callback receives {@code null} on success
      */
     public void joinWaitlist(String eventId, String deviceId, FirestoreCallback<Void> callback) {
         Timestamp now = Timestamp.now();
@@ -42,6 +71,12 @@ public class EntrantRepository {
 
     /**
      * Updates an entrant's status (e.g. waitlist → invited, invited → enrolled).
+     * Also updates the {@code statusUpdatedAt} timestamp to now.
+     *
+     * @param eventId   the ID of the event
+     * @param deviceId  the device ID of the entrant
+     * @param newStatus the new status value (use {@link Entrant} {@code STATUS_*} constants)
+     * @param callback  receives {@code null} on success
      */
     public void updateStatus(String eventId, String deviceId, String newStatus,
                              FirestoreCallback<Void> callback) {
@@ -56,7 +91,11 @@ public class EntrantRepository {
 
     /**
      * Returns all entrants for an event with a specific status.
-     * e.g. getEntrantsByStatus(eventId, Entrant.STATUS_WAITLIST, callback)
+     * e.g. {@code getEntrantsByStatus(eventId, Entrant.STATUS_WAITLIST, callback)}
+     *
+     * @param eventId  the ID of the event
+     * @param status   the status to filter by (use {@link Entrant} {@code STATUS_*} constants)
+     * @param callback receives the list of matching {@link Entrant} objects on success
      */
     public void getEntrantsByStatus(String eventId, String status,
                                     FirestoreCallback<List<Entrant>> callback) {
@@ -82,6 +121,9 @@ public class EntrantRepository {
     /**
      * Returns all entrant docs for an event regardless of status.
      * Useful for showing the full entrant list grouped by status.
+     *
+     * @param eventId  the ID of the event
+     * @param callback receives the list of all {@link Entrant} objects on success
      */
     public void getAllEntrantsForEvent(String eventId, FirestoreCallback<List<Entrant>> callback) {
         db.collection("events")
@@ -106,10 +148,13 @@ public class EntrantRepository {
      * Returns the full event history for a user across ALL events.
      * Uses a Firestore collection group query on all "entrants" subcollections.
      *
-     * NOTE: This requires a Firestore composite index.
+     * <p>NOTE: This requires a Firestore composite index.
      * When you first run this, Firestore will log a link in Logcat — click it to auto-create the index.
      * Or go to Firebase Console → Firestore → Indexes → Add:
-     *   Collection group: entrants | Field: deviceId ASC
+     * Collection group: entrants | Field: deviceId ASC
+     *
+     * @param deviceId the device ID of the user whose history to fetch
+     * @param callback receives the list of {@link Entrant} objects (with {@code eventId} populated) on success
      */
     public void getUserEventHistory(String deviceId, FirestoreCallback<List<Entrant>> callback) {
         db.collectionGroup("entrants")
@@ -132,7 +177,12 @@ public class EntrantRepository {
     }
 
     /**
-     * Checks if a user is already an entrant in an event (any status).
+     * Fetches a single entrant record for a user in a specific event, regardless of status.
+     * Useful for checking whether a user has already joined an event's waitlist.
+     *
+     * @param eventId  the ID of the event to look up
+     * @param deviceId the device ID of the user to check
+     * @param callback receives the {@link Entrant} if the user is an entrant, or {@code null} if not found
      */
     public void getEntrant(String eventId, String deviceId, FirestoreCallback<Entrant> callback) {
         db.collection("events")

@@ -15,15 +15,34 @@ import com.example.eventlotteryapp.models.Event;
 
 import java.util.List;
 
+/**
+ * RecyclerView adapter that displays a list of {@link Event} objects.
+ * Each item shows the event's poster image, title, and organizer name.
+ * Poster images are loaded with Glide; a placeholder is shown when no URL is available.
+ */
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
+    /**
+     * Callback interface for item click events.
+     */
     public interface OnEventClickListener {
+        /**
+         * Called when the user taps on an event item.
+         *
+         * @param event the {@link Event} that was clicked
+         */
         void onEventClick(Event event);
     }
 
     private final List<Event> events;
     private final OnEventClickListener listener;
 
+    /**
+     * Creates an adapter for the given list of events.
+     *
+     * @param events   the list of events to display
+     * @param listener callback invoked when an event item is tapped
+     */
     public EventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
@@ -63,11 +82,19 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         holder.itemView.setOnClickListener(v -> listener.onEventClick(event));
     }
 
+    /**
+     * Returns the total number of events in the list.
+     *
+     * @return number of events
+     */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
+    /**
+     * ViewHolder that holds references to the views for a single event list item.
+     */
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView titleTextView;
         TextView subtitleTextView;
