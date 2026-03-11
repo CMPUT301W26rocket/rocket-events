@@ -48,11 +48,35 @@ public class UserRepository {
         data.put("name", name);
         data.put("email", email);
         data.put("phone", phone);
-        data.put("notificationsEnabled", true);
 
         firebaseConnector.getUsersCollection()
                 .document(deviceId)
                 .set(data, SetOptions.merge())
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Updates only the notificationsEnabled field for a user.
+     */
+    public void setNotificationsEnabled(String deviceId, boolean enabled, FirestoreCallback<Void> callback) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("notificationsEnabled", enabled);
+
+        firebaseConnector.getUsersCollection()
+                .document(deviceId)
+                .set(data, SetOptions.merge())
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Deletes a user's profile document from Firestore.
+     */
+    public void deleteUser(String deviceId, FirestoreCallback<Void> callback) {
+        firebaseConnector.getUsersCollection()
+                .document(deviceId)
+                .delete()
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
