@@ -39,3 +39,9 @@ lint/
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+# settings configurations locally
+.settings/*
+**/.settings/* 
+.classpath
+.project 
