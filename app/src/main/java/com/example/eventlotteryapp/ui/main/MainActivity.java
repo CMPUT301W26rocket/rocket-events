@@ -8,6 +8,7 @@ import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.ui.fragments.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
+import com.example.eventlotteryapp.ui.fragments.ProfileFragment;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
@@ -52,7 +53,11 @@ public class MainActivity extends AppCompatActivity {
             } else if (itemId == R.id.nav_notifications) {
                 // selectedFragment = new NotificationsFragment();
             } else if (itemId == R.id.nav_profile) {
-                // selectedFragment = new ProfileFragment();
+                ProfileFragment profileFragment = new ProfileFragment();
+                Bundle bundle = new Bundle();
+                bundle.putString("deviceId", deviceId);
+                profileFragment.setArguments(bundle);
+                selectedFragment = profileFragment;
             }
 
             if (selectedFragment != null) {
