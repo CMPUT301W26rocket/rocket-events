@@ -3,11 +3,13 @@ package com.example.eventlotteryapp.ui.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Event;
 
@@ -46,6 +48,18 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 : "Unknown organizer";
         holder.subtitleTextView.setText(subtitle);
 
+        // Load poster — shows placeholder if posterUrl is null or empty
+        String posterUrl = event.getPosterUrl();
+        if (posterUrl != null && !posterUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(posterUrl)
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .into(holder.posterImageView);
+        } else {
+            holder.posterImageView.setImageResource(R.drawable.ic_image_placeholder);
+        }
+
         holder.itemView.setOnClickListener(v -> listener.onEventClick(event));
     }
 
@@ -57,11 +71,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView titleTextView;
         TextView subtitleTextView;
+        ImageView posterImageView;
 
         EventViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleTextView = itemView.findViewById(R.id.text_event_title);
+            titleTextView   = itemView.findViewById(R.id.text_event_title);
             subtitleTextView = itemView.findViewById(R.id.text_event_subtitle);
+            posterImageView  = itemView.findViewById(R.id.image_event_poster);
         }
     }
 }
