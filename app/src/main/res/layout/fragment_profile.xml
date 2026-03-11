@@ -110,7 +110,7 @@
             android:text="Opt Out of Notifications"
             android:textSize="16sp"
             android:textColor="#FFFFFF"
-            android:backgroundTint="#FF9800"
+            android:backgroundTint="#FF6200EE"
             android:layout_marginBottom="16dp"/>
 
         <!-- Event History Button (coming soon) -->
@@ -132,7 +132,7 @@
             android:text="Delete Profile"
             android:textSize="16sp"
             android:textColor="#FFFFFF"
-            android:backgroundTint="#D32F2F"
+            android:backgroundTint="#FF6200EE"
             android:layout_marginBottom="16dp"/>
 
     </LinearLayout>

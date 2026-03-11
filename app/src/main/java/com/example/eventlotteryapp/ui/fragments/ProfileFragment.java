@@ -84,11 +84,11 @@ public class ProfileFragment extends Fragment {
         if (notificationsEnabled) {
             buttonNotifications.setText("Opt Out of Notifications");
             buttonNotifications.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF9800")));
+                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF6200EE")));
         } else {
             buttonNotifications.setText("Opt In to Notifications");
             buttonNotifications.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#4CAF50")));
+                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#CCCCCC")));
         }
     }
 
