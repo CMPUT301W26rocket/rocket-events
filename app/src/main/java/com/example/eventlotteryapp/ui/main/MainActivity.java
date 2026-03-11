@@ -22,6 +22,13 @@ public class MainActivity extends AppCompatActivity {
 
     private String deviceId;
 
+    /**
+     * Reads the device ID from the intent, hides the action bar, sets up the bottom navigation
+     * listener to swap fragments (Home, My Events, Profile) with the device ID passed as arguments,
+     * and loads {@link HomeFragment} as the default tab on first launch.
+     *
+     * @param savedInstanceState previously saved state, or null if none
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

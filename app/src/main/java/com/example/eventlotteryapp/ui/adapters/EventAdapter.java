@@ -48,6 +48,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         this.listener = listener;
     }
 
+    /**
+     * Inflates the {@code item_event} layout and wraps it in a new {@link EventViewHolder}.
+     *
+     * @param parent   the RecyclerView that this view holder will be attached to
+     * @param viewType the view type of the new view (unused — only one type exists)
+     * @return a new {@link EventViewHolder} holding the inflated item view
+     */
     @NonNull
     @Override
     public EventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -56,6 +63,14 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         return new EventViewHolder(view);
     }
 
+    /**
+     * Binds the event at the given position to the view holder.
+     * Sets the title, organizer name, and loads the poster image via Glide.
+     * Falls back to a placeholder if the poster URL is null or empty.
+     *
+     * @param holder   the view holder to bind data into
+     * @param position the index of the event in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull EventViewHolder holder, int position) {
         Event event = events.get(position);
@@ -100,6 +115,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         TextView subtitleTextView;
         ImageView posterImageView;
 
+        /**
+         * Binds view references from the given item view.
+         *
+         * @param itemView the root view of the inflated event list item
+         */
         EventViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView   = itemView.findViewById(R.id.text_event_title);
