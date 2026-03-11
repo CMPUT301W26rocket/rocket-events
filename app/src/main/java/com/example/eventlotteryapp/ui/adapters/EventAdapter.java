@@ -41,9 +41,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         holder.titleTextView.setText(event.getTitle() != null ? event.getTitle() : "Untitled Event");
 
-        String subtitle = event.getOrganizerId() != null && !event.getOrganizerId().isEmpty()
-                ? event.getOrganizerId()
-                : "Organizer";
+        String subtitle = event.getOrganizerName() != null && !event.getOrganizerName().isEmpty()
+                ? event.getOrganizerName()
+                : "Unknown organizer";
         holder.subtitleTextView.setText(subtitle);
 
         holder.itemView.setOnClickListener(v -> listener.onEventClick(event));

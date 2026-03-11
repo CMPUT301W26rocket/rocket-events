@@ -19,7 +19,7 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.auth.ProfileSetupActivity" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".ui.main.MainActivity" />
         <activity android:name=".ui.admin.AdminActivity"
             android:exported="false" />
     </application>
