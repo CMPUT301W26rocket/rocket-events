@@ -38,6 +38,9 @@ public class HomeFragment extends Fragment {
     public HomeFragment() {
     }
 
+    /** Allows tests to inject a mock {@link EventRepository} before the fragment loads. */
+    public void setEventRepository(EventRepository repo) { this.eventRepository = repo; }
+
     /**
      * Inflates the fragment layout, sets up the RecyclerView with a LinearLayoutManager,
      * and attaches click listeners for the create event button and the QR scan placeholder.
@@ -65,7 +68,7 @@ public class HomeFragment extends Fragment {
         }
 
         eventsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        eventRepository = new EventRepository();
+        if (eventRepository == null) eventRepository = new EventRepository();
 
         createButton.setOnClickListener(v -> {
             CreateEventFragment fragment = new CreateEventFragment();

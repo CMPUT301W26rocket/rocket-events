@@ -42,6 +42,15 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    // Mockito for mocking repositories in UI tests
+    androidTestImplementation("org.mockito:mockito-android:5.11.0")
+    // RecyclerViewActions for scrolling in RecyclerView tests
+    androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+    // FragmentScenario for launching fragments in isolation
+    debugImplementation("androidx.fragment:fragment-testing:1.6.2")
+    // Firebase transitively pulls in an older androidx.test:core — force it up so
+    // Espresso and FragmentScenario can find classes like DirectExecutor at runtime
+    implementation("androidx.test:core:1.6.1")
     // Firebase BoM - manages all versions automatically
     implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
     // Firestore

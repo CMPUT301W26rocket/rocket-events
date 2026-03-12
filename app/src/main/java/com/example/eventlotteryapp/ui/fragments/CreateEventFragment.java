@@ -85,6 +85,21 @@ public class CreateEventFragment extends Fragment {
      */
     public CreateEventFragment() {}
 
+    /** Allows tests to inject a mock {@link EventRepository} before the fragment loads. */
+    public void setEventRepository(EventRepository repo) { this.eventRepository = repo; }
+
+    /** Allows tests to inject a mock {@link UserRepository} before the fragment loads. */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
+
+    /** Allows tests to pre-set the event start date, bypassing the DatePickerDialog. */
+    public void setSelectedEventStartDate(Date date) { this.selectedEventStartDate = date; }
+
+    /** Allows tests to pre-set the registration open date, bypassing the DatePickerDialog. */
+    public void setSelectedRegistrationOpenDate(Date date) { this.selectedRegistrationOpenDate = date; }
+
+    /** Allows tests to pre-set the registration close date, bypassing the DatePickerDialog. */
+    public void setSelectedRegistrationCloseDate(Date date) { this.selectedRegistrationCloseDate = date; }
+
     /**
      * Inflates the fragment layout, binds all form fields and buttons, and attaches
      * click listeners for the gallery picker, date pickers, and the create button.
@@ -122,9 +137,9 @@ public class CreateEventFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        eventRepository = new EventRepository();
-        userRepository  = new UserRepository();
-        imageRepository = new ImageRepository();
+        if (eventRepository == null) eventRepository = new EventRepository();
+        if (userRepository == null)  userRepository  = new UserRepository();
+        if (imageRepository == null) imageRepository = new ImageRepository();
 
         uploadButton.setOnClickListener(v -> galleryLauncher.launch("image/*"));
         createButton.setOnClickListener(v -> saveEventToFirestore());

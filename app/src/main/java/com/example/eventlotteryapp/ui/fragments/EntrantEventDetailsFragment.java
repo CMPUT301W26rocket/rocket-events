@@ -60,6 +60,12 @@ public class EntrantEventDetailsFragment extends Fragment {
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
 
+    /** Allows tests to inject a mock {@link EventRepository} before the fragment loads. */
+    public void setEventRepository(EventRepository repo) { this.eventRepository = repo; }
+
+    /** Allows tests to inject a mock {@link EntrantRepository} before the fragment loads. */
+    public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
+
     /**
      * Inflates the fragment layout, binds all views, reads {@code eventId} and
      * {@code deviceId} from arguments, and triggers loading of event details and
@@ -101,8 +107,8 @@ public class EntrantEventDetailsFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        eventRepository   = new EventRepository();
-        entrantRepository = new EntrantRepository();
+        if (eventRepository == null)   eventRepository   = new EventRepository();
+        if (entrantRepository == null) entrantRepository = new EntrantRepository();
 
         loadEventDetails();
         actionButton.setOnClickListener(v -> handleButtonClick());
