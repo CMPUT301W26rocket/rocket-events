@@ -160,7 +160,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         }
     }
     private void handleLotteryClick() {
-        // conditions (registration date, etc.)
+        // after registration period?
         selectLottery();
     }
     private void selectLottery() {

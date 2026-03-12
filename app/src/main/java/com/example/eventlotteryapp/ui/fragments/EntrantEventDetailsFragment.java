@@ -241,7 +241,8 @@ public class EntrantEventDetailsFragment extends Fragment {
      */
     private void handleButtonClick() {
         if (currentEntrant == null) {
-            joinWaitlist();
+            //joinWaitlist();
+            showTermsDialog();
         } else {
             switch (currentEntrant.getStatus()) {
                 case Entrant.STATUS_WAITLIST:
@@ -349,5 +350,14 @@ public class EntrantEventDetailsFragment extends Fragment {
                 }
             }
         });
+    }
+    private void showTermsDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Criteria & Guidelines")
+                .setMessage("By joining the waitlist, you understand that selection is random. Enrollment and cancellation policies are fixed")
+                .setPositiveButton("Agree", (dialog, which) -> joinWaitlist())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
     }
 }
