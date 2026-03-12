@@ -20,6 +20,7 @@ import com.example.eventlotteryapp.models.Entrant;
 import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.repository.EntrantRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -49,11 +50,12 @@ public class EntrantEventDetailsFragment extends Fragment {
     private ImageView posterImageView;
     private TextView titleView, organizerView, descriptionView, locationView;
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
-    private TextView geolocationView, waitlistView;
+    private TextView geolocationView, waitlistView, waitlistCountView;
     private Button actionButton;
 
     private EventRepository eventRepository;
     private EntrantRepository entrantRepository;
+    private ListenerRegistration waitlistCountListener;
 
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
@@ -86,8 +88,9 @@ public class EntrantEventDetailsFragment extends Fragment {
         eventDateView   = view.findViewById(R.id.text_detail_event_date);
         regOpenView     = view.findViewById(R.id.text_detail_reg_open);
         regCloseView    = view.findViewById(R.id.text_detail_reg_close);
-        geolocationView = view.findViewById(R.id.text_detail_geolocation);
-        waitlistView    = view.findViewById(R.id.text_detail_waitlist);
+        geolocationView   = view.findViewById(R.id.text_detail_geolocation);
+        waitlistView      = view.findViewById(R.id.text_detail_waitlist);
+        waitlistCountView = view.findViewById(R.id.text_detail_waitlist_count);
         actionButton    = view.findViewById(R.id.button_entrant_action);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
@@ -120,6 +123,7 @@ public class EntrantEventDetailsFragment extends Fragment {
                 currentEvent = event;
                 populateViews(event);
                 loadEntrantStatus();
+                attachWaitlistCountListener();
             }
 
             @Override
@@ -191,6 +195,37 @@ public class EntrantEventDetailsFragment extends Fragment {
                 }
             }
         });
+    }
+
+    /**
+     * Attaches a real-time Firestore listener that updates the waitlist count
+     * automatically whenever someone joins or leaves. Stored in
+     * {@code waitlistCountListener} so it can be removed in {@link #onDestroyView()}.
+     */
+    private void attachWaitlistCountListener() {
+        waitlistCountListener = entrantRepository.listenToWaitlistCount(eventId,
+                new EntrantRepository.FirestoreCallback<Integer>() {
+                    @Override
+                    public void onSuccess(Integer count) {
+                        if (!isAdded()) return;
+                        waitlistCountView.setText("Current Waitlist: " + count);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (isAdded()) {
+                            waitlistCountView.setText("Current Waitlist: —");
+                        }
+                    }
+                });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (waitlistCountListener != null) {
+            waitlistCountListener.remove();
+        }
     }
 
     /**

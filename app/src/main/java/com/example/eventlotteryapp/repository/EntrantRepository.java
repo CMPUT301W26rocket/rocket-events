@@ -4,6 +4,7 @@ import com.example.eventlotteryapp.models.Entrant;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,6 +194,31 @@ public class EntrantRepository {
                 .get()
                 .addOnSuccessListener(query -> callback.onSuccess(query.size() >= limit))
                 .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Attaches a real-time listener that fires whenever the waitlist count changes.
+     * The callback is called immediately with the current count, and again on every update.
+     * The caller must call {@link ListenerRegistration#remove()} when done to avoid memory leaks.
+     *
+     * @param eventId  the ID of the event to watch
+     * @param callback receives the updated waitlist count on each change
+     * @return a {@link ListenerRegistration} that must be removed when no longer needed
+     */
+    public ListenerRegistration listenToWaitlistCount(String eventId, FirestoreCallback<Integer> callback) {
+        return db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .whereEqualTo("status", Entrant.STATUS_WAITLIST)
+                .addSnapshotListener((query, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error);
+                        return;
+                    }
+                    if (query != null) {
+                        callback.onSuccess(query.size());
+                    }
+                });
     }
 
     /**
