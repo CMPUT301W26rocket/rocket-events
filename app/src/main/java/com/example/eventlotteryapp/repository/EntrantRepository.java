@@ -177,6 +177,24 @@ public class EntrantRepository {
     }
 
     /**
+     * Removes a user from an event's waitlist by deleting their entrant document.
+     * Used when the user chooses to leave the waitlist or remove themselves after not being selected.
+     *
+     * @param eventId  the ID of the event to leave
+     * @param deviceId the device ID of the user leaving
+     * @param callback receives {@code null} on success
+     */
+    public void leaveWaitlist(String eventId, String deviceId, FirestoreCallback<Void> callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(deviceId)
+                .delete()
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Fetches a single entrant record for a user in a specific event, regardless of status.
      * Useful for checking whether a user has already joined an event's waitlist.
      *
