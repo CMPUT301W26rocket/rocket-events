@@ -177,6 +177,25 @@ public class EntrantRepository {
     }
 
     /**
+     * Checks whether the waitlist for an event has reached its limit.
+     * Queries all entrants with status {@link Entrant#STATUS_WAITLIST} and compares
+     * the count against the provided limit.
+     *
+     * @param eventId  the ID of the event to check
+     * @param limit    the maximum number of waitlist spots allowed
+     * @param callback receives {@code true} if the waitlist is full, {@code false} if there is space
+     */
+    public void isWaitlistFull(String eventId, int limit, FirestoreCallback<Boolean> callback) {
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .whereEqualTo("status", Entrant.STATUS_WAITLIST)
+                .get()
+                .addOnSuccessListener(query -> callback.onSuccess(query.size() >= limit))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Removes a user from an event's waitlist by deleting their entrant document.
      * Used when the user chooses to leave the waitlist or remove themselves after not being selected.
      *
