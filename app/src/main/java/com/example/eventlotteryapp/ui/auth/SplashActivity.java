@@ -11,6 +11,7 @@ import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.UserRepository;
 import com.example.eventlotteryapp.ui.admin.AdminActivity;
 import com.example.eventlotteryapp.ui.main.MainActivity;
+import com.example.eventlotteryapp.utils.TestImageSeeder;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 /**
@@ -42,6 +43,10 @@ public class SplashActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         userRepository = new UserRepository();
+
+        // Seed test poster images to the gallery on first run
+        TestImageSeeder.seedIfNeeded(this);
+
         startAuthFlow();
     }
 
