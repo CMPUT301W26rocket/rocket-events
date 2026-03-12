@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -21,6 +22,10 @@ import com.example.eventlotteryapp.repository.EventRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Fragment that displays the details of an event from the organizer's perspective.
@@ -37,10 +42,12 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private TextView titleView, organizerView, descriptionView, locationView;
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
     private TextView geolocationView, waitlistView;
-    //private Button lotteryButton;
+    private Button lotteryButton;
+    private Event currentEvent;
 
 
     private EventRepository eventRepository;
+    private EntrantRepository entrantRepository;
 
     public OrganizerEventDetailsFragment() {}
 
@@ -64,7 +71,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         regCloseView    = view.findViewById(R.id.text_detail_reg_close);
         geolocationView = view.findViewById(R.id.text_detail_geolocation);
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
-        //lotteryButton    = view.findViewById(R.id.lottery_button);
+        lotteryButton    = view.findViewById(R.id.lottery_button);
 
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
@@ -75,9 +82,10 @@ public class OrganizerEventDetailsFragment extends Fragment {
         }
 
         eventRepository = new EventRepository();
+        entrantRepository = new EntrantRepository();
 
         loadEventDetails();
-        //lotteryButton.setOnClickListener(v -> handleLotteryClick());
+        lotteryButton.setOnClickListener(v -> handleLotteryClick());
 
         return view;
     }
@@ -87,6 +95,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
             @Override
             public void onSuccess(Event event) {
                 if (event == null || !isAdded()) return;
+
                 populateViews(event);
             }
 
@@ -100,6 +109,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
     }
 
     private void populateViews(Event event) {
+        currentEvent = event;
 
         titleView.setText(event.getTitle());
 
@@ -149,31 +159,49 @@ public class OrganizerEventDetailsFragment extends Fragment {
                     .into(posterImageView);
         }
     }
-//    private void handleLotteryClick() {
-//        // conditions (registration date, etc.)
-//        selectLottery();
-//    }
-//
-//    private void selectLottery() {
-//        lotteryButton.setEnabled(false);
-//
-//        entrantRepository.joinWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
-//            @Override
-//            public void onSuccess(Void unused) {
-//                if (!isAdded()) return;
-//                Toast.makeText(getContext(), "Joined waitlist!", Toast.LENGTH_SHORT).show();
-//                currentEntrant = new Entrant();
-//                currentEntrant.setStatus(Entrant.STATUS_WAITLIST);
-//                updateButton();
-//            }
-//
-//            @Override
-//            public void onFailure(Exception e) {
-//                if (isAdded()) {
-//                    Toast.makeText(getContext(), "Failed to join waitlist", Toast.LENGTH_SHORT).show();
-//                    actionButton.setEnabled(true);
-//                }
-//            }
-//        });
-//    }
+    private void handleLotteryClick() {
+        // conditions (registration date, etc.)
+        selectLottery();
+    }
+    private void selectLottery() {
+        lotteryButton.setEnabled(false);
+
+        if (currentEvent == null) return;
+
+        entrantRepository.getEntrantsByStatus(eventId, "waitlist", new EntrantRepository.FirestoreCallback<List<Entrant>>() {
+            @Override
+            public void onSuccess(List<Entrant> waitlist) {
+                if (waitlist == null || waitlist.isEmpty()) {
+                    Toast.makeText(getContext(), "No entrants on the waitlist", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Collections.shuffle(waitlist);
+
+                for (int i = 0; i < Math.min(currentEvent.getLotteryCapacity(), waitlist.size()); i++) {
+                    Entrant entrant = waitlist.get(i);
+
+                    // Update status to "pending" using the method you have
+                    entrantRepository.updateStatus(eventId, entrant.getDeviceId(), "pending", new EntrantRepository.FirestoreCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            // optional: log success
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            Toast.makeText(getContext(), "Failed to update entrant: " + entrant.getDeviceId(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                Toast.makeText(getContext(), "Selected entrants set to pending", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(getContext(), "Failed to fetch waitlist", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 }
