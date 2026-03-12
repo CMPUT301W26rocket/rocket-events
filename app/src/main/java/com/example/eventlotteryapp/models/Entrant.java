@@ -6,6 +6,7 @@ public class Entrant {
 
     public static final String STATUS_WAITLIST = "waitlist";
     public static final String STATUS_INVITED = "invited";
+
     public static final String STATUS_ENROLLED = "enrolled";
     public static final String STATUS_DECLINED = "declined";
     public static final String STATUS_CANCELLED = "cancelled";

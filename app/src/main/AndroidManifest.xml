@@ -30,7 +30,8 @@
         <activity android:name=".ui.admin.AdminOrganizerDetailActivity" />
         <activity android:name=".ui.admin.AdminBrowseEventsActivity" />
         <activity android:name=".ui.admin.AdminEventDetailActivity" />
-
+        <activity android:name=".ui.admin.AdminBrowseImagesActivity" />
+        <activity android:name=".ui.admin.AdminImageDetailActivity" />
     </application>
 
 </manifest>

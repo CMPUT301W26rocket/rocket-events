@@ -60,9 +60,9 @@ public class AdminActivity extends AppCompatActivity {
         });
 
         btnBrowseImages.setOnClickListener(v -> {
-            Toast.makeText(this, "Browse Images coming soon", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(AdminActivity.this, AdminBrowseImagesActivity.class);
+            startActivity(intent);
         });
-
         btnViewLogs.setOnClickListener(v -> {
             Toast.makeText(this, "Notification Logs coming soon", Toast.LENGTH_SHORT).show();
         });
