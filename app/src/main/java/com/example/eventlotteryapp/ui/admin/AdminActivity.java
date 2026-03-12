@@ -5,19 +5,36 @@ import android.os.Bundle;
 import android.provider.Settings;
 import android.widget.Button;
 import android.widget.Toast;
-import com.example.eventlotteryapp.R;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.ui.auth.SplashActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Main administrator dashboard for the application.
+ * Provides navigation to admin management screens for events, profiles,
+ * and organizers, and supports administrator logout.
+ */
 public class AdminActivity extends AppCompatActivity {
-    private Button btnBrowseEvents, btnBrowseProfiles, btnBrowseOrganizers, btnBrowseImages, btnViewLogs, btnLogout;
+
+    private Button btnBrowseEvents;
+    private Button btnBrowseProfiles;
+    private Button btnBrowseOrganizers;
+    private Button btnBrowseImages;
+    private Button btnViewLogs;
+    private Button btnLogout;
 
     private FirebaseFirestore db;
     private String deviceId;
 
+    /**
+     * Initializes the admin dashboard UI, connects button actions,
+     * and loads the current device identifier for admin logout handling.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,6 +49,7 @@ public class AdminActivity extends AppCompatActivity {
         btnViewLogs = findViewById(R.id.btnViewLogs);
         btnLogout = findViewById(R.id.btnLogout);
         btnBrowseOrganizers = findViewById(R.id.btnBrowseOrganizers);
+
         btnBrowseEvents.setOnClickListener(v -> {
             Toast.makeText(this, "Browse Events screen next", Toast.LENGTH_SHORT).show();
         });
@@ -40,6 +58,7 @@ public class AdminActivity extends AppCompatActivity {
             Intent intent = new Intent(AdminActivity.this, AdminBrowseProfilesActivity.class);
             startActivity(intent);
         });
+
         btnBrowseImages.setOnClickListener(v -> {
             Toast.makeText(this, "Browse Images coming soon", Toast.LENGTH_SHORT).show();
         });
@@ -56,6 +75,10 @@ public class AdminActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Logs the current administrator out by removing the admin device entry
+     * from Firestore and returning the user to the splash screen.
+     */
     private void logoutAdmin() {
         db.collection("admins").document(deviceId)
                 .delete()

@@ -19,6 +19,10 @@ import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Admin screen for browsing all events in the system.
+ * Allows an administrator to review events and open the event detail screen.
+ */
 public class AdminBrowseEventsActivity extends AppCompatActivity {
 
     private RecyclerView recyclerEvents;
@@ -28,6 +32,12 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     private List<Event> eventList;
     private EventAdapter eventAdapter;
 
+    /**
+     * Initializes the event list screen, connects the shared event adapter,
+     * and loads all events for administrator review.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,12 +67,19 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Reloads the event list whenever the screen returns to the foreground.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadEvents();
     }
 
+    /**
+     * Loads all events from the repository and updates the administrator list UI.
+     * Displays an empty-state message when no events are available.
+     */
     private void loadEvents() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override
@@ -82,9 +99,11 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(AdminBrowseEventsActivity.this,
+                Toast.makeText(
+                        AdminBrowseEventsActivity.this,
                         "Failed to load events: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
     }

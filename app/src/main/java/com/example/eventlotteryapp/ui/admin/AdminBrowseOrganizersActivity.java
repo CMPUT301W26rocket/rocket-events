@@ -12,16 +12,22 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlotteryapp.R;
-import com.example.eventlotteryapp.models.User;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.example.eventlotteryapp.repository.EventRepository;
 import com.example.eventlotteryapp.models.Event;
-import java.util.HashSet;
-import java.util.Set;
+import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.EventRepository;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
+/**
+ * Admin screen for browsing all organizers currently represented by event ownership.
+ * Organizers are derived from event organizer IDs rather than a separate organizer table.
+ */
 public class AdminBrowseOrganizersActivity extends AppCompatActivity {
+
     private EventRepository eventRepository;
     private RecyclerView recyclerOrganizers;
     private TextView textEmptyOrganizers;
@@ -30,6 +36,12 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     private List<User> organizerList;
     private ProfileAdapter profileAdapter;
 
+    /**
+     * Initializes the organizer list screen, connects the adapter,
+     * and loads organizers based on current event ownership.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,6 +50,7 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
         recyclerOrganizers = findViewById(R.id.recyclerOrganizers);
         textEmptyOrganizers = findViewById(R.id.textEmptyOrganizers);
         btnBack = findViewById(R.id.btnBack);
+
         eventRepository = new EventRepository();
         db = FirebaseFirestore.getInstance();
         organizerList = new ArrayList<>();
@@ -59,17 +72,24 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Reloads the organizer list whenever the screen returns to the foreground.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadOrganizers();
     }
 
+    /**
+     * Loads organizers by first gathering unique organizer IDs from events,
+     * then resolving those IDs to user documents for display in the admin UI.
+     */
     private void loadOrganizers() {
-        eventRepository.getAllEvents(new EventRepository.FirestoreCallback<java.util.List<Event>>() {
+        eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override
-            public void onSuccess(java.util.List<Event> events) {
-                java.util.Set<String> organizerIds = new java.util.HashSet<>();
+            public void onSuccess(List<Event> events) {
+                Set<String> organizerIds = new HashSet<>();
 
                 for (Event event : events) {
                     if (event.getOrganizerId() != null && !event.getOrganizerId().isEmpty()) {
@@ -114,17 +134,21 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
                             }
                         })
                         .addOnFailureListener(e ->
-                                Toast.makeText(AdminBrowseOrganizersActivity.this,
+                                Toast.makeText(
+                                        AdminBrowseOrganizersActivity.this,
                                         "Failed to load organizers: " + e.getMessage(),
-                                        Toast.LENGTH_SHORT).show()
+                                        Toast.LENGTH_SHORT
+                                ).show()
                         );
             }
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(AdminBrowseOrganizersActivity.this,
+                Toast.makeText(
+                        AdminBrowseOrganizersActivity.this,
                         "Failed to load events: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
     }

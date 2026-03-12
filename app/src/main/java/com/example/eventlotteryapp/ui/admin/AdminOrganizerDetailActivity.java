@@ -14,13 +14,28 @@ import com.example.eventlotteryapp.repository.EventRepository;
 
 import java.util.List;
 
+/**
+ * Admin screen for viewing organizer information and removing organizer status.
+ * In the current project structure, removing an organizer deletes all events
+ * owned by that organizer so they no longer appear in organizer-derived views.
+ */
 public class AdminOrganizerDetailActivity extends AppCompatActivity {
 
-    private TextView textDeviceId, textName, textEmail, textPhone;
-    private Button btnRemoveOrganizer, btnBack;
+    private TextView textDeviceId;
+    private TextView textName;
+    private TextView textEmail;
+    private TextView textPhone;
+    private Button btnRemoveOrganizer;
+    private Button btnBack;
     private String deviceId;
     private EventRepository eventRepository;
 
+    /**
+     * Initializes the organizer detail screen and loads organizer data
+     * passed from the admin organizer list.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,6 +64,9 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before removing organizer status.
+     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Organizer")
@@ -58,6 +76,10 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Loads all events owned by the selected organizer and removes organizer
+     * status by deleting those events.
+     */
     private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing organizer ID", Toast.LENGTH_SHORT).show();
@@ -68,7 +90,11 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
             @Override
             public void onSuccess(List<Event> events) {
                 if (events.isEmpty()) {
-                    Toast.makeText(AdminOrganizerDetailActivity.this, "No events found for this organizer", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(
+                            AdminOrganizerDetailActivity.this,
+                            "No events found for this organizer",
+                            Toast.LENGTH_SHORT
+                    ).show();
                     finish();
                     return;
                 }
@@ -78,13 +104,21 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(AdminOrganizerDetailActivity.this,
+                Toast.makeText(
+                        AdminOrganizerDetailActivity.this,
                         "Failed to load organizer events: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
     }
 
+    /**
+     * Deletes organizer-owned events one at a time until all have been removed.
+     *
+     * @param events organizer-owned event list
+     * @param index current event index being deleted
+     */
     private void deleteEventsSequentially(List<Event> events, int index) {
         if (index >= events.size()) {
             Toast.makeText(this, "Organizer removed", Toast.LENGTH_SHORT).show();
@@ -108,9 +142,11 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(AdminOrganizerDetailActivity.this,
+                Toast.makeText(
+                        AdminOrganizerDetailActivity.this,
                         "Failed to delete event: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
     }

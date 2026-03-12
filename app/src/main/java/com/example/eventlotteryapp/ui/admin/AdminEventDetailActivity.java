@@ -11,13 +11,28 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.repository.EventRepository;
 
+/**
+ * Admin screen for viewing event details and deleting an event.
+ * Displays the selected event information and provides a confirmation
+ * step before permanent removal.
+ */
 public class AdminEventDetailActivity extends AppCompatActivity {
 
-    private TextView textEventId, textEventTitle, textEventDescription, textOrganizerId;
-    private Button btnDeleteEvent, btnBack;
+    private TextView textEventId;
+    private TextView textEventTitle;
+    private TextView textEventDescription;
+    private TextView textOrganizerId;
+    private Button btnDeleteEvent;
+    private Button btnBack;
     private EventRepository eventRepository;
     private String eventId;
 
+    /**
+     * Initializes the event detail screen and loads event data passed
+     * from the admin event list.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +61,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the selected event.
+     */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Event")
@@ -55,6 +73,10 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the selected event through the shared event repository.
+     * Shows a success or failure toast depending on the result.
+     */
     private void deleteEvent() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -70,9 +92,11 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
             @Override
             public void onFailure(Exception e) {
-                Toast.makeText(AdminEventDetailActivity.this,
+                Toast.makeText(
+                        AdminEventDetailActivity.this,
                         "Delete failed: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_SHORT
+                ).show();
             }
         });
     }

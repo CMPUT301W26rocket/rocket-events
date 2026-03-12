@@ -11,13 +11,28 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.eventlotteryapp.R;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Admin screen for viewing profile details and deleting a user profile.
+ * Displays the selected user's basic information and provides
+ * a confirmation step before deletion.
+ */
 public class AdminProfileDetailActivity extends AppCompatActivity {
 
-    private TextView textDeviceId, textName, textEmail, textPhone;
-    private Button btnDeleteProfile, btnBack;
+    private TextView textDeviceId;
+    private TextView textName;
+    private TextView textEmail;
+    private TextView textPhone;
+    private Button btnDeleteProfile;
+    private Button btnBack;
     private FirebaseFirestore db;
     private String deviceId;
 
+    /**
+     * Initializes the profile detail screen and loads profile data
+     * passed from the admin profile list.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,6 +61,9 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the selected profile.
+     */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Profile")
@@ -55,6 +73,10 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the selected user profile from Firestore.
+     * Shows a success or failure toast depending on the result.
+     */
     private void deleteProfile() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing device ID", Toast.LENGTH_SHORT).show();
