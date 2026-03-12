@@ -84,7 +84,7 @@ public class EntrantEventDetailsFragment extends Fragment {
         regCloseView    = view.findViewById(R.id.text_detail_reg_close);
         geolocationView = view.findViewById(R.id.text_detail_geolocation);
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
-        actionButton    = view.findViewById(R.id.button_entrant_action);
+        actionButton    = view.findViewById(R.id.action_button);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());

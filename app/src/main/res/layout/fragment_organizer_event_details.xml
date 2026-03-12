@@ -133,11 +133,11 @@
                 <!-- Registration Close Date -->
                 <TextView
                     android:id="@+id/text_detail_reg_close"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textSize="14sp"
+                    android:layout_width="372dp"
+                    android:layout_height="25dp"
+                    android:layout_marginBottom="8dp"
                     android:textColor="@color/color_text_dark"
-                    android:layout_marginBottom="8dp" />
+                    android:textSize="14sp" />
 
                 <!-- Geolocation -->
                 <TextView
@@ -162,13 +162,23 @@
     </ScrollView>
 
     <!-- Fixed action button at bottom -->
+
     <Button
-        android:id="@+id/action_button"
+        android:id="@+id/entrants_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:padding="14dp"
-        android:textSize="16sp"
-        android:text="Join Waitlist" />
+        android:text="See Entrant Lists"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/lottery_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:padding="14dp"
+        android:text="Lottery"
+        android:textSize="16sp" />
 
 </LinearLayout>
