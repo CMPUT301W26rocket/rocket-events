@@ -1,0 +1,7 @@
+com.example.eventlotteryapp.models
+com.example.eventlotteryapp.repository
+com.example.eventlotteryapp.ui.adapters
+com.example.eventlotteryapp.ui.admin
+com.example.eventlotteryapp.ui.auth
+com.example.eventlotteryapp.ui.fragments
+com.example.eventlotteryapp.ui.main
