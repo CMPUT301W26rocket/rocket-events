@@ -1,6 +1,7 @@
 package com.example.eventlotteryapp.models;
 
 import java.util.Date;
+import java.util.Calendar;
 
 /**
  * Represents an event in the lottery system.
@@ -27,6 +28,33 @@ public class Event {
 
     /** Required empty constructor for Firestore deserialization. */
     public Event() {}
+
+    // --- Business logic ---
+
+    /**
+     * Returns whether the registration window is currently open.
+     * Returns {@code false} if either date is null.
+     * The window is open when the current date is on or after {@code registrationOpenDate}
+     * and on or before {@code registrationCloseDate}.
+     *
+     * @return {@code true} if registration is currently open, {@code false} otherwise
+     */
+    public boolean isRegistrationOpen() {
+        if (registrationOpenDate == null || registrationCloseDate == null) return false;
+        Date now = Calendar.getInstance().getTime();
+        return !now.before(registrationOpenDate) && !now.after(registrationCloseDate);
+    }
+
+    /**
+     * Returns whether the registration window has not yet opened.
+     * Returns {@code false} if {@code registrationOpenDate} is null.
+     *
+     * @return {@code true} if registration has not opened yet, {@code false} otherwise
+     */
+    public boolean isRegistrationNotYetOpen() {
+        if (registrationOpenDate == null) return false;
+        return Calendar.getInstance().getTime().before(registrationOpenDate);
+    }
 
     // --- Getters ---
 

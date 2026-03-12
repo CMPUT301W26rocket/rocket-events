@@ -121,26 +121,60 @@ public class EventTest {
         assertEquals("https://example.com/poster.jpg", event.getPosterUrl());
     }
 
-    @Test
-    public void registrationOpen_whenCurrentDateIsBetweenDates() {
-        Date past   = new Date(System.currentTimeMillis() - 86400000L); // yesterday
-        Date future = new Date(System.currentTimeMillis() + 86400000L); // tomorrow
-        event.setRegistrationOpenDate(past);
-        event.setRegistrationCloseDate(future);
+    // --- isRegistrationOpen() tests ---
 
-        Date now = new Date();
-        assertTrue(now.after(event.getRegistrationOpenDate())
-                && now.before(event.getRegistrationCloseDate()));
+    @Test
+    public void isRegistrationOpen_returnsTrueWhenNowIsBetweenDates() {
+        // Open date: yesterday, close date: tomorrow — registration is active
+        event.setRegistrationOpenDate(new Date(System.currentTimeMillis() - 86400000L));
+        event.setRegistrationCloseDate(new Date(System.currentTimeMillis() + 86400000L));
+        assertTrue(event.isRegistrationOpen());
     }
 
     @Test
-    public void registrationClosed_whenCloseDateIsInPast() {
-        Date past1 = new Date(System.currentTimeMillis() - 172800000L); // 2 days ago
-        Date past2 = new Date(System.currentTimeMillis() - 86400000L);  // yesterday
-        event.setRegistrationOpenDate(past1);
-        event.setRegistrationCloseDate(past2);
+    public void isRegistrationOpen_returnsFalseWhenCloseDateIsInPast() {
+        // Both dates in the past — registration has ended
+        event.setRegistrationOpenDate(new Date(System.currentTimeMillis() - 172800000L));
+        event.setRegistrationCloseDate(new Date(System.currentTimeMillis() - 86400000L));
+        assertFalse(event.isRegistrationOpen());
+    }
 
-        Date now = new Date();
-        assertFalse(now.before(event.getRegistrationCloseDate()));
+    @Test
+    public void isRegistrationOpen_returnsFalseWhenOpenDateIsInFuture() {
+        // Both dates in the future — registration has not started
+        event.setRegistrationOpenDate(new Date(System.currentTimeMillis() + 86400000L));
+        event.setRegistrationCloseDate(new Date(System.currentTimeMillis() + 172800000L));
+        assertFalse(event.isRegistrationOpen());
+    }
+
+    @Test
+    public void isRegistrationOpen_returnsFalseWhenDatesAreNull() {
+        // No dates set — should not crash and should return false
+        event.setRegistrationOpenDate(null);
+        event.setRegistrationCloseDate(null);
+        assertFalse(event.isRegistrationOpen());
+    }
+
+    // --- isRegistrationNotYetOpen() tests ---
+
+    @Test
+    public void isRegistrationNotYetOpen_returnsTrueWhenOpenDateIsInFuture() {
+        // Open date is tomorrow — registration hasn't started yet
+        event.setRegistrationOpenDate(new Date(System.currentTimeMillis() + 86400000L));
+        assertTrue(event.isRegistrationNotYetOpen());
+    }
+
+    @Test
+    public void isRegistrationNotYetOpen_returnsFalseWhenOpenDateIsInPast() {
+        // Open date was yesterday — registration has already opened
+        event.setRegistrationOpenDate(new Date(System.currentTimeMillis() - 86400000L));
+        assertFalse(event.isRegistrationNotYetOpen());
+    }
+
+    @Test
+    public void isRegistrationNotYetOpen_returnsFalseWhenOpenDateIsNull() {
+        // No open date set — should not crash and should return false
+        event.setRegistrationOpenDate(null);
+        assertFalse(event.isRegistrationNotYetOpen());
     }
 }
