@@ -113,15 +113,15 @@
             android:backgroundTint="#FF6200EE"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Event History Button (coming soon) -->
+        <!-- Event History Button -->
         <Button
             android:id="@+id/buttonEventHistory"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Event History (Coming Soon)"
+            android:text="Event History"
             android:textSize="16sp"
-            android:enabled="false"
-            android:backgroundTint="#CCCCCC"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FF6200EE"
             android:layout_marginBottom="16dp"/>
 
         <!-- Delete Profile Button -->

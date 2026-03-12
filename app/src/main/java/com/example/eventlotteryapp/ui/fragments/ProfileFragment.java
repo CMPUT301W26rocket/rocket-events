@@ -70,6 +70,7 @@ public class ProfileFragment extends Fragment {
 
         buttonSave.setOnClickListener(v -> saveProfile());
         buttonNotifications.setOnClickListener(v -> showNotificationsDialog());
+        view.findViewById(R.id.buttonEventHistory).setOnClickListener(v -> openEventHistory());
         view.findViewById(R.id.buttonDeleteProfile).setOnClickListener(v -> showDeleteProfileDialog());
 
         return view;
@@ -125,6 +126,19 @@ public class ProfileFragment extends Fragment {
      * On confirmation, updates the preference in Firestore via {@link UserRepository#setNotificationsEnabled}
      * and refreshes the button state.
      */
+    private void openEventHistory() {
+        EventHistoryFragment historyFragment = new EventHistoryFragment();
+        Bundle args = new Bundle();
+        args.putString("deviceId", deviceId);
+        historyFragment.setArguments(args);
+
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, historyFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     private void showNotificationsDialog() {
         boolean willEnable = !notificationsEnabled;
         String title = willEnable ? "Opt In to Notifications" : "Opt Out of Notifications";
