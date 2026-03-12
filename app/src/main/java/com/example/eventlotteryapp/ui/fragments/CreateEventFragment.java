@@ -1,6 +1,8 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -26,6 +28,7 @@ import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.EventRepository;
 import com.example.eventlotteryapp.repository.ImageRepository;
 import com.example.eventlotteryapp.repository.UserRepository;
+import com.example.eventlotteryapp.utils.QRCodeUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -406,14 +409,24 @@ public class CreateEventFragment extends Fragment {
 
         eventRepository.addEvent(event, new EventRepository.FirestoreCallback<String>() {
             @Override
-            public void onSuccess(String result) {
-                if (getContext() != null) {
-                    Toast.makeText(getContext(), "Event created!", Toast.LENGTH_SHORT).show();
+            public void onSuccess(String eventId) {
+                if (getContext() == null) {
+                    clearForm();
+                    return;
                 }
+
+                // Build the QR content URI and persist it on the event
+                String qrContent = "eventlotteryapp://event/" + eventId;
+                event.setQrCodeValue(qrContent);
+                eventRepository.updateEvent(event, new EventRepository.FirestoreCallback<Void>() {
+                    @Override public void onSuccess(Void v) {}
+                    @Override public void onFailure(Exception e) {}
+                });
+
+                // Generate the QR bitmap and show the success dialog
+                Bitmap qrBitmap = QRCodeUtils.generateQrBitmap(qrContent, 600);
                 clearForm();
-                if (getParentFragmentManager().getBackStackEntryCount() > 0) {
-                    getParentFragmentManager().popBackStack();
-                }
+                showEventCreatedDialog(qrBitmap, title);
             }
 
             @Override
@@ -424,6 +437,53 @@ public class CreateEventFragment extends Fragment {
                 createButton.setEnabled(true);
             }
         });
+    }
+
+    /**
+     * Shows a dialog confirming that the event was created, displaying the generated QR code
+     * and offering a button to download it to the device gallery.
+     *
+     * @param qrBitmap   the generated QR code bitmap, or {@code null} if generation failed
+     * @param eventTitle the event title, used as the filename when saving the QR code
+     */
+    private void showEventCreatedDialog(Bitmap qrBitmap, String eventTitle) {
+        if (getContext() == null) return;
+
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_event_created, null);
+
+        ImageView qrImageView   = dialogView.findViewById(R.id.image_qr_code);
+        Button downloadButton   = dialogView.findViewById(R.id.button_download_qr);
+        Button doneButton       = dialogView.findViewById(R.id.button_done);
+
+        if (qrBitmap != null) {
+            qrImageView.setImageBitmap(qrBitmap);
+        } else {
+            downloadButton.setEnabled(false);
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        downloadButton.setOnClickListener(v -> {
+            if (qrBitmap != null) {
+                boolean saved = QRCodeUtils.saveQrToGallery(requireContext(), qrBitmap, eventTitle);
+                Toast.makeText(getContext(),
+                        saved ? "QR code saved to gallery!" : "Failed to save QR code",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        doneButton.setOnClickListener(v -> {
+            dialog.dismiss();
+            if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                getParentFragmentManager().popBackStack();
+            }
+        });
+
+        dialog.show();
     }
 
     /**
