@@ -103,9 +103,17 @@ public class HomeFragment extends Fragment {
                 }
 
                 EventAdapter adapter = new EventAdapter(result, event -> {
-                    Toast.makeText(getContext(),
-                            "Open details for: " + event.getTitle(),
-                            Toast.LENGTH_SHORT).show();
+                    EntrantEventDetailsFragment detailsFragment = new EntrantEventDetailsFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("eventId", event.getEventId());
+                    bundle.putString("deviceId", deviceId);
+                    detailsFragment.setArguments(bundle);
+
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, detailsFragment)
+                            .addToBackStack(null)
+                            .commit();
                 });
 
                 eventsRecyclerView.setAdapter(adapter);
