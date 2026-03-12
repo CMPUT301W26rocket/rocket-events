@@ -32,6 +32,22 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * Fragment that provides a form for creating a new event.
+ *
+ * <p>The user fills in the event title, description, location, registration fee,
+ * lottery capacity, optional waitlist limit, three date fields, and optional geolocation
+ * and waitlist-limit flags. An event poster image can be selected from the gallery.
+ *
+ * <p>On submission the fragment:
+ * <ol>
+ *   <li>Validates all required fields.</li>
+ *   <li>Fetches the organizer's display name from {@link UserRepository}.</li>
+ *   <li>If a poster was selected, uploads it via {@link ImageRepository} before saving.</li>
+ *   <li>Saves the event to Firestore via {@link EventRepository#addEvent}.</li>
+ *   <li>Clears the form and pops the back stack on success.</li>
+ * </ol>
+ */
 public class CreateEventFragment extends Fragment {
 
     private static final SimpleDateFormat DATE_FORMAT =
@@ -64,8 +80,21 @@ public class CreateEventFragment extends Fragment {
                 }
             });
 
+    /**
+     * Required empty public constructor.
+     */
     public CreateEventFragment() {}
 
+    /**
+     * Inflates the fragment layout, binds all form fields and buttons, and attaches
+     * click listeners for the gallery picker, date pickers, and the create button.
+     * Also reads the device ID from the fragment arguments.
+     *
+     * @param inflater  the LayoutInflater used to inflate the fragment's view
+     * @param container the parent view that the fragment's UI will be attached to, or null
+     * @param savedInstanceState previously saved state, or null if none
+     * @return the root {@link View} of the inflated fragment layout
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -111,6 +140,14 @@ public class CreateEventFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Shows a {@link DatePickerDialog} pre-filled to today's date.
+     * When the user confirms a date, the formatted string is written into {@code target}
+     * and the selected {@link Date} is delivered to {@code listener}.
+     *
+     * @param target   the {@link EditText} to display the formatted date in
+     * @param listener callback that receives the chosen {@link Date}
+     */
     private void showDatePicker(EditText target, OnDateSelectedListener listener) {
         Calendar cal = Calendar.getInstance();
         new DatePickerDialog(requireContext(),
@@ -128,10 +165,18 @@ public class CreateEventFragment extends Fragment {
         ).show();
     }
 
+    /**
+     * Internal callback interface used by {@link #showDatePicker} to return the selected date.
+     */
     private interface OnDateSelectedListener {
         void onDateSelected(Date date);
     }
 
+    /**
+     * Validates all form fields, then fetches the organizer name and triggers either
+     * {@link #uploadPosterThenSave} (if a poster was selected) or {@link #buildAndSaveEvent}
+     * directly.
+     */
     private void saveEventToFirestore() {
         String title        = titleInput.getText().toString().trim();
         String description  = descriptionInput.getText().toString().trim();
@@ -263,6 +308,21 @@ public class CreateEventFragment extends Fragment {
         });
     }
 
+    /**
+     * Uploads the selected poster image to Firebase Storage via {@link ImageRepository},
+     * then calls {@link #buildAndSaveEvent} with the resulting download URL.
+     * If the upload fails, the event is saved without a poster.
+     *
+     * @param organizerName     the organizer's display name
+     * @param title             event title
+     * @param description       event description
+     * @param location          event location
+     * @param fee               registration fee
+     * @param lotteryCapacity   number of spots in the lottery draw
+     * @param waitlistLimit     maximum waitlist size (only relevant when {@code hasWaitlistLimit} is true)
+     * @param hasWaitlistLimit  whether a waitlist size cap is enforced
+     * @param geolocationRequired whether geolocation verification is required to join
+     */
     private void uploadPosterThenSave(String organizerName, String title, String description,
                                       String location, double fee, int lotteryCapacity,
                                       int waitlistLimit, boolean hasWaitlistLimit,
@@ -292,6 +352,22 @@ public class CreateEventFragment extends Fragment {
                 });
     }
 
+    /**
+     * Constructs an {@link Event} object from the provided parameters and saves it to
+     * Firestore via {@link EventRepository#addEvent}. On success, clears the form and
+     * pops the back stack.
+     *
+     * @param organizerName     the organizer's display name
+     * @param posterUrl         Firebase Storage download URL for the poster, or empty string if none
+     * @param title             event title
+     * @param description       event description
+     * @param location          event location
+     * @param fee               registration fee
+     * @param lotteryCapacity   number of spots in the lottery draw
+     * @param waitlistLimit     maximum waitlist size (only relevant when {@code hasWaitlistLimit} is true)
+     * @param hasWaitlistLimit  whether a waitlist size cap is enforced
+     * @param geolocationRequired whether geolocation verification is required to join
+     */
     private void buildAndSaveEvent(String organizerName, String posterUrl,
                                    String title, String description, String location,
                                    double fee, int lotteryCapacity, int waitlistLimit,
@@ -335,6 +411,10 @@ public class CreateEventFragment extends Fragment {
         });
     }
 
+    /**
+     * Resets all form fields, checkboxes, date selections, and the poster image back to
+     * their default empty state. Re-enables the create button after a successful submission.
+     */
     private void clearForm() {
         titleInput.setText("");
         descriptionInput.setText("");

@@ -12,6 +12,15 @@ import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.ui.auth.SplashActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+/**
+ * Activity displayed to users who have an active admin session.
+ * Provides placeholder buttons for admin actions (browse events, profiles, images, logs)
+ * and a logout button that deletes the admin session document and returns to {@link SplashActivity}.
+ *
+ * <p>Logout removes the device's document from the {@code admins} Firestore collection.
+ * {@link SplashActivity} then re-evaluates whether to route the device as a regular user
+ * or back to profile setup.
+ */
 public class AdminActivity extends AppCompatActivity {
 
     private String deviceId;
@@ -55,6 +64,11 @@ public class AdminActivity extends AppCompatActivity {
         btnLogout.setOnClickListener(v -> logout());
     }
 
+    /**
+     * Ends the admin session by deleting the device's document from the {@code admins} collection.
+     * Once the deletion succeeds, navigates to {@link SplashActivity} which re-evaluates
+     * the device's role and routes it appropriately (regular user or profile setup).
+     */
     private void logout() {
         // Remove from admins collection
         db.collection("admins")

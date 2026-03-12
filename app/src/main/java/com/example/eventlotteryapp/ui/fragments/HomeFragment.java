@@ -20,15 +20,34 @@ import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 
 import java.util.List;
 
+/**
+ * Fragment that displays all available events in a scrollable list.
+ * Shown on the Home tab of {@link com.example.eventlotteryapp.ui.main.MainActivity}.
+ *
+ * <p>Provides buttons to navigate to {@link CreateEventFragment} and a placeholder for QR scanning.
+ */
 public class HomeFragment extends Fragment {
 
     private RecyclerView eventsRecyclerView;
     private EventRepository eventRepository;
     private String deviceId;
 
+    /**
+     * Required empty public constructor.
+     */
     public HomeFragment() {
     }
 
+    /**
+     * Inflates the fragment layout, sets up the RecyclerView with a LinearLayoutManager,
+     * and attaches click listeners for the create event button and the QR scan placeholder.
+     * Also reads the device ID from fragment arguments and triggers the initial event load.
+     *
+     * @param inflater  the LayoutInflater used to inflate the fragment's view
+     * @param container the parent view that the fragment's UI will be attached to, or null
+     * @param savedInstanceState previously saved state, or null if none
+     * @return the root {@link View} of the inflated fragment layout
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -70,6 +89,11 @@ public class HomeFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches all events from Firestore via {@link EventRepository#getAllEvents} and
+     * binds them to the RecyclerView using an {@link EventAdapter}.
+     * Shows a toast if the load fails. Does nothing if the fragment is no longer attached.
+     */
     private void loadAllEvents() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

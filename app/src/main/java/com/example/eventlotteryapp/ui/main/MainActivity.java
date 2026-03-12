@@ -11,10 +11,24 @@ import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
 import com.example.eventlotteryapp.ui.fragments.ProfileFragment;
 import android.view.View;
 
+/**
+ * The main activity for authenticated users, providing bottom navigation between
+ * the Home, My Events, Notifications, and Profile tabs.
+ *
+ * <p>Receives the user's {@code deviceId} from the intent and passes it as arguments
+ * to each fragment. The Home tab ({@link HomeFragment}) is loaded by default on first launch.
+ */
 public class MainActivity extends AppCompatActivity {
 
     private String deviceId;
 
+    /**
+     * Reads the device ID from the intent, hides the action bar, sets up the bottom navigation
+     * listener to swap fragments (Home, My Events, Profile) with the device ID passed as arguments,
+     * and loads {@link HomeFragment} as the default tab on first launch.
+     *
+     * @param savedInstanceState previously saved state, or null if none
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
