@@ -44,6 +44,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
     private TextView geolocationView, waitlistView;
     private Button lotteryButton;
+    private Button entrantsButton;
     private Event currentEvent;
 
 
@@ -86,7 +87,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         geolocationView = view.findViewById(R.id.text_detail_geolocation);
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
         lotteryButton    = view.findViewById(R.id.lottery_button);
-
+        entrantsButton   = view.findViewById(R.id.entrants_button);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -100,6 +101,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
 
         loadEventDetails();
         lotteryButton.setOnClickListener(v -> handleLotteryClick());
+        entrantsButton.setOnClickListener(v -> openEntrantList());
 
         return view;
     }
@@ -212,6 +214,19 @@ public class OrganizerEventDetailsFragment extends Fragment {
      * <p>If no entrants exist on the waitlist, a message is displayed to
      * inform the organizer.</p>
      */
+    private void openEntrantList() {
+        EntrantListFragment fragment = new EntrantListFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        fragment.setArguments(args);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     private void selectLottery() {
         lotteryButton.setEnabled(false);
 
