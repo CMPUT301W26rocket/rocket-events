@@ -59,7 +59,14 @@
             android:textSize="16sp"
             android:backgroundTint="#FF6200EE"
             android:layout_marginBottom="12dp"/>
-
+        <Button
+            android:id="@+id/btnBrowseOrganizers"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:text="🧑‍💼 Browse Organizers"
+            android:textSize="16sp"
+            android:backgroundTint="#FF6200EE"
+            android:layout_marginBottom="12dp"/>
         <Button
             android:id="@+id/btnBrowseImages"
             android:layout_width="match_parent"
@@ -97,7 +104,7 @@
             android:textSize="16sp"
             android:textColor="#E65100"
             android:backgroundTint="#FFFFFF"
-            android:strokeColor="#E65100"/>
+            android:layout_marginBottom="24dp"/>
 
     </LinearLayout>
 </ScrollView>
