@@ -32,6 +32,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
 }
 
 dependencies {
@@ -46,6 +47,8 @@ dependencies {
     androidTestImplementation("org.mockito:mockito-android:5.11.0")
     // RecyclerViewActions for scrolling in RecyclerView tests
     androidTestImplementation("androidx.test.espresso:espresso-contrib:3.5.1")
+    // Intents.intended() for verifying Activity navigation
+    androidTestImplementation("androidx.test.espresso:espresso-intents:3.5.1")
     // FragmentScenario for launching fragments in isolation
     debugImplementation("androidx.fragment:fragment-testing:1.6.2")
     // Firebase transitively pulls in an older androidx.test:core — force it up so

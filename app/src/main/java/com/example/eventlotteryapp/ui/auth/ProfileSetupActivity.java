@@ -42,14 +42,24 @@ public class ProfileSetupActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String deviceId;
 
+    /**
+     * Injects a mock {@link UserRepository} for testing.
+     * Call via {@code ActivityScenario.onActivity()} after launch but before clicking Save,
+     * so the mock is in place when {@link #saveProfile()} runs.
+     */
+    public void setUserRepository(UserRepository repo) {
+        this.userRepository = repo;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_setup);
 
         deviceId = getIntent().getStringExtra("deviceId");
-        userRepository = new UserRepository();
-        db = FirebaseFirestore.getInstance();
+        if (userRepository == null) userRepository = new UserRepository();
+        // db is initialized lazily in createAdminSession() to avoid triggering
+        // Firestore's internal gRPC initialization on every activity launch
 
         editTextName = findViewById(R.id.editTextName);
         editTextEmail = findViewById(R.id.editTextEmail);
@@ -162,6 +172,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
      * The {@code users} collection is not modified during this operation.
      */
     private void createAdminSession() {
+        if (db == null) db = FirebaseFirestore.getInstance();
         Map<String, Object> adminData = new HashMap<>();
         adminData.put("deviceId", deviceId);
         adminData.put("loginTimestamp", System.currentTimeMillis());

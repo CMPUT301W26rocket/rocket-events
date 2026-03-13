@@ -164,7 +164,7 @@ public class EntrantEventDetailsFragmentTest {
         launch(null);
 
         // With registration open and no entrant record, the button should say "Join Waitlist"
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Join Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(withText("Join Waitlist")));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class EntrantEventDetailsFragmentTest {
         launch(null);
 
         // The button should be clickable (registration is open)
-        onView(withId(R.id.button_entrant_action)).check(matches(isEnabled()));
+        onView(withId(R.id.action_button)).check(matches(isEnabled()));
     }
 
     @Test
@@ -182,7 +182,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_WAITLIST);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Leave Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(withText("Leave Waitlist")));
     }
 
     @Test
@@ -191,7 +191,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_INVITED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Invited")));
+        onView(withId(R.id.action_button)).check(matches(withText("Invited")));
     }
 
     @Test
@@ -201,7 +201,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_INVITED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(isEnabled()));
+        onView(withId(R.id.action_button)).check(matches(isEnabled()));
     }
 
     @Test
@@ -210,7 +210,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_ENROLLED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Enrolled")));
+        onView(withId(R.id.action_button)).check(matches(withText("Enrolled")));
     }
 
     @Test
@@ -220,7 +220,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_ENROLLED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     @Test
@@ -229,7 +229,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_DECLINED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     @Test
@@ -239,7 +239,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_NOT_SELECTED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Leave Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(withText("Leave Waitlist")));
     }
 
     @Test
@@ -251,7 +251,7 @@ public class EntrantEventDetailsFragmentTest {
         // null entrant = user hasn't joined, but registration is now closed
         launch(null);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Registration Closed")));
+        onView(withId(R.id.action_button)).check(matches(withText("Registration Closed")));
     }
 
     @Test
@@ -260,7 +260,7 @@ public class EntrantEventDetailsFragmentTest {
         fakeEvent.setRegistrationCloseDate(new Date(System.currentTimeMillis() - 86400000L));
         launch(null);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     @Test
@@ -270,7 +270,7 @@ public class EntrantEventDetailsFragmentTest {
         fakeEvent.setRegistrationCloseDate(new Date(System.currentTimeMillis() + 172800000L));
         launch(null);
 
-        onView(withId(R.id.button_entrant_action))
+        onView(withId(R.id.action_button))
                 .check(matches(withText("Registration Not Open Yet")));
     }
 
@@ -280,7 +280,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_CANCELLED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Cancelled")));
+        onView(withId(R.id.action_button)).check(matches(withText("Cancelled")));
     }
 
     @Test
@@ -289,7 +289,7 @@ public class EntrantEventDetailsFragmentTest {
         entrant.setStatus(Entrant.STATUS_CANCELLED);
         launch(entrant);
 
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     // --- Button click tests ---
@@ -308,11 +308,11 @@ public class EntrantEventDetailsFragmentTest {
         launch(null);
 
         // Button currently says "Join Waitlist" — click it
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // After the mock joinWaitlist succeeds, the fragment updates currentEntrant
         // and calls updateButton() — button should now say "Leave Waitlist"
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Leave Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(withText("Leave Waitlist")));
     }
 
     @Test
@@ -330,11 +330,11 @@ public class EntrantEventDetailsFragmentTest {
         launch(entrant);
 
         // Button currently says "Leave Waitlist" — click it
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // After the mock leaveWaitlist succeeds, currentEntrant is set to null
         // and updateButton() runs — button should go back to "Join Waitlist"
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Join Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(withText("Join Waitlist")));
     }
 
     @Test
@@ -345,7 +345,7 @@ public class EntrantEventDetailsFragmentTest {
         launch(entrant);
 
         // Click the "Invited" button
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // The invitation dialog should appear with the correct title
         onView(withText("You're Invited!")).check(matches(isDisplayed()));
@@ -366,7 +366,7 @@ public class EntrantEventDetailsFragmentTest {
         launch(entrant);
 
         // Open the invitation dialog
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // Click "Accept" in the dialog
         // This calls respondToInvitation(STATUS_ENROLLED) which calls updateStatus()
@@ -374,8 +374,8 @@ public class EntrantEventDetailsFragmentTest {
 
         // After the mock updateStatus succeeds, currentEntrant status is set to "enrolled"
         // and updateButton() runs — button should say "Enrolled" and be disabled
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Enrolled")));
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(withText("Enrolled")));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     @Test
@@ -392,14 +392,14 @@ public class EntrantEventDetailsFragmentTest {
         launch(entrant);
 
         // Open the invitation dialog
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // Click "Decline" in the dialog
         onView(withText("Decline")).perform(click());
 
         // Button should say "Declined" and be disabled
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Declined")));
-        onView(withId(R.id.button_entrant_action)).check(matches(not(isEnabled())));
+        onView(withId(R.id.action_button)).check(matches(withText("Declined")));
+        onView(withId(R.id.action_button)).check(matches(not(isEnabled())));
     }
 
     @Test
@@ -420,11 +420,11 @@ public class EntrantEventDetailsFragmentTest {
         launch(null);
 
         // Click "Join Waitlist"
-        onView(withId(R.id.button_entrant_action)).perform(click());
+        onView(withId(R.id.action_button)).perform(click());
 
         // The fragment checks isWaitlistFull first — since it's full, joinWaitlist is never called.
         // The button should be re-enabled and still say "Join Waitlist" (join was blocked)
-        onView(withId(R.id.button_entrant_action)).check(matches(withText("Join Waitlist")));
-        onView(withId(R.id.button_entrant_action)).check(matches(isEnabled()));
+        onView(withId(R.id.action_button)).check(matches(withText("Join Waitlist")));
+        onView(withId(R.id.action_button)).check(matches(isEnabled()));
     }
 }
