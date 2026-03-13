@@ -82,11 +82,17 @@ public class MyEventsFragment extends Fragment {
                 }
 
                 EventAdapter adapter = new EventAdapter(result, event -> {
-                    Toast.makeText(getContext(),
-                            "Open details for: " + event.getTitle(),
-                            Toast.LENGTH_SHORT).show();
+                    OrganizerEventDetailsFragment detailsFragment = new OrganizerEventDetailsFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("eventId", event.getEventId());
+                    bundle.putString("deviceId", deviceId);
+                    detailsFragment.setArguments(bundle);
 
-                    // Later replace with EventDetailsFragment or EventDetailsActivity
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, detailsFragment)
+                            .addToBackStack(null)
+                            .commit();
                 });
 
                 myEventsRecyclerView.setAdapter(adapter);
