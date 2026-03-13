@@ -94,10 +94,10 @@ public class EntrantEventDetailsFragment extends Fragment {
         eventDateView   = view.findViewById(R.id.text_detail_event_date);
         regOpenView     = view.findViewById(R.id.text_detail_reg_open);
         regCloseView    = view.findViewById(R.id.text_detail_reg_close);
-        geolocationView   = view.findViewById(R.id.text_detail_geolocation);
-        waitlistView      = view.findViewById(R.id.text_detail_waitlist);
+        geolocationView = view.findViewById(R.id.text_detail_geolocation);
+        waitlistView    = view.findViewById(R.id.text_detail_waitlist);
+        actionButton    = view.findViewById(R.id.action_button);
         waitlistCountView = view.findViewById(R.id.text_detail_waitlist_count);
-        actionButton    = view.findViewById(R.id.button_entrant_action);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -300,7 +300,7 @@ public class EntrantEventDetailsFragment extends Fragment {
      */
     private void handleButtonClick() {
         if (currentEntrant == null) {
-            joinWaitlist();
+            showTermsDialog();
         } else {
             switch (currentEntrant.getStatus()) {
                 case Entrant.STATUS_WAITLIST:
@@ -445,5 +445,21 @@ public class EntrantEventDetailsFragment extends Fragment {
                 }
             }
         });
+    }
+
+    /**
+     * Displays a confirmation dialog explaining the event lottery rules
+     * before allowing the user to join the waitlist.
+     *
+     * If the user agrees, they are added to the waitlist.
+     */
+    private void showTermsDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Criteria & Guidelines")
+                .setMessage("By joining the waitlist, you understand that selection is random. Enrollment and cancellation policies are fixed.")
+                .setPositiveButton("Agree", (dialog, which) -> joinWaitlist())
+                .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
     }
 }
