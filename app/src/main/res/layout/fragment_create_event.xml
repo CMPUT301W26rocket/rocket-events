@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#FFFFFFFF">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -9,46 +10,246 @@
         android:orientation="vertical"
         android:padding="24dp">
 
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create Event"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_primary"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Poster Section -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Event Poster (optional)"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="10dp"/>
+
+        <ImageView
+            android:id="@+id/image_event_poster"
+            android:layout_width="match_parent"
+            android:layout_height="360dp"
+            android:background="@drawable/poster_placeholder_bg"
+            android:src="@drawable/ic_image_placeholder"
+            android:scaleType="centerCrop"
+            android:clipToOutline="true"
+            android:contentDescription="Event poster preview"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/button_upload_poster"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="Upload Poster"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Event Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Event Title *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
         <EditText
             android:id="@+id/edit_event_title"
             android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Enter event title"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:hint="Event title" />
+            android:text="Description (optional)"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
 
         <EditText
             android:id="@+id/edit_event_description"
             android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:hint="Describe your event"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:gravity="top"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Location -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="Description" />
+            android:text="Location *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
 
         <EditText
-            android:id="@+id/edit_waitlist_limit"
+            android:id="@+id/edit_event_location"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:hint="Waitlist limit"
-            android:inputType="number" />
+            android:layout_height="56dp"
+            android:hint="e.g. Edmonton Convention Centre"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:layout_marginBottom="20dp"/>
 
+        <!-- Registration Fee -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Registration Fee * (default $0.00)"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/edit_registration_fee"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="0.00"
+            android:inputType="numberDecimal"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Lottery Capacity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enrollment Capacity * (lottery size)"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/edit_lottery_capacity"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="How many people to select in the lottery"
+            android:inputType="number"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Event Start Date -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Event Start Date *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/edit_event_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Select date"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:focusable="false"
+            android:clickable="true"
+            android:cursorVisible="false"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Registration Open Date -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Registration Open Date *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/edit_registration_open_date"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Select date"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:focusable="false"
+            android:clickable="true"
+            android:cursorVisible="false"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Registration Close Date -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Registration Close Date *"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="6dp"/>
+
+        <EditText
+            android:id="@+id/edit_registration_close_date"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Select date"
+            android:padding="12dp"
+            android:background="@drawable/rounded_input"
+            android:focusable="false"
+            android:clickable="true"
+            android:cursorVisible="false"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Waitlist Limit -->
         <CheckBox
             android:id="@+id/checkbox_has_waitlist_limit"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Has waitlist limit"
-            android:checked="true" />
+            android:text="Limit waitlist size (optional)"
+            android:layout_marginBottom="8dp"/>
 
+        <EditText
+            android:id="@+id/edit_waitlist_limit"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:hint="Maximum waitlist size"
+            android:inputType="number"
+            android:background="@drawable/rounded_input"
+            android:padding="12dp"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- Geolocation -->
         <CheckBox
             android:id="@+id/checkbox_geolocation_required"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Require geolocation" />
+            android:text="Require geolocation check (optional)"
+            android:layout_marginBottom="28dp"/>
 
+        <!-- Create Button -->
         <Button
             android:id="@+id/button_create_event"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="Create Event" />
+            android:layout_height="56dp"
+            android:text="Create Event"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:backgroundTint="@color/color_primary"/>
+
     </LinearLayout>
 </ScrollView>

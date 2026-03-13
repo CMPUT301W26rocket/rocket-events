@@ -15,7 +15,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 /**
  * Main administrator dashboard for the application.
  * Provides navigation to admin management screens for events, profiles,
- * and organizers, and supports administrator logout.
+ * organizers, and images, and supports administrator logout.
+ *
+ * <p>Logout removes the device's document from the {@code admins} Firestore collection.
+ * {@link SplashActivity} then re-evaluates whether to route the device as a regular user
+ * or back to profile setup.
  */
 public class AdminActivity extends AppCompatActivity {
 
@@ -29,12 +33,6 @@ public class AdminActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String deviceId;
 
-    /**
-     * Initializes the admin dashboard UI, connects button actions,
-     * and loads the current device identifier for admin logout handling.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,11 +41,11 @@ public class AdminActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        btnBrowseEvents = findViewById(R.id.btnBrowseEvents);
-        btnBrowseProfiles = findViewById(R.id.btnBrowseProfiles);
-        btnBrowseImages = findViewById(R.id.btnBrowseImages);
-        btnViewLogs = findViewById(R.id.btnViewLogs);
-        btnLogout = findViewById(R.id.btnLogout);
+        btnBrowseEvents    = findViewById(R.id.btnBrowseEvents);
+        btnBrowseProfiles  = findViewById(R.id.btnBrowseProfiles);
+        btnBrowseImages    = findViewById(R.id.btnBrowseImages);
+        btnViewLogs        = findViewById(R.id.btnViewLogs);
+        btnLogout          = findViewById(R.id.btnLogout);
         btnBrowseOrganizers = findViewById(R.id.btnBrowseOrganizers);
 
         btnBrowseEvents.setOnClickListener(v -> {
@@ -63,6 +61,7 @@ public class AdminActivity extends AppCompatActivity {
             Intent intent = new Intent(AdminActivity.this, AdminBrowseImagesActivity.class);
             startActivity(intent);
         });
+
         btnViewLogs.setOnClickListener(v -> {
             Toast.makeText(this, "Notification Logs coming soon", Toast.LENGTH_SHORT).show();
         });
@@ -76,8 +75,8 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     /**
-     * Logs the current administrator out by removing the admin device entry
-     * from Firestore and returning the user to the splash screen.
+     * Ends the admin session by deleting the device's document from the {@code admins} collection.
+     * Navigates to {@link SplashActivity} which re-evaluates the device's role.
      */
     private void logoutAdmin() {
         db.collection("admins").document(deviceId)

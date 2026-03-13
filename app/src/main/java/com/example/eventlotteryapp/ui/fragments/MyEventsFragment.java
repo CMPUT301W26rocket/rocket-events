@@ -19,16 +19,33 @@ import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 
 import java.util.List;
 
+/**
+ * Fragment that displays the events created by the currently logged-in user.
+ * Shown on the My Events tab of {@link com.example.eventlotteryapp.ui.main.MainActivity}.
+ *
+ * <p>Queries Firestore for events where {@code organizerId} matches the device's ID.
+ */
 public class MyEventsFragment extends Fragment {
 
     private RecyclerView myEventsRecyclerView;
     private EventRepository eventRepository;
     private String deviceId;
 
-    public MyEventsFragment() {
-        // Required empty public constructor
-    }
+    /**
+     * Required empty public constructor.
+     */
+    public MyEventsFragment() {}
 
+    /**
+     * Inflates the fragment layout, sets up the RecyclerView with a LinearLayoutManager,
+     * and reads the device ID from fragment arguments. Triggers the initial load of the
+     * user's hosted events.
+     *
+     * @param inflater  the LayoutInflater used to inflate the fragment's view
+     * @param container the parent view that the fragment's UI will be attached to, or null
+     * @param savedInstanceState previously saved state, or null if none
+     * @return the root {@link View} of the inflated fragment layout
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -51,6 +68,11 @@ public class MyEventsFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches all events where {@code organizerId} matches the current device ID via
+     * {@link EventRepository#getEventsByOrganizerId} and binds them to the RecyclerView
+     * using an {@link EventAdapter}. Shows a toast if the load fails or the fragment is detached.
+     */
     private void loadMyEvents() {
         eventRepository.getEventsByOrganizerId(deviceId, new EventRepository.FirestoreCallback<List<Event>>() {
             @Override
@@ -60,11 +82,18 @@ public class MyEventsFragment extends Fragment {
                 }
 
                 EventAdapter adapter = new EventAdapter(result, event -> {
-                    Toast.makeText(getContext(),
-                            "Open details for: " + event.getTitle(),
-                            Toast.LENGTH_SHORT).show();
+                    OrganizerEventDetailsFragment detailsFragment = new OrganizerEventDetailsFragment();
+                    Bundle bundle = new Bundle();
+                    bundle.putString("eventId", event.getEventId());
+                    bundle.putString("deviceId", deviceId);
+                    detailsFragment.setArguments(bundle);
 
-                    // Later replace with EventDetailsFragment or EventDetailsActivity
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left, R.anim.slide_in_left, R.anim.slide_out_right)
+                            .replace(R.id.fragment_container, detailsFragment)
+                            .addToBackStack(null)
+                            .commit();
                 });
 
                 myEventsRecyclerView.setAdapter(adapter);

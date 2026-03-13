@@ -1,79 +1,90 @@
 package com.example.eventlotteryapp.models;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Calendar;
 
+/**
+ * Represents an event in the lottery system.
+ * Event documents are stored in Firestore under {@code events/{eventId}}.
+ * Each event has an organizer, registration window, lottery capacity, and optional waitlist limit.
+ */
 public class Event {
     private String eventId;
     private String organizerId;
+    private String organizerName;
     private String title;
     private String description;
+    private String location;
     private String posterUrl;
     private String qrCodeValue;
-    private Date registrationOpenDate;
-    private Date registrationCloseDate;
+    private double registrationFee;      // defaults to 0.0 (free)
+    private int lotteryCapacity;         // how many people get selected in the lottery
+    private Date eventStartDate;         // when the event actually happens
+    private Date registrationOpenDate;   // when people can start joining the waitlist
+    private Date registrationCloseDate;  // when waitlist closes and lottery runs
     private boolean geolocationRequired;
     private boolean hasWaitlistLimit;
     private int waitlistLimit;
 
-    private List<String> invitedUsers;
-    private List<String> enrolledUsers;
-    private List<String> cancelledUsers;
+    /** Required empty constructor for Firestore deserialization. */
+    public Event() {}
 
-    public Event() {
-        this.invitedUsers = new ArrayList<>();
-        this.enrolledUsers = new ArrayList<>();
-        this.cancelledUsers = new ArrayList<>();
+    // --- Business logic ---
+
+    /**
+     * Returns whether the registration window is currently open.
+     * Returns {@code false} if either date is null.
+     */
+    public boolean isRegistrationOpen() {
+        if (registrationOpenDate == null || registrationCloseDate == null) return false;
+        Date now = Calendar.getInstance().getTime();
+        return !now.before(registrationOpenDate) && !now.after(registrationCloseDate);
     }
 
-    public Event(String eventId, String organizerId, String title, String description,
-                 String posterUrl, String qrCodeValue, Date registrationOpenDate,
-                 Date registrationCloseDate, boolean geolocationRequired,
-                 boolean hasWaitlistLimit, int waitlistLimit) {
-        this.eventId = eventId;
-        this.organizerId = organizerId;
-        this.title = title;
-        this.description = description;
-        this.posterUrl = posterUrl;
-        this.qrCodeValue = qrCodeValue;
-        this.registrationOpenDate = registrationOpenDate;
-        this.registrationCloseDate = registrationCloseDate;
-        this.geolocationRequired = geolocationRequired;
-        this.hasWaitlistLimit = hasWaitlistLimit;
-        this.waitlistLimit = waitlistLimit;
-        this.invitedUsers = new ArrayList<>();
-        this.enrolledUsers = new ArrayList<>();
-        this.cancelledUsers = new ArrayList<>();
+    /**
+     * Returns whether the registration window has not yet opened.
+     * Returns {@code false} if {@code registrationOpenDate} is null.
+     */
+    public boolean isRegistrationNotYetOpen() {
+        if (registrationOpenDate == null) return false;
+        return Calendar.getInstance().getTime().before(registrationOpenDate);
     }
+
+    // --- Getters ---
 
     public String getEventId() { return eventId; }
     public String getOrganizerId() { return organizerId; }
+    public String getOrganizerName() { return organizerName; }
     public String getTitle() { return title; }
     public String getDescription() { return description; }
+    public String getLocation() { return location; }
     public String getPosterUrl() { return posterUrl; }
     public String getQrCodeValue() { return qrCodeValue; }
+    public double getRegistrationFee() { return registrationFee; }
+    public int getLotteryCapacity() { return lotteryCapacity; }
+    public Date getEventStartDate() { return eventStartDate; }
     public Date getRegistrationOpenDate() { return registrationOpenDate; }
     public Date getRegistrationCloseDate() { return registrationCloseDate; }
     public boolean isGeolocationRequired() { return geolocationRequired; }
     public boolean isHasWaitlistLimit() { return hasWaitlistLimit; }
     public int getWaitlistLimit() { return waitlistLimit; }
-    public List<String> getInvitedUsers() { return invitedUsers; }
-    public List<String> getEnrolledUsers() { return enrolledUsers; }
-    public List<String> getCancelledUsers() { return cancelledUsers; }
+
+    // --- Setters ---
 
     public void setEventId(String eventId) { this.eventId = eventId; }
     public void setOrganizerId(String organizerId) { this.organizerId = organizerId; }
+    public void setOrganizerName(String organizerName) { this.organizerName = organizerName; }
     public void setTitle(String title) { this.title = title; }
     public void setDescription(String description) { this.description = description; }
+    public void setLocation(String location) { this.location = location; }
     public void setPosterUrl(String posterUrl) { this.posterUrl = posterUrl; }
     public void setQrCodeValue(String qrCodeValue) { this.qrCodeValue = qrCodeValue; }
+    public void setRegistrationFee(double registrationFee) { this.registrationFee = registrationFee; }
+    public void setLotteryCapacity(int lotteryCapacity) { this.lotteryCapacity = lotteryCapacity; }
+    public void setEventStartDate(Date eventStartDate) { this.eventStartDate = eventStartDate; }
     public void setRegistrationOpenDate(Date registrationOpenDate) { this.registrationOpenDate = registrationOpenDate; }
     public void setRegistrationCloseDate(Date registrationCloseDate) { this.registrationCloseDate = registrationCloseDate; }
     public void setGeolocationRequired(boolean geolocationRequired) { this.geolocationRequired = geolocationRequired; }
     public void setHasWaitlistLimit(boolean hasWaitlistLimit) { this.hasWaitlistLimit = hasWaitlistLimit; }
     public void setWaitlistLimit(int waitlistLimit) { this.waitlistLimit = waitlistLimit; }
-    public void setInvitedUsers(List<String> invitedUsers) { this.invitedUsers = invitedUsers; }
-    public void setEnrolledUsers(List<String> enrolledUsers) { this.enrolledUsers = enrolledUsers; }
-    public void setCancelledUsers(List<String> cancelledUsers) { this.cancelledUsers = cancelledUsers; }
 }

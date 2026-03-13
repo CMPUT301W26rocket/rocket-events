@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/color_background">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Back button row -->
+            <ImageButton
+                android:id="@+id/button_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_margin="8dp"
+                android:src="@drawable/ic_arrow_back"
+                android:background="@android:color/transparent"
+                android:contentDescription="Back" />
+
+            <!-- Poster Image -->
+            <ImageView
+                android:id="@+id/image_detail_poster"
+                android:layout_width="match_parent"
+                android:layout_height="360dp"
+                android:scaleType="centerCrop"
+                android:clipToOutline="true"
+                android:background="@drawable/poster_placeholder_bg"
+                android:src="@drawable/ic_image_placeholder" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <!-- Title -->
+                <TextView
+                    android:id="@+id/text_detail_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/color_text_dark" />
+
+                <!-- Organizer -->
+                <TextView
+                    android:id="@+id/text_detail_organizer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_medium"
+                    android:layout_marginTop="4dp" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/color_border"
+                    android:layout_marginTop="16dp"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Description -->
+                <TextView
+                    android:id="@+id/text_detail_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="15sp"
+                    android:textColor="@color/color_text_dark"
+                    android:lineSpacingMultiplier="1.4"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Divider -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/color_border"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Location -->
+                <TextView
+                    android:id="@+id/text_detail_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Fee -->
+                <TextView
+                    android:id="@+id/text_detail_fee"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Lottery Capacity -->
+                <TextView
+                    android:id="@+id/text_detail_capacity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Event Start Date -->
+                <TextView
+                    android:id="@+id/text_detail_event_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Registration Open Date -->
+                <TextView
+                    android:id="@+id/text_detail_reg_open"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Registration Close Date -->
+                <TextView
+                    android:id="@+id/text_detail_reg_close"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Geolocation -->
+                <TextView
+                    android:id="@+id/text_detail_geolocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Waitlist Count -->
+                <TextView
+                    android:id="@+id/text_detail_waitlist_count"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Waitlist Limit -->
+                <TextView
+                    android:id="@+id/text_detail_waitlist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textColor="@color/color_text_dark"
+                    android:layout_marginBottom="8dp" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <!-- Fixed action button at bottom -->
+    <Button
+        android:id="@+id/action_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:padding="14dp"
+        android:textSize="16sp"
+        android:text="Join Waitlist" />
+
+</LinearLayout>

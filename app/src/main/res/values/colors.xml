@@ -2,4 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Brand colors -->
+    <color name="color_primary">#9C27B0</color>
+    <color name="color_on_primary">#FFFFFF</color>
+    <color name="color_background">#FFFFFF</color>
+
+    <!-- Text colors -->
+    <color name="color_text_dark">#333333</color>
+    <color name="color_text_medium">#666666</color>
+    <color name="color_hint">#999999</color>
+
+    <!-- UI colors -->
+    <color name="color_border">#CCCCCC</color>
+    <color name="color_placeholder_bg">#EEEEEE</color>
 </resources>

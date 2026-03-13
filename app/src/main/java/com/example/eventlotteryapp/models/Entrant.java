@@ -1,61 +1,67 @@
 package com.example.eventlotteryapp.models;
 
-import java.util.Date;
+import com.google.firebase.Timestamp;
 
+/**
+ * Represents one user's relationship to one event in the lottery system.
+ * Entrant documents are stored at {@code events/{eventId}/entrants/{deviceId}} in Firestore.
+ * The {@code eventId} field is not persisted to Firestore; it is populated locally after a query.
+ */
 public class Entrant {
 
-    public static final String STATUS_WAITLIST = "waitlist";
-    public static final String STATUS_INVITED = "invited";
-
-    public static final String STATUS_ENROLLED = "enrolled";
-    public static final String STATUS_DECLINED = "declined";
-    public static final String STATUS_CANCELLED = "cancelled";
+    /** Status constant indicating the user is on the waitlist. */
+    public static final String STATUS_WAITLIST     = "waitlist";
+    /** Status constant indicating the user has been invited via the lottery draw. */
+    public static final String STATUS_INVITED      = "invited";
+    /** Status constant indicating the user accepted the invitation and is enrolled. */
+    public static final String STATUS_ENROLLED     = "enrolled";
+    /** Status constant indicating the user declined the lottery invitation. */
+    public static final String STATUS_DECLINED     = "declined";
+    /** Status constant indicating the user cancelled their enrollment. */
+    public static final String STATUS_CANCELLED    = "cancelled";
+    /** Status constant indicating the user was not selected in the lottery draw. */
     public static final String STATUS_NOT_SELECTED = "not_selected";
 
     private String deviceId;
+    private String eventId;   // not stored in Firestore doc, populated after query
     private String status;
-    private Date joinedAt;
-    private Date statusUpdatedAt;
+    private Timestamp joinedAt;
+    private Timestamp statusUpdatedAt;
 
-    public Entrant() {
-    }
+    /** Required empty constructor for Firestore deserialization. */
+    public Entrant() {}
 
-    public Entrant(String deviceId, String status, Date joinedAt, Date statusUpdatedAt) {
+    /**
+     * Creates a fully initialised Entrant.
+     *
+     * @param deviceId        the entrant's device ID
+     * @param eventId         the event this entrant belongs to (local only, not stored in Firestore)
+     * @param status          the entrant's current status (use one of the {@code STATUS_*} constants)
+     * @param joinedAt        the timestamp when the user joined the waitlist
+     * @param statusUpdatedAt the timestamp when the status was last changed
+     */
+    public Entrant(String deviceId, String eventId, String status,
+                   Timestamp joinedAt, Timestamp statusUpdatedAt) {
         this.deviceId = deviceId;
+        this.eventId = eventId;
         this.status = status;
         this.joinedAt = joinedAt;
         this.statusUpdatedAt = statusUpdatedAt;
     }
 
-    public String getDeviceId() {
-        return deviceId;
-    }
+    // --- Getters ---
 
-    public String getStatus() {
-        return status;
-    }
+    public String getDeviceId() { return deviceId; }
+    public String getEventId() { return eventId; }
+    public String getStatus() { return status; }
+    public Timestamp getJoinedAt() { return joinedAt; }
+    public Timestamp getStatusUpdatedAt() { return statusUpdatedAt; }
 
-    public Date getJoinedAt() {
-        return joinedAt;
-    }
+    // --- Setters ---
 
-    public Date getStatusUpdatedAt() {
-        return statusUpdatedAt;
-    }
-
-    public void setDeviceId(String deviceId) {
-        this.deviceId = deviceId;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public void setJoinedAt(Date joinedAt) {
-        this.joinedAt = joinedAt;
-    }
-
-    public void setStatusUpdatedAt(Date statusUpdatedAt) {
-        this.statusUpdatedAt = statusUpdatedAt;
-    }
+    public void setDeviceId(String deviceId) { this.deviceId = deviceId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
+    public void setStatus(String status) { this.status = status; }
+    public void setJoinedAt(Timestamp joinedAt) { this.joinedAt = joinedAt; }
+    public void setStatusUpdatedAt(Timestamp statusUpdatedAt) { this.statusUpdatedAt = statusUpdatedAt; }
 }

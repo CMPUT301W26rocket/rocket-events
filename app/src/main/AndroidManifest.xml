@@ -2,6 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Required for saving QR codes / test images to the gallery on API 24–28.
+         API 29+ uses MediaStore scoped storage and does not need this permission. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+
+    <!-- Required for the QR code scanner -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -22,7 +32,19 @@
         </activity>
 
         <activity android:name=".ui.auth.ProfileSetupActivity" />
-        <activity android:name=".MainActivity" />
+
+        <activity
+            android:name=".ui.main.MainActivity"
+            android:exported="true">
+            <!-- Deep link: eventlotteryapp://event/{eventId} — encoded in QR codes -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="eventlotteryapp" android:host="event" />
+            </intent-filter>
+        </activity>
+
         <activity android:name=".ui.admin.AdminActivity" android:exported="false" />
         <activity android:name=".ui.admin.AdminBrowseProfilesActivity" />
         <activity android:name=".ui.admin.AdminProfileDetailActivity" />
@@ -32,6 +54,7 @@
         <activity android:name=".ui.admin.AdminEventDetailActivity" />
         <activity android:name=".ui.admin.AdminBrowseImagesActivity" />
         <activity android:name=".ui.admin.AdminImageDetailActivity" />
+
     </application>
 
 </manifest>

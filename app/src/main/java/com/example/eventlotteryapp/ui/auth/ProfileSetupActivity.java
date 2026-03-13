@@ -4,27 +4,41 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.Keep;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.eventlotteryapp.MainActivity;
 import com.example.eventlotteryapp.R;
+import com.example.eventlotteryapp.repository.UserRepository;
 import com.example.eventlotteryapp.ui.admin.AdminActivity;
+import com.example.eventlotteryapp.ui.main.MainActivity;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Activity that allows a new or returning user to set up their profile.
+ *
+ * <p>Handles two flows:
+ * <ul>
+ *   <li><b>Regular user:</b> fills in name, email, and phone, then saves via
+ *       {@link UserRepository#saveUserProfile} (set+merge) and navigates to {@link MainActivity}.</li>
+ *   <li><b>Admin login:</b> a hidden link opens a password dialog; on success, an admin session
+ *       document is created in the {@code admins} collection and the user is sent to
+ *       {@link AdminActivity}. The {@code users} collection is never touched during admin login.</li>
+ * </ul>
+ */
 public class ProfileSetupActivity extends AppCompatActivity {
+
+    private static final String TAG = "ProfileSetupActivity";
 
     private EditText editTextName, editTextEmail, editTextPhone;
     private Button buttonSave;
+    private UserRepository userRepository;
     private FirebaseFirestore db;
     private String deviceId;
 
@@ -33,11 +47,10 @@ public class ProfileSetupActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_profile_setup);
 
-        // Get deviceId passed from SplashActivity
         deviceId = getIntent().getStringExtra("deviceId");
+        userRepository = new UserRepository();
         db = FirebaseFirestore.getInstance();
 
-        // Hook up views
         editTextName = findViewById(R.id.editTextName);
         editTextEmail = findViewById(R.id.editTextEmail);
         editTextPhone = findViewById(R.id.editTextPhone);
@@ -49,12 +62,16 @@ public class ProfileSetupActivity extends AppCompatActivity {
         textAdminLogin.setOnClickListener(v -> showAdminLoginDialog());
     }
 
+    /**
+     * Validates the name and email fields, then saves the user's profile to Firestore
+     * via {@link UserRepository#saveUserProfile}. Disables the save button during the
+     * operation to prevent duplicate submissions. Navigates to {@link MainActivity} on success.
+     */
     private void saveProfile() {
         String name = editTextName.getText().toString().trim();
         String email = editTextEmail.getText().toString().trim();
         String phone = editTextPhone.getText().toString().trim();
 
-        // Validate required fields
         if (TextUtils.isEmpty(name)) {
             editTextName.setError("Name is required");
             editTextName.requestFocus();
@@ -73,46 +90,48 @@ public class ProfileSetupActivity extends AppCompatActivity {
             return;
         }
 
-        // Disable button to prevent double taps
         buttonSave.setEnabled(false);
         buttonSave.setText("Saving...");
 
-        // Build the update map - only update these fields, keep role etc.
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("name", name);
-        updates.put("email", email);
-        updates.put("phone", phone);
+        // set+merge creates the doc if it doesn't exist, or updates existing fields
+        userRepository.saveUserProfile(deviceId, name, email, phone,
+                new UserRepository.FirestoreCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        Log.d(TAG, "Profile saved successfully");
+                        Toast.makeText(ProfileSetupActivity.this,
+                                "Welcome, " + name + "!", Toast.LENGTH_SHORT).show();
+                        goToMain();
+                    }
 
-        db.collection("users")
-                .document(deviceId)
-                .update(updates)
-                .addOnSuccessListener(unused -> {
-                    Log.d("ProfileSetup", "Profile saved successfully!");
-                    Toast.makeText(this,
-                            "Welcome, " + name + "!",
-                            Toast.LENGTH_SHORT).show();
-                    goToMain();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ProfileSetup", "Failed to save: " + e.getMessage());
-                    Toast.makeText(this,
-                            "Failed to save profile. Please try again.",
-                            Toast.LENGTH_SHORT).show();
-                    buttonSave.setEnabled(true);
-                    buttonSave.setText("Save Profile");
+                    @Override
+                    public void onFailure(Exception e) {
+                        Log.e(TAG, "Failed to save profile: " + e.getMessage());
+                        Toast.makeText(ProfileSetupActivity.this,
+                                "Failed to save profile. Please try again.", Toast.LENGTH_SHORT).show();
+                        buttonSave.setEnabled(true);
+                        buttonSave.setText("Save Profile");
+                    }
                 });
     }
 
+    /**
+     * Navigates to {@link MainActivity}, passing the device ID as an extra.
+     * Clears the back stack so the user cannot navigate back to profile setup.
+     */
     private void goToMain() {
         Intent intent = new Intent(this, MainActivity.class);
         intent.putExtra("deviceId", deviceId);
-        // Clear back stack so user can't go back to setup
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
 
+    /**
+     * Displays an {@link android.app.AlertDialog} prompting for the admin password.
+     * If the correct password is entered, calls {@link #createAdminSession()}.
+     * The {@code users} collection is never touched during this flow.
+     */
     private void showAdminLoginDialog() {
         android.app.AlertDialog.Builder builder = new android.app.AlertDialog.Builder(this);
         builder.setTitle("Admin Login");
@@ -126,47 +145,10 @@ public class ProfileSetupActivity extends AppCompatActivity {
         builder.setPositiveButton("Login", (dialog, which) -> {
             String password = input.getText().toString();
 
-            Log.d("ProfileSetup", "Password entered: " + password);
-
             if (password.equals("admin123")) {
-                Log.d("ProfileSetup", "Password correct! Creating admin session...");
-
-                // FIRST: Delete the user document if it exists
-                db.collection("users")
-                        .document(deviceId)
-                        .delete()
-                        .addOnSuccessListener(unused -> {
-                            Log.d("ProfileSetup", "User document deleted");
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("ProfileSetup", "Failed to delete user: " + e.getMessage());
-                        });
-
-                // THEN: Create admin document
-                Map<String, Object> adminSession = new HashMap<>();
-                adminSession.put("deviceId", deviceId);
-                adminSession.put("loginTimestamp", System.currentTimeMillis());
-
-                Log.d("ProfileSetup", "Writing to admins/" + deviceId);
-
-                db.collection("admins")
-                        .document(deviceId)
-                        .set(adminSession)
-                        .addOnSuccessListener(unused -> {
-                            Log.d("ProfileSetup", "Admin document created successfully!");
-                            Toast.makeText(this, "Admin access granted!",
-                                    Toast.LENGTH_SHORT).show();
-                            goToAdmin();
-                        })
-                        .addOnFailureListener(e -> {
-                            Log.e("ProfileSetup", "Failed to create admin doc: " + e.getMessage());
-                            Toast.makeText(this, "Login failed: " + e.getMessage(),
-                                    Toast.LENGTH_LONG).show();
-                        });
+                createAdminSession();
             } else {
-                Log.d("ProfileSetup", "Password incorrect");
-                Toast.makeText(this, "Invalid password",
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Invalid password", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -174,14 +156,39 @@ public class ProfileSetupActivity extends AppCompatActivity {
         builder.show();
     }
 
+    /**
+     * Creates an admin session document in the {@code admins} Firestore collection,
+     * storing the device ID and a login timestamp. On success, navigates to {@link AdminActivity}.
+     * The {@code users} collection is not modified during this operation.
+     */
+    private void createAdminSession() {
+        Map<String, Object> adminData = new HashMap<>();
+        adminData.put("deviceId", deviceId);
+        adminData.put("loginTimestamp", System.currentTimeMillis());
+
+        db.collection("admins")
+                .document(deviceId)
+                .set(adminData)
+                .addOnSuccessListener(unused -> {
+                    Log.d(TAG, "Admin session created for " + deviceId);
+                    Toast.makeText(this, "Admin access granted!", Toast.LENGTH_SHORT).show();
+                    goToAdmin();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to create admin session: " + e.getMessage());
+                    Toast.makeText(this, "Login failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                });
+    }
+
+    /**
+     * Navigates to {@link AdminActivity}, passing the device ID as an extra.
+     * Clears the back stack so the user cannot navigate back to profile setup.
+     */
     private void goToAdmin() {
-        // We'll create AdminActivity later
         Intent intent = new Intent(this, AdminActivity.class);
         intent.putExtra("deviceId", deviceId);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK |
-                Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
         finish();
     }
-
 }
