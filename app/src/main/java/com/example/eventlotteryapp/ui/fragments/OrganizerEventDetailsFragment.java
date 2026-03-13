@@ -31,6 +31,8 @@ import java.util.Date;
 /**
  * Fragment that displays the details of an event from the organizer's perspective.
  * Shows event information such as poster, title, description, dates, capacity, etc.
+ * @author Santiago
+ * @author Leyla
  */
 public class OrganizerEventDetailsFragment extends Fragment {
 
@@ -121,7 +123,10 @@ public class OrganizerEventDetailsFragment extends Fragment {
             @Override
             public void onSuccess(Event event) {
                 if (event == null || !isAdded()) return;
-
+                if (event.isLotteryCompleted()) {
+                    lotteryButton.setEnabled(false);
+                    lotteryButton.setText("Lottery Completed");
+                }
                 populateViews(event);
             }
 
@@ -201,6 +206,13 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private void handleLotteryClick() {
         if (currentEvent == null) return; // event not loaded yet
 
+        if (currentEvent.isLotteryCompleted()) {
+            Toast.makeText(getContext(),
+                    "Lottery has already been completed for this event",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         if (currentEvent.getRegistrationCloseDate() != null &&
                 new Date().after(currentEvent.getRegistrationCloseDate())) {
             selectLottery();
@@ -232,16 +244,31 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
-
+    /**
+     * Executes the lottery selection for the current event.
+     *
+     * <p>This method retrieves all entrants currently on the waitlist and randomly
+     * shuffles them to ensure a fair lottery. A number of entrants equal to the
+     * event's lottery capacity (or the size of the waitlist if smaller) are then
+     * selected and their status is updated to "pending".</p>
+     *
+     * <p>After the selection is complete, the event is marked as having its
+     * lottery completed in Firestore so that the lottery cannot be run again.</p>
+     *
+     * <p>If the waitlist is empty or the fetch fails, a message is shown to the
+     * organizer via a Toast.</p>
+     */
     private void selectLottery() {
         lotteryButton.setEnabled(false);
 
         entrantRepository.getEntrantsByStatus(eventId, Entrant.STATUS_WAITLIST, new EntrantRepository.FirestoreCallback<List<Entrant>>() {
             @Override
             public void onSuccess(List<Entrant> waitlist) {
+                if (!isAdded()) return;
+
                 if (waitlist == null || waitlist.isEmpty()) {
                     Toast.makeText(getContext(), "No entrants on the waitlist", Toast.LENGTH_SHORT).show();
-                    lotteryButton.setEnabled(true); // nothing ran — let organizer try again later
+                    lotteryButton.setEnabled(true);
                     return;
                 }
 
@@ -276,6 +303,22 @@ public class OrganizerEventDetailsFragment extends Fragment {
                                 }
                             });
                 }
+
+                // Mark lottery as completed so it cannot be run again
+                eventRepository.updateLotteryCompleted(eventId, true,
+                        new EventRepository.FirestoreCallback<Void>() {
+                            @Override
+                            public void onSuccess(Void result) {
+                                currentEvent.setLotteryCompleted(true);
+                            }
+
+                            @Override
+                            public void onFailure(Exception e) {
+                                if (isAdded()) Toast.makeText(getContext(),
+                                        "Failed to mark lottery completed",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
 
                 if (isAdded()) {
                     Toast.makeText(getContext(),

@@ -452,6 +452,7 @@ public class EntrantEventDetailsFragment extends Fragment {
      * before allowing the user to join the waitlist.
      *
      * If the user agrees, they are added to the waitlist.
+     * @author Santiago
      */
     private void showTermsDialog() {
         new AlertDialog.Builder(requireContext())
