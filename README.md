@@ -1,17 +1,45 @@
-# rocket-events
+# Rocket Events
 
-This is william testing permissions.
+An Android event lottery app that lets organizers create events with configurable waitlists and run fair lotteries to select entrants. Built with Java and Firebase Firestore.
 
+## Features
 
-HomeFragment.java       (browse events + QR)
+- **Entrants** can browse events by QR code or event list, join/leave waitlists, and accept or decline lottery invitations
+- **Organizers** can create events with custom capacity, registration periods, waitlist limits, and geolocation requirements, then run a lottery to select winners
+- **Admins** can browse and remove events, user profiles, organizers, and event posters
 
-MyEventsFragment.java   (events I'm hosting)
+## Tech Stack
 
-CreateEventFragment.java (+ button)
+- Java (Android SDK)
+- Firebase Firestore (database)
+- Firebase Storage (event poster images)
+- Glide (image loading)
+- ZXing (QR code scanning)
+- Espresso + Mockito (UI and unit testing)
 
-NotificationsFragment.java
+## Project Structure
 
-ProfileFragment.java
+```
+app/src/main/java/com/example/eventlotteryapp/
+├── models/          # User, Event, Entrant
+├── repository/      # FirebaseConnector, UserRepository, EventRepository, EntrantRepository, ImageRepository
+├── ui/
+│   ├── auth/        # SplashActivity, ProfileSetupActivity
+│   ├── main/        # MainActivity (bottom nav)
+│   ├── fragments/   # HomeFragment, MyEventsFragment, CreateEventFragment,
+│   │                  EntrantEventDetailsFragment, OrganizerEventDetailsFragment,
+│   │                  EntrantListFragment, EventHistoryFragment, QrScannerFragment
+│   ├── adapters/    # EventAdapter, EventHistoryAdapter
+│   └── admin/       # AdminActivity and all admin browse/detail screens
+└── utils/           # QRCodeUtils
+```
+
+## Setup
+
+1. Clone the repo and open in Android Studio
+2. Connect to Firebase — place your `google-services.json` in `app/`
+3. Deploy Firestore indexes (see below)
+4. Run on an emulator or physical device (API 26+)
 
 ---
 
