@@ -51,7 +51,8 @@ public class AdminActivity extends AppCompatActivity {
         btnBrowseOrganizers = findViewById(R.id.btnBrowseOrganizers);
 
         btnBrowseEvents.setOnClickListener(v -> {
-            Toast.makeText(this, "Browse Events screen next", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(AdminActivity.this, AdminBrowseEventsActivity.class);
+            startActivity(intent);
         });
 
         btnBrowseProfiles.setOnClickListener(v -> {
