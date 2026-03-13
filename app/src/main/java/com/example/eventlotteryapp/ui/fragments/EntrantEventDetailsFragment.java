@@ -351,10 +351,17 @@ public class EntrantEventDetailsFragment extends Fragment {
             }
         });
     }
+
+    /**
+     * Displays a confirmation dialog explaining the event lottery rules
+     * before allowing the user to join the waitlist.
+     *
+     * If the user agrees, they are added to the waitlist.
+     */
     private void showTermsDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Criteria & Guidelines")
-                .setMessage("By joining the waitlist, you understand that selection is random. Enrollment and cancellation policies are fixed")
+                .setMessage("By joining the waitlist, you understand that selection is random. Enrollment and cancellation policies are fixed.")
                 .setPositiveButton("Agree", (dialog, which) -> joinWaitlist())
                 .setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss())
                 .setCancelable(false)

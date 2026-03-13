@@ -49,8 +49,21 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private EventRepository eventRepository;
     private EntrantRepository entrantRepository;
 
-    public OrganizerEventDetailsFragment() {}
 
+    /**
+     * Required empty public constructor for fragment instantiation.
+     */
+    public OrganizerEventDetailsFragment() {}
+    /**
+     * Inflates the organizer event details layout and initializes all UI components.
+     * Retrieves the event ID from fragment arguments and begins loading the
+     * event details from Firestore.
+     *
+     * @param inflater the LayoutInflater used to inflate the fragment layout
+     * @param container the parent view that the fragment UI will attach to
+     * @param savedInstanceState previously saved instance state, if any
+     * @return the root view of the fragment layout
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -89,7 +102,11 @@ public class OrganizerEventDetailsFragment extends Fragment {
 
         return view;
     }
-
+    /**
+     * Retrieves the event information from Firestore using the
+     * {@link EventRepository}. Once the event is successfully fetched,
+     * the UI fields are populated with the event data.
+     */
     private void loadEventDetails() {
         eventRepository.getEventById(eventId, new EventRepository.FirestoreCallback<Event>() {
             @Override
@@ -107,7 +124,13 @@ public class OrganizerEventDetailsFragment extends Fragment {
             }
         });
     }
-
+    /**
+     * Populates all UI components with data from the given event.
+     * This includes the poster image, title, organizer name, description,
+     * location, fees, registration dates, event date, and waitlist rules.
+     *
+     * @param event the event whose details should be displayed
+     */
     private void populateViews(Event event) {
         currentEvent = event;
 
@@ -159,10 +182,28 @@ public class OrganizerEventDetailsFragment extends Fragment {
                     .into(posterImageView);
         }
     }
+    /**
+     * Handles clicks on the lottery button.
+     *
+     * <p>This method triggers the lottery selection process that randomly
+     * chooses entrants from the waitlist based on the event's lottery
+     * capacity.</p>
+     */
     private void handleLotteryClick() {
         // after registration period?
         selectLottery();
     }
+    /**
+     * Performs the lottery selection for the event.
+     *
+     * <p>This method retrieves all entrants currently on the waitlist,
+     * randomly shuffles them, and selects a number of entrants equal
+     * to the event's lottery capacity. The selected entrants are then
+     * updated to a "pending" status using {@link EntrantRepository#updateStatus}.</p>
+     *
+     * <p>If no entrants exist on the waitlist, a message is displayed to
+     * inform the organizer.</p>
+     */
     private void selectLottery() {
         lotteryButton.setEnabled(false);
 
