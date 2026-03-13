@@ -33,19 +33,66 @@ import com.google.firebase.firestore.FirebaseFirestore;
  */
 public class SplashActivity extends AppCompatActivity {
 
-    private FirebaseFirestore db;
-    private UserRepository userRepository;
     private static final String TAG = "SplashActivity";
+
+    /**
+     * Abstraction over the Firestore admin-session check so tests can inject a fake
+     * without needing a real Firebase connection.
+     */
+    public interface AdminCheckProvider {
+        /** Calls back with {@code true} if an admin session exists for the device. */
+        interface Callback { void onResult(boolean isAdmin); }
+        void checkAdmin(String deviceId, Callback callback);
+    }
+
+    /**
+     * Intercepts navigation in tests so no real Activity is launched.
+     * When set, {@link #navigateTo} calls this instead of {@link #startActivity}.
+     */
+    public interface NavigationListener {
+        void onNavigateTo(Class<?> destination);
+    }
+
+    // --- Test injection points ---
+
+    /** Set by tests to replace the real Firebase admin check. Cleared in @After. */
+    public static AdminCheckProvider adminCheckProviderForTest = null;
+    /** Set by tests to replace the real UserRepository. Cleared in @After. */
+    public static UserRepository userRepositoryForTest = null;
+    /** Set to true by tests to skip gallery seeding. */
+    public static boolean skipSeedingForTest = false;
+    /** Set by tests to capture the navigation target without launching the real Activity. Cleared in @After. */
+    public static NavigationListener navigationListenerForTest = null;
+
+    // --- Instance fields ---
+
+    private AdminCheckProvider adminCheckProvider;
+    private UserRepository userRepository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        db = FirebaseFirestore.getInstance();
-        userRepository = new UserRepository();
+        // Use test doubles if injected, otherwise create real implementations
+        if (adminCheckProviderForTest != null) {
+            adminCheckProvider = adminCheckProviderForTest;
+        } else {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            adminCheckProvider = (deviceId, callback) ->
+                    db.collection("admins").document(deviceId).get()
+                            .addOnSuccessListener(doc -> callback.onResult(doc.exists()))
+                            .addOnFailureListener(e -> {
+                                Log.e(TAG, "Admin check failed, falling back to user check", e);
+                                callback.onResult(false);
+                            });
+        }
 
-        // Seed test poster images to the gallery on first run
-        TestImageSeeder.seedIfNeeded(this);
+        userRepository = (userRepositoryForTest != null)
+                ? userRepositoryForTest : new UserRepository();
+
+        if (!skipSeedingForTest) {
+            TestImageSeeder.seedIfNeeded(this);
+        }
 
         startAuthFlow();
     }
@@ -54,7 +101,6 @@ public class SplashActivity extends AppCompatActivity {
      * Reads the device's ANDROID_ID and begins the auth routing flow.
      * First checks the {@code admins} collection; if the device has an active admin session,
      * navigates directly to {@link AdminActivity}. Otherwise delegates to {@link #checkRegularUser}.
-     * If the admin check itself fails, falls back to {@link #checkRegularUser} to avoid a dead end.
      */
     private void startAuthFlow() {
         final String deviceId = Settings.Secure.getString(
@@ -62,19 +108,13 @@ public class SplashActivity extends AppCompatActivity {
                 Settings.Secure.ANDROID_ID
         );
 
-        // Check admins collection first
-        db.collection("admins").document(deviceId).get()
-                .addOnSuccessListener(adminDoc -> {
-                    if (adminDoc.exists()) {
-                        navigateTo(AdminActivity.class, deviceId);
-                    } else {
-                        checkRegularUser(deviceId);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Admin check failed, falling back to user check", e);
-                    checkRegularUser(deviceId);
-                });
+        adminCheckProvider.checkAdmin(deviceId, isAdmin -> {
+            if (isAdmin) {
+                navigateTo(AdminActivity.class, deviceId);
+            } else {
+                checkRegularUser(deviceId);
+            }
+        });
     }
 
     /**
@@ -115,6 +155,11 @@ public class SplashActivity extends AppCompatActivity {
      * @param deviceId         the device's ANDROID_ID to pass as an intent extra
      */
     private void navigateTo(Class<?> destinationClass, String deviceId) {
+        if (navigationListenerForTest != null) {
+            navigationListenerForTest.onNavigateTo(destinationClass);
+            finish();
+            return;
+        }
         Intent intent = new Intent(this, destinationClass);
         intent.putExtra("deviceId", deviceId);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);

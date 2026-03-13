@@ -33,6 +33,22 @@ public class EventHistoryFragment extends Fragment {
 
     public EventHistoryFragment() {}
 
+    /**
+     * Injects a mock {@link EntrantRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setEntrantRepository(EntrantRepository repo) {
+        this.entrantRepository = repo;
+    }
+
+    /**
+     * Injects a mock {@link EventRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setEventRepository(EventRepository repo) {
+        this.eventRepository = repo;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -47,8 +63,8 @@ public class EventHistoryFragment extends Fragment {
         recyclerView = view.findViewById(R.id.recycler_event_history);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        entrantRepository = new EntrantRepository();
-        eventRepository = new EventRepository();
+        if (entrantRepository == null) entrantRepository = new EntrantRepository();
+        if (eventRepository == null) eventRepository = new EventRepository();
 
         loadHistory();
 

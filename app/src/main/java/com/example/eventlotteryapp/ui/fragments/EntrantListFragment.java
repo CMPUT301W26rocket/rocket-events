@@ -15,14 +15,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Entrant;
+import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.EntrantRepository;
+import com.example.eventlotteryapp.repository.UserRepository;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Displays all entrants for an event grouped by status (waitlist, pending, enrolled, etc.).
+ * Displays all entrants for an event grouped by status (waitlist, invited, enrolled, etc.).
  * Opened from the organizer event details screen.
  */
 public class EntrantListFragment extends Fragment {
@@ -38,10 +43,17 @@ public class EntrantListFragment extends Fragment {
 
     private String eventId;
     private EntrantRepository entrantRepository;
+    private UserRepository userRepository;
     private RecyclerView recyclerView;
     private EntrantAdapter adapter;
 
     public EntrantListFragment() {}
+
+    /** Injects a mock {@link EntrantRepository} for testing. */
+    public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
+
+    /** Injects a mock {@link UserRepository} for testing. */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
 
     @Nullable
     @Override
@@ -63,7 +75,8 @@ public class EntrantListFragment extends Fragment {
         adapter = new EntrantAdapter();
         recyclerView.setAdapter(adapter);
 
-        entrantRepository = new EntrantRepository();
+        if (entrantRepository == null) entrantRepository = new EntrantRepository();
+        if (userRepository == null) userRepository = new UserRepository();
         loadEntrants();
 
         return view;
@@ -74,7 +87,13 @@ public class EntrantListFragment extends Fragment {
             @Override
             public void onSuccess(List<Entrant> entrants) {
                 if (!isAdded()) return;
-                adapter.setEntrants(groupByStatus(entrants));
+                if (entrants == null || entrants.isEmpty()) {
+                    List<ListItem> empty = new ArrayList<>();
+                    empty.add(new ListItem("No entrants yet", null));
+                    adapter.setItems(empty);
+                    return;
+                }
+                resolveNamesAndDisplay(entrants);
             }
 
             @Override
@@ -86,8 +105,40 @@ public class EntrantListFragment extends Fragment {
         });
     }
 
-    /** Returns a flat list of items: a header item followed by entrant items for each status group. */
-    private List<ListItem> groupByStatus(List<Entrant> entrants) {
+    /**
+     * Fetches a display name for each entrant in parallel from the users collection,
+     * then builds and shows the grouped list once all lookups have completed.
+     */
+    private void resolveNamesAndDisplay(List<Entrant> entrants) {
+        Map<String, String> names = new ConcurrentHashMap<>();
+        AtomicInteger remaining = new AtomicInteger(entrants.size());
+
+        for (Entrant entrant : entrants) {
+            userRepository.getUser(entrant.getDeviceId(), new UserRepository.FirestoreCallback<User>() {
+                @Override
+                public void onSuccess(User user) {
+                    if (user != null && user.getName() != null && !user.getName().isEmpty()) {
+                        names.put(entrant.getDeviceId(), user.getName());
+                    }
+                    checkDone();
+                }
+
+                @Override
+                public void onFailure(Exception e) {
+                    checkDone();
+                }
+
+                private void checkDone() {
+                    if (remaining.decrementAndGet() == 0 && isAdded()) {
+                        adapter.setItems(groupByStatus(entrants, names));
+                    }
+                }
+            });
+        }
+    }
+
+    /** Returns a flat list: a section header followed by entrant rows for each status group. */
+    private List<ListItem> groupByStatus(List<Entrant> entrants, Map<String, String> names) {
         List<ListItem> items = new ArrayList<>();
         for (String status : STATUS_ORDER) {
             List<Entrant> group = new ArrayList<>();
@@ -97,7 +148,8 @@ public class EntrantListFragment extends Fragment {
             if (!group.isEmpty()) {
                 items.add(new ListItem(formatStatus(status), null));
                 for (Entrant e : group) {
-                    items.add(new ListItem(null, e.getDeviceId()));
+                    String display = names.getOrDefault(e.getDeviceId(), e.getDeviceId());
+                    items.add(new ListItem(null, display));
                 }
             }
         }
@@ -122,11 +174,11 @@ public class EntrantListFragment extends Fragment {
     // --- Simple data class for list rows ---
 
     private static class ListItem {
-        final String header;   // non-null = section header row
-        final String deviceId; // non-null = entrant row
-        ListItem(String header, String deviceId) {
+        final String header;      // non-null = section header row
+        final String displayName; // non-null = entrant row (user name or deviceId fallback)
+        ListItem(String header, String displayName) {
             this.header = header;
-            this.deviceId = deviceId;
+            this.displayName = displayName;
         }
     }
 
@@ -136,7 +188,7 @@ public class EntrantListFragment extends Fragment {
 
         private List<ListItem> items = new ArrayList<>();
 
-        void setEntrants(List<ListItem> items) {
+        void setItems(List<ListItem> items) {
             this.items = items;
             notifyDataSetChanged();
         }
@@ -152,15 +204,14 @@ public class EntrantListFragment extends Fragment {
         @Override
         public void onBindViewHolder(@NonNull VH holder, int position) {
             ListItem item = items.get(position);
-            if (item.header != null && item.deviceId == null) {
-                // header row
-                holder.header.setVisibility(View.VISIBLE);
-                holder.header.setText(item.header);
-                holder.deviceId.setVisibility(View.GONE);
+            if (item.header != null) {
+                holder.headerView.setVisibility(View.VISIBLE);
+                holder.headerView.setText(item.header);
+                holder.nameView.setVisibility(View.GONE);
             } else {
-                holder.header.setVisibility(View.GONE);
-                holder.deviceId.setVisibility(View.VISIBLE);
-                holder.deviceId.setText(item.deviceId);
+                holder.headerView.setVisibility(View.GONE);
+                holder.nameView.setVisibility(View.VISIBLE);
+                holder.nameView.setText(item.displayName);
             }
         }
 
@@ -168,12 +219,12 @@ public class EntrantListFragment extends Fragment {
         public int getItemCount() { return items.size(); }
 
         static class VH extends RecyclerView.ViewHolder {
-            final TextView header;
-            final TextView deviceId;
+            final TextView headerView;
+            final TextView nameView;
             VH(View v) {
                 super(v);
-                header = v.findViewById(R.id.text_section_header);
-                deviceId = v.findViewById(R.id.text_device_id);
+                headerView = v.findViewById(R.id.text_section_header);
+                nameView   = v.findViewById(R.id.text_device_id);
             }
         }
     }

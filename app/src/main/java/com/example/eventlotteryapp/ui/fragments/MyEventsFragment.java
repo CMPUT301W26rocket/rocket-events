@@ -37,6 +37,16 @@ public class MyEventsFragment extends Fragment {
     public MyEventsFragment() {}
 
     /**
+     * Injects a mock {@link EventRepository} for testing. Must be called before
+     * the fragment is attached to a host (i.e. inside a {@link androidx.fragment.app.FragmentFactory}).
+     *
+     * @param repo the repository to use instead of creating a new one
+     */
+    public void setEventRepository(EventRepository repo) {
+        this.eventRepository = repo;
+    }
+
+    /**
      * Inflates the fragment layout, sets up the RecyclerView with a LinearLayoutManager,
      * and reads the device ID from fragment arguments. Triggers the initial load of the
      * user's hosted events.
@@ -61,7 +71,7 @@ public class MyEventsFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        eventRepository = new EventRepository();
+        if (eventRepository == null) eventRepository = new EventRepository();
 
         loadMyEvents();
 
