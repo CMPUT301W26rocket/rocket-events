@@ -31,6 +31,8 @@ import java.util.Date;
 /**
  * Fragment that displays the details of an event from the organizer's perspective.
  * Shows event information such as poster, title, description, dates, capacity, etc.
+ * @author Santiago
+ * @author Leyla
  */
 public class OrganizerEventDetailsFragment extends Fragment {
 
@@ -115,7 +117,10 @@ public class OrganizerEventDetailsFragment extends Fragment {
             @Override
             public void onSuccess(Event event) {
                 if (event == null || !isAdded()) return;
-
+                if (event.isLotteryCompleted()) {
+                    lotteryButton.setEnabled(false);
+                    lotteryButton.setText("Lottery Completed");
+                }
                 populateViews(event);
             }
 
@@ -193,6 +198,13 @@ public class OrganizerEventDetailsFragment extends Fragment {
      * capacity.</p>
      */
     private void handleLotteryClick() {
+        if (currentEvent.isLotteryCompleted()) {
+            Toast.makeText(getContext(),
+                    "Lottery has already been completed for this event",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // after registration period?
         if (currentEvent.getRegistrationCloseDate() != null &&
                 new Date().after(currentEvent.getRegistrationCloseDate())) {
@@ -226,46 +238,101 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
-
+    /**
+     * Executes the lottery selection for the current event.
+     *
+     * <p>This method retrieves all entrants currently on the waitlist and randomly
+     * shuffles them to ensure a fair lottery. A number of entrants equal to the
+     * event's lottery capacity (or the size of the waitlist if smaller) are then
+     * selected and their status is updated to "pending".</p>
+     *
+     * <p>After the selection is complete, the event is marked as having its
+     * lottery completed in Firestore so that the lottery cannot be run again.</p>
+     *
+     * <p>If the waitlist is empty or the fetch fails, a message is shown to the
+     * organizer via a Toast.</p>
+     */
     private void selectLottery() {
-        lotteryButton.setEnabled(false);
-
         if (currentEvent == null) return;
 
-        entrantRepository.getEntrantsByStatus(eventId, "waitlist", new EntrantRepository.FirestoreCallback<List<Entrant>>() {
-            @Override
-            public void onSuccess(List<Entrant> waitlist) {
-                if (waitlist == null || waitlist.isEmpty()) {
-                    Toast.makeText(getContext(), "No entrants on the waitlist", Toast.LENGTH_SHORT).show();
-                    return;
-                }
+        lotteryButton.setEnabled(false);
 
-                Collections.shuffle(waitlist);
+        entrantRepository.getEntrantsByStatus(eventId, "waitlist",
+                new EntrantRepository.FirestoreCallback<List<Entrant>>() {
 
-                for (int i = 0; i < Math.min(currentEvent.getLotteryCapacity(), waitlist.size()); i++) {
-                    Entrant entrant = waitlist.get(i);
+                    @Override
+                    public void onSuccess(List<Entrant> waitlist) {
+                        if (!isAdded()) return;
 
-                    // Update status to "pending" using the method you have
-                    entrantRepository.updateStatus(eventId, entrant.getDeviceId(), "pending", new EntrantRepository.FirestoreCallback<Void>() {
-                        @Override
-                        public void onSuccess(Void unused) {
-                            // optional: log success
+                        if (waitlist == null || waitlist.isEmpty()) {
+                            Toast.makeText(getContext(),
+                                    "No entrants on the waitlist",
+                                    Toast.LENGTH_SHORT).show();
+                            lotteryButton.setEnabled(true);
+                            return;
                         }
 
-                        @Override
-                        public void onFailure(Exception e) {
-                            Toast.makeText(getContext(), "Failed to update entrant: " + entrant.getDeviceId(), Toast.LENGTH_SHORT).show();
+                        // Shuffle to randomize lottery results
+                        Collections.shuffle(waitlist);
+
+                        int selectionCount = Math.min(currentEvent.getLotteryCapacity(), waitlist.size());
+
+                        for (int i = 0; i < selectionCount; i++) {
+                            Entrant entrant = waitlist.get(i);
+
+                            entrantRepository.updateStatus(
+                                    eventId,
+                                    entrant.getDeviceId(),
+                                    "pending",
+                                    new EntrantRepository.FirestoreCallback<Void>() {
+                                        @Override
+                                        public void onSuccess(Void unused) {
+                                            // Optional: log success
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            if (isAdded()) {
+                                                Toast.makeText(getContext(),
+                                                        "Failed to update entrant: " + entrant.getDeviceId(),
+                                                        Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
                         }
-                    });
-                }
 
-                Toast.makeText(getContext(), "Selected entrants set to pending", Toast.LENGTH_SHORT).show();
-            }
+                        // Mark lottery as completed
+                        eventRepository.updateLotteryCompleted(eventId, true,
+                                new EventRepository.FirestoreCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void result) {
+                                        currentEvent.setLotteryCompleted(true);
+                                    }
 
-            @Override
-            public void onFailure(Exception e) {
-                Toast.makeText(getContext(), "Failed to fetch waitlist", Toast.LENGTH_SHORT).show();
-            }
-        });
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (isAdded()) {
+                                            Toast.makeText(getContext(),
+                                                    "Failed to mark lottery completed",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+
+                        Toast.makeText(getContext(),
+                                selectionCount + " entrants selected",
+                                Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (!isAdded()) return;
+
+                        lotteryButton.setEnabled(true);
+                        Toast.makeText(getContext(),
+                                "Failed to fetch waitlist",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 }
