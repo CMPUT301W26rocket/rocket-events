@@ -46,7 +46,7 @@ public class QRCodeUtils {
                 }
             }
             return bitmap;
-        } catch (WriterException e) {
+        } catch (WriterException | RuntimeException e) {
             return null;
         }
     }
