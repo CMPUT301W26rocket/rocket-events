@@ -26,6 +26,7 @@ import java.util.Locale;
 import java.util.Collections;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Date;
 
 /**
  * Fragment that displays the details of an event from the organizer's perspective.
@@ -191,7 +192,14 @@ public class OrganizerEventDetailsFragment extends Fragment {
      */
     private void handleLotteryClick() {
         // after registration period?
-        selectLottery();
+        if (currentEvent.getRegistrationCloseDate() != null &&
+                new Date().after(currentEvent.getRegistrationCloseDate())) {
+            selectLottery();
+        } else {
+            Toast.makeText(getContext(),
+                    "Registration period has not ended yet",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
     /**
      * Performs the lottery selection for the event.
