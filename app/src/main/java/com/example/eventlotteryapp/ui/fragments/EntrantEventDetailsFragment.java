@@ -20,6 +20,7 @@ import com.example.eventlotteryapp.models.Entrant;
 import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.repository.EntrantRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
@@ -29,6 +30,9 @@ import java.util.Locale;
  * Shows event information (poster, title, organizer, description, dates, etc.)
  * and a state-based action button that reflects the user's current relationship
  * to the event (e.g. join waitlist, leave waitlist, invited, enrolled).
+ *
+ * <p>The join button is greyed out if the current date is outside the registration window,
+ * or if the event's waitlist is full.
  *
  * <p>Navigate to this fragment from {@link HomeFragment} when a user taps an event.
  * Pass {@code eventId} and {@code deviceId} as fragment arguments.
@@ -41,15 +45,17 @@ public class EntrantEventDetailsFragment extends Fragment {
     private String eventId;
     private String deviceId;
     private Entrant currentEntrant;
+    private Event currentEvent;
 
     private ImageView posterImageView;
     private TextView titleView, organizerView, descriptionView, locationView;
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
-    private TextView geolocationView, waitlistView;
+    private TextView geolocationView, waitlistView, waitlistCountView;
     private Button actionButton;
 
     private EventRepository eventRepository;
     private EntrantRepository entrantRepository;
+    private ListenerRegistration waitlistCountListener;
 
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
@@ -85,6 +91,7 @@ public class EntrantEventDetailsFragment extends Fragment {
         geolocationView = view.findViewById(R.id.text_detail_geolocation);
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
         actionButton    = view.findViewById(R.id.action_button);
+        waitlistCountView = view.findViewById(R.id.text_detail_waitlist_count);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -113,8 +120,10 @@ public class EntrantEventDetailsFragment extends Fragment {
             @Override
             public void onSuccess(Event event) {
                 if (event == null || !isAdded()) return;
+                currentEvent = event;
                 populateViews(event);
                 loadEntrantStatus();
+                attachWaitlistCountListener();
             }
 
             @Override
@@ -189,12 +198,56 @@ public class EntrantEventDetailsFragment extends Fragment {
     }
 
     /**
+     * Attaches a real-time Firestore listener that updates the waitlist count
+     * automatically whenever someone joins or leaves. Stored in
+     * {@code waitlistCountListener} so it can be removed in {@link #onDestroyView()}.
+     */
+    private void attachWaitlistCountListener() {
+        waitlistCountListener = entrantRepository.listenToWaitlistCount(eventId,
+                new EntrantRepository.FirestoreCallback<Integer>() {
+                    @Override
+                    public void onSuccess(Integer count) {
+                        if (!isAdded()) return;
+                        waitlistCountView.setText("Current Waitlist: " + count);
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (isAdded()) {
+                            waitlistCountView.setText("Current Waitlist: —");
+                        }
+                    }
+                });
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        if (waitlistCountListener != null) {
+            waitlistCountListener.remove();
+        }
+    }
+
+    /**
      * Updates the action button's text and enabled state based on {@code currentEntrant}.
-     * If the user has no entrant record, shows "Join Waitlist".
+     * If the user has no entrant record, checks whether registration is currently open
+     * via {@link Event#isRegistrationOpen()} before showing "Join Waitlist".
      * Greyed-out states (enrolled, declined, cancelled) disable the button.
      */
     private void updateButton() {
         if (currentEntrant == null) {
+            if (currentEvent != null && currentEvent.isRegistrationNotYetOpen()) {
+                actionButton.setText("Registration Not Open Yet");
+                actionButton.setEnabled(false);
+                actionButton.setAlpha(0.5f);
+                return;
+            }
+            if (currentEvent != null && !currentEvent.isRegistrationOpen()) {
+                actionButton.setText("Registration Closed");
+                actionButton.setEnabled(false);
+                actionButton.setAlpha(0.5f);
+                return;
+            }
             actionButton.setText("Join Waitlist");
             actionButton.setEnabled(true);
             actionButton.setAlpha(1f);
@@ -241,7 +294,6 @@ public class EntrantEventDetailsFragment extends Fragment {
      */
     private void handleButtonClick() {
         if (currentEntrant == null) {
-            //joinWaitlist();
             showTermsDialog();
         } else {
             switch (currentEntrant.getStatus()) {
@@ -257,11 +309,48 @@ public class EntrantEventDetailsFragment extends Fragment {
     }
 
     /**
-     * Adds the user to the event's waitlist via {@link EntrantRepository#joinWaitlist}.
-     * Updates the button to "Leave Waitlist" on success.
+     * Attempts to add the user to the event's waitlist.
+     * If the event has a waitlist limit, first checks via {@link EntrantRepository#isWaitlistFull}
+     * and shows a "Waitlist is full" message if the limit has been reached.
+     * Otherwise proceeds with {@link #proceedWithJoin()}.
      */
     private void joinWaitlist() {
         actionButton.setEnabled(false);
+
+        if (currentEvent != null && currentEvent.isHasWaitlistLimit()) {
+            entrantRepository.isWaitlistFull(eventId, currentEvent.getWaitlistLimit(),
+                    new EntrantRepository.FirestoreCallback<Boolean>() {
+                        @Override
+                        public void onSuccess(Boolean isFull) {
+                            if (!isAdded()) return;
+                            if (isFull) {
+                                Toast.makeText(getContext(),
+                                        "Waitlist is full for this event", Toast.LENGTH_SHORT).show();
+                                actionButton.setEnabled(true);
+                            } else {
+                                proceedWithJoin();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (isAdded()) {
+                                Toast.makeText(getContext(),
+                                        "Failed to check waitlist", Toast.LENGTH_SHORT).show();
+                                actionButton.setEnabled(true);
+                            }
+                        }
+                    });
+        } else {
+            proceedWithJoin();
+        }
+    }
+
+    /**
+     * Performs the actual Firestore write to add the user to the waitlist via
+     * {@link EntrantRepository#joinWaitlist}. Updates the button to "Leave Waitlist" on success.
+     */
+    private void proceedWithJoin() {
         entrantRepository.joinWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
             @Override
             public void onSuccess(Void unused) {
