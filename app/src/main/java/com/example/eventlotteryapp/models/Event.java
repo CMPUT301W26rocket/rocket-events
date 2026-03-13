@@ -25,6 +25,7 @@ public class Event {
     private boolean geolocationRequired;
     private boolean hasWaitlistLimit;
     private int waitlistLimit;
+    private boolean lotteryCompleted;
 
     /** Required empty constructor for Firestore deserialization. */
     public Event() {}
@@ -303,4 +304,23 @@ public class Event {
      * @param waitlistLimit the maximum waitlist size
      */
     public void setWaitlistLimit(int waitlistLimit) { this.waitlistLimit = waitlistLimit; }
+    /**
+     * Returns whether the lottery process has been completed.
+     * @author Santiago
+     * @return {@code true} if the lottery has already been executed,
+     *         {@code false} otherwise
+     */
+    public boolean isLotteryCompleted() {
+        return lotteryCompleted;
+    }
+    /**
+     * Sets the lottery completion status.
+     * @author Santiago
+     * @param lotteryCompleted {@code true} if the lottery process has finished,
+     *                         {@code false} if it has not yet been completed
+     */
+
+    public void setLotteryCompleted(boolean lotteryCompleted) {
+        this.lotteryCompleted = lotteryCompleted;
+    }
 }

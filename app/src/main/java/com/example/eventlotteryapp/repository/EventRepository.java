@@ -168,4 +168,18 @@ public class EventRepository {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
+    /**
+     * Updates the lotteryCompleted flag for an event.
+     * @author Santiago
+     * @param eventId   the Firestore document ID of the event
+     * @param completed true if the lottery has been completed
+     * @param callback  receives null on success
+     */
+    public void updateLotteryCompleted(String eventId, boolean completed, FirestoreCallback<Void> callback) {
+        firebaseConnector.getEventsCollection()
+                .document(eventId)
+                .update("lotteryCompleted", completed)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
 }
