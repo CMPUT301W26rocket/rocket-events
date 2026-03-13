@@ -39,6 +39,16 @@ public class ProfileFragment extends Fragment {
     public ProfileFragment() {}
 
     /**
+     * Injects a mock {@link UserRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     *
+     * @param repo the repository to use instead of creating a new one
+     */
+    public void setUserRepository(UserRepository repo) {
+        this.userRepository = repo;
+    }
+
+    /**
      * Inflates the fragment layout, binds all input fields and buttons, reads the device ID
      * from fragment arguments, and triggers the initial profile load from Firestore.
      *
@@ -58,7 +68,7 @@ public class ProfileFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        userRepository = new UserRepository();
+        if (userRepository == null) userRepository = new UserRepository();
 
         editTextName = view.findViewById(R.id.editTextName);
         editTextEmail = view.findViewById(R.id.editTextEmail);
