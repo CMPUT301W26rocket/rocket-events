@@ -37,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -405,7 +406,6 @@ public class OrganizerEventDetailsFragmentTest {
 
         doAnswer(invocation -> {
             EntrantRepository.FirestoreCallback<List<Entrant>> cb = invocation.getArgument(2);
-            // Return entrant1 first so it's always the "winner" (no shuffle randomness)
             cb.onSuccess(Arrays.asList(entrant1, entrant2));
             return null;
         }).when(mockEntrantRepo).getEntrantsByStatus(any(), any(), any());
@@ -423,8 +423,10 @@ public class OrganizerEventDetailsFragmentTest {
 
         onView(withId(R.id.lottery_button)).perform(click());
 
-        verify(mockEntrantRepo).updateStatus(eq(EVENT_ID), eq("user1"), eq(Entrant.STATUS_INVITED), any());
-        verify(mockEntrantRepo).updateStatus(eq(EVENT_ID), eq("user2"), eq(Entrant.STATUS_NOT_SELECTED), any());
+        // The lottery shuffles randomly — we can't know which user wins.
+        // Assert that exactly one user got INVITED and one got NOT_SELECTED.
+        verify(mockEntrantRepo, times(1)).updateStatus(eq(EVENT_ID), any(), eq(Entrant.STATUS_INVITED), any());
+        verify(mockEntrantRepo, times(1)).updateStatus(eq(EVENT_ID), any(), eq(Entrant.STATUS_NOT_SELECTED), any());
     }
 
     /**

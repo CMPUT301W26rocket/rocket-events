@@ -310,6 +310,9 @@ public class EntrantEventDetailsFragmentTest {
         // Button currently says "Join Waitlist" — click it
         onView(withId(R.id.action_button)).perform(click());
 
+        // A "Criteria & Guidelines" confirmation dialog appears — click Agree to proceed
+        onView(withText("Agree")).perform(click());
+
         // After the mock joinWaitlist succeeds, the fragment updates currentEntrant
         // and calls updateButton() — button should now say "Leave Waitlist"
         onView(withId(R.id.action_button)).check(matches(withText("Leave Waitlist")));
@@ -422,7 +425,10 @@ public class EntrantEventDetailsFragmentTest {
         // Click "Join Waitlist"
         onView(withId(R.id.action_button)).perform(click());
 
-        // The fragment checks isWaitlistFull first — since it's full, joinWaitlist is never called.
+        // A "Criteria & Guidelines" confirmation dialog appears — click Agree to proceed
+        onView(withText("Agree")).perform(click());
+
+        // The fragment checks isWaitlistFull after Agree — since it's full, joinWaitlist is never called.
         // The button should be re-enabled and still say "Join Waitlist" (join was blocked)
         onView(withId(R.id.action_button)).check(matches(withText("Join Waitlist")));
         onView(withId(R.id.action_button)).check(matches(isEnabled()));

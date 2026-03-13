@@ -303,7 +303,10 @@ public class CreateEventFragmentTest {
         // Click submit
         onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
 
-        // After a successful save, clearForm() is called — title field should be empty
+        // A "Event Created!" success dialog appears with a QR code — dismiss it
+        onView(withId(R.id.button_done)).perform(click());
+
+        // After dismissing the dialog, clearForm() has run — title field should be empty
         onView(withId(R.id.edit_event_title)).check(matches(withText("")));
     }
 
