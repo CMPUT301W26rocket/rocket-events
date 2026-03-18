@@ -25,6 +25,7 @@ import java.util.HashSet;
 /**
  * Admin screen for browsing all organizers currently represented by event ownership.
  * Organizers are derived from event organizer IDs rather than a separate organizer table.
+ * @author Mazen
  */
 public class AdminBrowseOrganizersActivity extends AppCompatActivity {
 

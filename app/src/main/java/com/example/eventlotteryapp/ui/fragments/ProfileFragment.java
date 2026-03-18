@@ -26,6 +26,12 @@ import com.example.eventlotteryapp.ui.auth.ProfileSetupActivity;
  *
  * <p>Loads the user's name, email, and phone from Firestore on launch. Provides buttons to
  * save changes, toggle notification preferences, and permanently delete the profile.
+ * User Stories Implemented:
+ * US 01.02.02 As an entrant I want to update information such as name, email and contact information on my profile
+ * US 01.02.04 As an entrant, I want to delete my profile if I no longer wish to use the app.
+ * US 01.04.03 As an entrant I want to opt out of receiving notifications from organizers and admins.
+ * @author William
+ *
  */
 public class ProfileFragment extends Fragment {
 

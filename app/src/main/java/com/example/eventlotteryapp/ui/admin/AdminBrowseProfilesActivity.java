@@ -22,6 +22,9 @@ import java.util.List;
  * Admin screen for browsing all user profiles in the system.
  * Allows an administrator to review basic profile information
  * and open the profile detail screen.
+ * User Stories Implemented:
+ * US 03.05.01 As an administrator, I want to be able to browse profiles.
+ * @author Mazen
  */
 public class AdminBrowseProfilesActivity extends AppCompatActivity {
 

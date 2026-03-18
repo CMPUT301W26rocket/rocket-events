@@ -15,6 +15,15 @@ import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.repository.EventRepository;
 import com.example.eventlotteryapp.repository.ImageRepository;
 
+/**
+ * Admin screen for viewing and removing an event poster image.
+ * Displays the poster associated with a selected event and allows
+ * the administrator to permanently remove it from both Firebase Storage
+ * and the event record in Firestore.
+ *User Stories Implemented:
+ * US 03.03.01 As an administrator, I want to be able to remove images.
+ * * @author Mazen
+ */
 public class AdminImageDetailActivity extends AppCompatActivity {
 
     private ImageView imagePoster;
@@ -29,6 +38,13 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     private String posterUrl;
     private String title;
 
+    /**
+     * Initializes the image detail screen, loads the event poster using Glide,
+     * and sets up the remove and back button listeners.
+     * Event ID, poster URL, and title are received via Intent extras.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +72,10 @@ public class AdminImageDetailActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before removing the event poster.
+     * Proceeds with removal only if the administrator confirms.
+     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Image")
@@ -65,6 +85,12 @@ public class AdminImageDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Removes the event poster in two steps: first deletes the image file
+     * from Firebase Storage, then clears the poster URL on the event document
+     * in Firestore. Shows a success or failure toast depending on the result
+     * and finishes the activity on success.
+     */
     private void removeImage() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();

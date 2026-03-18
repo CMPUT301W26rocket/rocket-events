@@ -15,6 +15,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * Admin screen for viewing profile details and deleting a user profile.
  * Displays the selected user's basic information and provides
  * a confirmation step before deletion.
+ * User Stories Implemented:
+ * US 03.02.01 As an administrator, I want to be able to remove profiles.
+ * @author Mazen
  */
 public class AdminProfileDetailActivity extends AppCompatActivity {
 

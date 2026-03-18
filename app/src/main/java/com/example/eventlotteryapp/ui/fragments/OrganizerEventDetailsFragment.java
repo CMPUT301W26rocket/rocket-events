@@ -31,6 +31,11 @@ import java.util.Date;
 /**
  * Fragment that displays the details of an event from the organizer's perspective.
  * Shows event information such as poster, title, description, dates, capacity, etc.
+ * User Stories Implemented:
+ *
+ * User Stories Left:
+ * US 02.04.02 As an organizer I want to update an event poster to provide visual information to entrants.
+ * US 02.05.03 As an organizer I want to be able to draw a replacement applicant from the pooling system when a previously selected applicant cancels or rejects the invitation.
  * @author Santiago
  * @author Leyla
  */

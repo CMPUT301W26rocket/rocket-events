@@ -27,6 +27,9 @@ import java.util.Collections;
  * Scans continuously until a result is found, then delivers it back to the
  * calling fragment via the Fragment Result API under the key {@link #REQUEST_KEY}
  * with the scanned string in {@link #RESULT_CONTENT}.
+ * User Stories Implemented:
+ * US 01.06.01 As an entrant I want to view event details within the app by scanning the promotional QR code.
+ * @author Daniel
  */
 public class QrScannerFragment extends Fragment {
 

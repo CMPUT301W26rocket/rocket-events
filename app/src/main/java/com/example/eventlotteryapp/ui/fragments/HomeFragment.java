@@ -26,8 +26,13 @@ import java.util.List;
 /**
  * Fragment that displays all available events in a scrollable list.
  * Shown on the Home tab of {@link com.example.eventlotteryapp.ui.main.MainActivity}.
- *
  * <p>Provides buttons to navigate to {@link CreateEventFragment} and a placeholder for QR scanning.
+ * User Stories Implemented:
+ * US 01.01.03 As an entrant, I want to be able to see a list of events that I can join the waiting list for.
+ * User Stories Left:
+ * US 01.01.04 As an entrant, I want to filter events based on my interests and availability.
+ * @author Daniel
+ * @author Leyla
  */
 public class HomeFragment extends Fragment {
 

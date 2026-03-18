@@ -36,6 +36,16 @@ import java.util.Locale;
  *
  * <p>Navigate to this fragment from {@link HomeFragment} when a user taps an event.
  * Pass {@code eventId} and {@code deviceId} as fragment arguments.
+ * User Stories Implemented:
+ * US 01.01.01 As an entrant, I want to join the waiting list for a specific event.
+ * US 01.01.02 As an entrant, I want to leave the waiting list for a specific event.
+ * US 01.05.02 As an entrant I want to be able to accept the invitation to register/sign up when chosen to participate in an event.
+ * US 01.05.03 As an entrant I want to be able to decline an invitation when chosen to participate in an event.
+ * US 01.05.04 As an entrant, I want to know how many total entrants are on the waiting list for an event.
+ * US 01.05.05 As an entrant, I want to be informed about the criteria or guidelines for the lottery selection process.
+ * US 01.06.02 As an entrant I want to be able to sign up for an event from the event details.
+ * @author Leyla
+ * @author Santiago
  */
 public class EntrantEventDetailsFragment extends Fragment {
 

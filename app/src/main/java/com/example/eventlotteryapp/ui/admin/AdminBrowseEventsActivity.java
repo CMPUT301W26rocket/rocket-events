@@ -22,6 +22,9 @@ import java.util.List;
 /**
  * Admin screen for browsing all events in the system.
  * Allows an administrator to review events and open the event detail screen.
+ * User Stories Implemented:
+ * US 03.04.01 As an administrator, I want to be able to browse events.
+ * @author Mazen
  */
 public class AdminBrowseEventsActivity extends AppCompatActivity {
 
