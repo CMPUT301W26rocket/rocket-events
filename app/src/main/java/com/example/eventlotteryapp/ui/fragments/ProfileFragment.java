@@ -128,7 +128,7 @@ public class ProfileFragment extends Fragment {
         if (notificationsEnabled) {
             buttonNotifications.setText("Opt Out of Notifications");
             buttonNotifications.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FF6200EE")));
+                    android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.color_primary, null)));
         } else {
             buttonNotifications.setText("Opt In to Notifications");
             buttonNotifications.setBackgroundTintList(

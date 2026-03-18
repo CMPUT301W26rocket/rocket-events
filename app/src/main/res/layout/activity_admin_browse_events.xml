@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#FFF3E0"
-    android:padding="16dp">
+    android:background="@color/color_background"
+    android:padding="24dp">
 
     <TextView
         android:id="@+id/textTitle"
@@ -13,7 +13,7 @@
         android:text="Browse Events"
         android:textSize="28sp"
         android:textStyle="bold"
-        android:textColor="#E65100"
+        android:textColor="@color/color_primary"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="8dp" />
 
@@ -22,8 +22,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="View and manage event records"
-        android:textSize="16sp"
-        android:textColor="#666666"
+        android:textSize="15sp"
+        android:textColor="@color/color_text_medium"
         android:layout_marginBottom="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView
@@ -38,7 +38,7 @@
         android:layout_height="wrap_content"
         android:text="No events found."
         android:textSize="16sp"
-        android:textColor="#666666"
+        android:textColor="@color/color_text_medium"
         android:gravity="center"
         android:visibility="gone"
         android:layout_marginTop="24dp"
@@ -50,8 +50,8 @@
         android:layout_height="56dp"
         android:text="Back"
         android:textSize="16sp"
-        android:textColor="#E65100"
-        android:backgroundTint="#FFFFFF"
+        android:textColor="@color/color_primary"
+        android:backgroundTint="@color/color_background"
         android:layout_marginTop="12dp" />
 
 </LinearLayout>
