@@ -50,6 +50,15 @@ import java.util.Locale;
  *   <li>Saves the event to Firestore via {@link EventRepository#addEvent}.</li>
  *   <li>Clears the form and pops the back stack on success.</li>
  * </ol>
+ * User Stories Implemented:
+ * US 02.01.01 As an organizer I want to create a new event and generate a unique promotional QR code that links to the event description and event poster in the app.
+ * US 02.01.04 As an organizer, I want to set a registration period.
+ * US 02.02.03 As an organizer I want to enable or disable the geolocation requirement for my event.
+ * US 02.03.01 As an organizer I want to OPTIONALLY limit the number of entrants who can join my waiting list.
+ * US 02.04.01 As an organizer I want to upload an event poster to the event details page to provide visual information to entrants.
+ * US 02.05.02 As an organizer I want to set the system to sample a specified number of attendees to register for the event.
+ * @author Daniel
+ * @author Leyla
  */
 public class CreateEventFragment extends Fragment {
 

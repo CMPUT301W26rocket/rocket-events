@@ -18,6 +18,9 @@ import java.util.List;
  * Admin screen for viewing organizer information and removing organizer status.
  * In the current project structure, removing an organizer deletes all events
  * owned by that organizer so they no longer appear in organizer-derived views.
+ * User Stories Implemented:
+ * US 03.07.01 As an administrator I want to remove organizers that violate app policy.
+ * @author Mazen
  */
 public class AdminOrganizerDetailActivity extends AppCompatActivity {
 

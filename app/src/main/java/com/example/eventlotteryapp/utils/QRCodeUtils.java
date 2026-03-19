@@ -29,6 +29,7 @@ public class QRCodeUtils {
      * @param content the text/URL to encode in the QR code
      * @param sizePx  the width and height of the output bitmap in pixels
      * @return a {@link Bitmap} of the QR code, or {@code null} if generation failed
+     * @author Daniel
      */
     public static Bitmap generateQrBitmap(String content, int sizePx) {
         Map<EncodeHintType, Object> hints = new HashMap<>();

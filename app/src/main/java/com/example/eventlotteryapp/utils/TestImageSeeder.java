@@ -20,6 +20,7 @@ import java.io.OutputStream;
  * <p>Call {@link #seedIfNeeded(Context)} once at app startup (e.g., from SplashActivity).
  * The images appear in the Photos app under Pictures/EventLotteryApp/TestPosters and can be
  * selected when choosing an event poster.
+ * @author Daniel
  */
 public class TestImageSeeder {
 

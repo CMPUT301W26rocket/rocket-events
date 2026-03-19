@@ -24,6 +24,8 @@ import java.util.List;
  * Shown on the My Events tab of {@link com.example.eventlotteryapp.ui.main.MainActivity}.
  *
  * <p>Queries Firestore for events where {@code organizerId} matches the device's ID.
+ * @author Daniel
+ * @author Leyla
  */
 public class MyEventsFragment extends Fragment {
 

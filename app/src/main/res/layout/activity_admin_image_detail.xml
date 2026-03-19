@@ -1,56 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="#F3E8D5">
+    android:background="@color/color_background">
 
-    <TextView
-        android:id="@+id/textHeader"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Image Details"
-        android:textSize="20sp"
-        android:textStyle="bold"
-        android:textColor="#E65100" />
-
-    <TextView
-        android:id="@+id/textTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Untitled Event"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#222222" />
-
-    <ImageView
-        android:id="@+id/imagePoster"
-        android:layout_width="match_parent"
-        android:layout_height="260dp"
-        android:layout_marginTop="20dp"
-        android:scaleType="centerCrop"
-        android:background="#DDDDDD"
-        android:contentDescription="Event poster" />
-
-    <Button
-        android:id="@+id/btnRemoveImage"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:text="Remove Image"
-        android:textAllCaps="false"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#D32F2F" />
+        android:orientation="vertical"
+        android:padding="24dp">
 
-    <Button
-        android:id="@+id/btnBack"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="Back"
-        android:textAllCaps="false"
-        android:textColor="#E65100"
-        android:backgroundTint="#F5F5F5" />
-</LinearLayout>
+        <TextView
+            android:id="@+id/textHeader"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Image Details"
+            android:textSize="28sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_primary"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/textTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Untitled Event"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/color_text_dark"
+            android:layout_marginBottom="16dp" />
+
+        <ImageView
+            android:id="@+id/imagePoster"
+            android:layout_width="match_parent"
+            android:layout_height="260dp"
+            android:scaleType="centerCrop"
+            android:background="@color/color_placeholder_bg"
+            android:contentDescription="Event poster" />
+
+        <Button
+            android:id="@+id/btnRemoveImage"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
+            android:text="Remove Image"
+            android:textSize="16sp"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#D32F2F"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnBack"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="Back"
+            android:textSize="16sp"
+            android:textColor="@color/color_primary"
+            android:backgroundTint="@color/color_background" />
+
+    </LinearLayout>
+</ScrollView>

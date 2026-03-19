@@ -22,6 +22,9 @@ import java.util.List;
 /**
  * Admin screen for browsing event posters currently stored in the system.
  * Only events with a non-empty poster URL are shown.
+ * User Stories Implemented:
+ * US 03.06.01 As an administrator, I want to be able to browse images that are uploaded so I can remove them if necessary.
+ * @author Mazen
  */
 public class AdminBrowseImagesActivity extends AppCompatActivity {
 

@@ -23,7 +23,18 @@ import com.example.eventlotteryapp.ui.adapters.EventHistoryAdapter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
+/**
+ * Fragment that displays a logged-in entrant's event registration history.
+ * Fetches all entrant records for the current device from {@link EntrantRepository},
+ * resolves each record to its full {@link Event} via {@link EventRepository},
+ * and displays the results in a list showing the event title and the entrant's
+ * final status (e.g. waitlist, invited, enrolled, declined).
+ * Tapping an event navigates to {@link EntrantEventDetailsFragment}.
+ *
+ * User Stories Implemented:
+ * US 01.02.03 As an entrant, I want to have a history of events I have registered for, whether I was selected or not.
+ * @author William
+ */
 public class EventHistoryFragment extends Fragment {
 
     private RecyclerView recyclerView;
@@ -49,6 +60,15 @@ public class EventHistoryFragment extends Fragment {
         this.eventRepository = repo;
     }
 
+    /**
+     * Inflates the event history layout, reads the device ID from fragment arguments,
+     * initializes the RecyclerView, and triggers the history load.
+     *
+     * @param inflater  the layout inflater
+     * @param container the parent view, or null
+     * @param savedInstanceState saved instance state
+     * @return the inflated view for this fragment
+     */
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -71,6 +91,13 @@ public class EventHistoryFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches all entrant records for the current device, then resolves each
+     * record's event ID to a full {@link Event} object in parallel using an
+     * {@link AtomicInteger} counter. Once all responses have returned,
+     * calls {@link #bindEvents} to populate the RecyclerView.
+     * Shows a toast if the initial history fetch fails.
+     */
     private void loadHistory() {
         entrantRepository.getUserEventHistory(deviceId, new EntrantRepository.FirestoreCallback<List<Entrant>>() {
             @Override
@@ -114,6 +141,14 @@ public class EventHistoryFragment extends Fragment {
         });
     }
 
+    /**
+     * Binds resolved events and their corresponding statuses to the RecyclerView
+     * via {@link EventHistoryAdapter}. Tapping an item navigates to
+     * {@link EntrantEventDetailsFragment} with a slide animation.
+     *
+     * @param events   list of resolved {@link Event} objects
+     * @param statuses list of entrant status strings, parallel to {@code events}
+     */
     private void bindEvents(List<Event> events, List<String> statuses) {
         EventHistoryAdapter adapter = new EventHistoryAdapter(events, statuses, event -> {
             EntrantEventDetailsFragment detailFragment = new EntrantEventDetailsFragment();

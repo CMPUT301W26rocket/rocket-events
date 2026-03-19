@@ -15,6 +15,9 @@ import com.example.eventlotteryapp.repository.EventRepository;
  * Admin screen for viewing event details and deleting an event.
  * Displays the selected event information and provides a confirmation
  * step before permanent removal.
+ * User Stories Implemented:
+ * US 03.01.01 As an administrator, I want to be able to remove events.
+ * @author Mazen
  */
 public class AdminEventDetailActivity extends AppCompatActivity {
 

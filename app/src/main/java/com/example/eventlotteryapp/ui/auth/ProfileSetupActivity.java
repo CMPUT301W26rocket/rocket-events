@@ -31,6 +31,10 @@ import java.util.Map;
  *       document is created in the {@code admins} collection and the user is sent to
  *       {@link AdminActivity}. The {@code users} collection is never touched during admin login.</li>
  * </ul>
+ * User Stories Implemented:
+ * US 01.02.01 As an entrant, I want to provide my personal information such as name, email and optional phone number in the app.
+ * US 01.07.01 As an entrant, I want to be identified by my device, so that I don't have to use a username and password.
+ * @author Leyla
  */
 public class ProfileSetupActivity extends AppCompatActivity {
 

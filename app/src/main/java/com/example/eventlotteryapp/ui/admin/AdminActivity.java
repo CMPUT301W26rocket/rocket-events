@@ -20,6 +20,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * <p>Logout removes the device's document from the {@code admins} Firestore collection.
  * {@link SplashActivity} then re-evaluates whether to route the device as a regular user
  * or back to profile setup.
+ * User Stories Left:
+ * US 03.08.01 As an administrator, I want to review logs of all notifications sent to entrants by organizers.
+ * @author Leyla
+ * @author Mazen
  */
 public class AdminActivity extends AppCompatActivity {
 

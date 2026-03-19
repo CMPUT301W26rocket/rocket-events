@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * RecyclerView adapter for displaying user profiles in admin-managed lists.
  * Supports both general profile browsing and organizer browsing screens.
+ * @author Mazen
  */
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 

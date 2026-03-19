@@ -3,7 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFF3E0">
+    android:background="@color/color_background">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,9 +16,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Admin Dashboard"
-            android:textSize="32sp"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textColor="#E65100"
+            android:textColor="@color/color_primary"
             android:layout_marginTop="40dp"
             android:layout_marginBottom="8dp"/>
 
@@ -28,8 +28,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Welcome, Admin!"
-            android:textSize="18sp"
-            android:textColor="#666666"
+            android:textSize="15sp"
+            android:textColor="@color/color_text_medium"
             android:layout_marginBottom="40dp"/>
 
         <!-- Section: Browse -->
@@ -39,41 +39,47 @@
             android:text="Browse and Manage"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#333333"
+            android:textColor="@color/color_text_dark"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnBrowseEvents"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="📅 Browse Events"
+            android:layout_height="56dp"
+            android:text="Browse Events"
             android:textSize="16sp"
-            android:backgroundTint="#FF6200EE"
+            android:textColor="@color/color_on_primary"
+            android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnBrowseProfiles"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="👥 Browse Profiles"
+            android:layout_height="56dp"
+            android:text="Browse Profiles"
             android:textSize="16sp"
-            android:backgroundTint="#FF6200EE"
+            android:textColor="@color/color_on_primary"
+            android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="12dp"/>
+
         <Button
             android:id="@+id/btnBrowseOrganizers"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="🧑‍💼 Browse Organizers"
+            android:layout_height="56dp"
+            android:text="Browse Organizers"
             android:textSize="16sp"
-            android:backgroundTint="#FF6200EE"
+            android:textColor="@color/color_on_primary"
+            android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="12dp"/>
+
         <Button
             android:id="@+id/btnBrowseImages"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="🖼️ Browse Event Posters"
+            android:layout_height="56dp"
+            android:text="Browse Event Posters"
             android:textSize="16sp"
-            android:backgroundTint="#FF6200EE"
+            android:textColor="@color/color_on_primary"
+            android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="24dp"/>
 
         <!-- Section: Logs -->
@@ -83,16 +89,17 @@
             android:text="System Monitoring"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#333333"
+            android:textColor="@color/color_text_dark"
             android:layout_marginBottom="12dp"/>
 
         <Button
             android:id="@+id/btnViewLogs"
             android:layout_width="match_parent"
-            android:layout_height="60dp"
-            android:text="📋 View Notification Logs"
+            android:layout_height="56dp"
+            android:text="View Notification Logs"
             android:textSize="16sp"
-            android:backgroundTint="#FF6200EE"
+            android:textColor="@color/color_on_primary"
+            android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="40dp"/>
 
         <!-- Logout -->
@@ -102,8 +109,8 @@
             android:layout_height="56dp"
             android:text="Logout"
             android:textSize="16sp"
-            android:textColor="#E65100"
-            android:backgroundTint="#FFFFFF"
+            android:textColor="@color/color_primary"
+            android:backgroundTint="@color/color_background"
             android:layout_marginBottom="24dp"/>
 
     </LinearLayout>

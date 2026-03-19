@@ -29,6 +29,23 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Displays all entrants for an event grouped by status (waitlist, invited, enrolled, etc.).
  * Opened from the organizer event details screen.
+ *
+ * User Stories Implemented:
+ * US 02.02.01 As an organizer I want to view the list of entrants who joined my event waiting list.
+ * US 02.06.01 As an organizer I want to view a list of all chosen entrants who are invited to apply.
+ * US 02.06.02 As an organizer I want to see a list of all the cancelled entrants.
+ * US 02.06.02 As an organizer I want to see a list of all the cancelled entrants.
+ * User Stories Left:
+ * US 01.05.01 As an entrant I want another chance to be chosen from the waiting list if a selected user declines an invitation to sign up.
+ * US 02.02.02 As an organizer I want to see on a map where entrants joined my event waiting list from.
+ * US 02.06.04 As an organizer I want to cancel entrants that did not sign up for the event.
+ * US 02.05.01 As an organizer I want to send a notification to chosen entrants to sign up for events.
+ * US 02.06.05 As an organizer I want to export a final list of entrants who enrolled for the event in CSV format.
+ * US 02.07.01 As an organizer I want to send notifications to all entrants on the waiting list.
+ * US 02.07.02 As an organizer I want to send notifications to all selected entrants.
+ * US 02.07.03 As an organizer I want to send a notification to all cancelled entrants.
+ * @author Daniel
+ * @author Leyla
  */
 public class EntrantListFragment extends Fragment {
 
