@@ -16,9 +16,26 @@ import com.example.eventlotteryapp.models.Event;
 
 import java.util.List;
 
+/**
+ * RecyclerView adapter that displays a list of events alongside the entrant's status for each.
+ * Used by {@link com.example.eventlotteryapp.ui.fragments.EventHistoryFragment} to show
+ * an entrant's full event registration history.
+ *
+ * User Stories Implemented:
+ * US 01.02.03 As an entrant, I want to have a history of events I have registered for, whether I was selected or not.
+ * @author William
+ */
 public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapter.ViewHolder> {
 
+    /**
+     * Callback interface for item click events.
+     */
     public interface OnItemClickListener {
+        /**
+         * Called when the user taps an event row.
+         *
+         * @param event the {@link Event} that was tapped
+         */
         void onItemClick(Event event);
     }
 
@@ -26,12 +43,26 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
     private final List<String> statuses;
     private final OnItemClickListener listener;
 
+    /**
+     * Constructs a new adapter.
+     *
+     * @param events   the list of events to display
+     * @param statuses entrant status strings parallel to {@code events}
+     * @param listener callback invoked when an item is tapped
+     */
     public EventHistoryAdapter(List<Event> events, List<String> statuses, OnItemClickListener listener) {
         this.events = events;
         this.statuses = statuses;
         this.listener = listener;
     }
 
+    /**
+     * Inflates {@code item_event} and wraps it in a {@link ViewHolder}.
+     *
+     * @param parent   the RecyclerView that this ViewHolder will be attached to
+     * @param viewType unused — only one view type exists
+     * @return a new {@link ViewHolder}
+     */
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -40,6 +71,14 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
         return new ViewHolder(view);
     }
 
+    /**
+     * Binds event data and entrant status to the given {@link ViewHolder}.
+     * Loads the event poster via Glide if a URL is present, otherwise shows a placeholder.
+     * Hides registration and waitlist status badges — they are not relevant in history view.
+     *
+     * @param holder   the ViewHolder to populate
+     * @param position the position of the item in the data set
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Event event = events.get(position);
@@ -66,11 +105,18 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
         holder.itemView.setOnClickListener(v -> listener.onItemClick(event));
     }
 
+    /** @return the number of events in this adapter */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
+    /**
+     * Converts a raw Firestore status string into a human-readable label.
+     *
+     * @param status the entrant status string (e.g. {@link com.example.eventlotteryapp.models.Entrant#STATUS_ENROLLED})
+     * @return a user-facing status label, or {@code "Unknown"} if {@code status} is null
+     */
     private String formatStatus(String status) {
         if (status == null) return "Unknown";
         switch (status) {
@@ -84,10 +130,18 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
         }
     }
 
+    /**
+     * Holds references to the views within a single {@code item_event} row.
+     */
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView titleTextView, subtitleTextView;
         ImageView posterImageView;
 
+        /**
+         * Binds view references from the inflated {@code item_event} layout.
+         *
+         * @param itemView the root view of the event row
+         */
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             titleTextView   = itemView.findViewById(R.id.text_event_title);

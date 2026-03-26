@@ -17,6 +17,7 @@ import android.view.View;
  *
  * <p>Receives the user's {@code deviceId} from the intent and passes it as arguments
  * to each fragment. The Home tab ({@link HomeFragment}) is loaded by default on first launch.
+ * @author William
  */
 public class MainActivity extends AppCompatActivity {
 
