@@ -3,6 +3,7 @@ package com.example.eventlotteryapp.repository;
 import com.example.eventlotteryapp.models.Entrant;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -66,7 +67,12 @@ public class EntrantRepository {
                 .collection("entrants")
                 .document(deviceId)
                 .set(entrant)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnSuccessListener(unused -> {
+                    // Increment the denormalized waitlist count on the event document
+                    db.collection("events").document(eventId)
+                            .update("currentWaitlistCount", FieldValue.increment(1));
+                    callback.onSuccess(null);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
 
@@ -235,7 +241,12 @@ public class EntrantRepository {
                 .collection("entrants")
                 .document(deviceId)
                 .delete()
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnSuccessListener(unused -> {
+                    // Decrement the denormalized waitlist count on the event document
+                    db.collection("events").document(eventId)
+                            .update("currentWaitlistCount", FieldValue.increment(-1));
+                    callback.onSuccess(null);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
 

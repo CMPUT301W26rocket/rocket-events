@@ -192,7 +192,6 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 : "Waitlist Limit: Unlimited");
 
         String posterUrl = event.getPosterUrl();
-
         if (posterUrl != null && !posterUrl.isEmpty()) {
             Glide.with(this)
                     .load(posterUrl)

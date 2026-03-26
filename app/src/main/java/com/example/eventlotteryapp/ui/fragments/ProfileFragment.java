@@ -162,7 +162,7 @@ public class ProfileFragment extends Fragment {
         } else {
             buttonNotifications.setText("Opt In to Notifications");
             buttonNotifications.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#CCCCCC")));
+                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#616161")));
         }
     }
 

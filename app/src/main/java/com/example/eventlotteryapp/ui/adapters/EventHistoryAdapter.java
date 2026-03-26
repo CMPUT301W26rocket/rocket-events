@@ -59,6 +59,10 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
             holder.posterImageView.setImageResource(R.drawable.ic_image_placeholder);
         }
 
+        // Hide status badges — not relevant in history view
+        holder.itemView.findViewById(R.id.badge_registration).setVisibility(View.GONE);
+        holder.itemView.findViewById(R.id.badge_waitlist).setVisibility(View.GONE);
+
         holder.itemView.setOnClickListener(v -> listener.onItemClick(event));
     }
 

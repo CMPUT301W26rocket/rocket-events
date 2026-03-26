@@ -71,7 +71,9 @@ public class QrScannerFragment extends Fragment {
             getParentFragmentManager().popBackStack();
         });
 
-        view.findViewById(R.id.button_close_scanner).setOnClickListener(v ->
+        View closeButton = view.findViewById(R.id.button_close_scanner);
+        closeButton.bringToFront();
+        closeButton.setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
 
         return view;

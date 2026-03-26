@@ -1,5 +1,6 @@
 package com.example.eventlotteryapp.ui.adapters;
 
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -94,6 +95,32 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.posterImageView.setImageResource(R.drawable.ic_image_placeholder);
         }
 
+        // Registration status badge
+        if (event.isRegistrationOpen()) {
+            holder.badgeRegistration.setText("Open");
+            holder.badgeRegistration.setBackgroundTintList(ColorStateList.valueOf(0xFF4CAF50));
+        } else if (event.isRegistrationNotYetOpen()) {
+            holder.badgeRegistration.setText("Coming Soon");
+            holder.badgeRegistration.setBackgroundTintList(ColorStateList.valueOf(0xFFFF9800));
+        } else {
+            holder.badgeRegistration.setText("Closed");
+            holder.badgeRegistration.setBackgroundTintList(ColorStateList.valueOf(0xFF616161));
+        }
+
+        // Waitlist status badge (only shown if event has a waitlist limit)
+        if (event.isHasWaitlistLimit()) {
+            holder.badgeWaitlist.setVisibility(View.VISIBLE);
+            if (event.isWaitlistFull()) {
+                holder.badgeWaitlist.setText("Waitlist Full");
+                holder.badgeWaitlist.setBackgroundTintList(ColorStateList.valueOf(0xFFF44336));
+            } else {
+                holder.badgeWaitlist.setText("Spots Available");
+                holder.badgeWaitlist.setBackgroundTintList(ColorStateList.valueOf(0xFF4CAF50));
+            }
+        } else {
+            holder.badgeWaitlist.setVisibility(View.GONE);
+        }
+
         holder.itemView.setOnClickListener(v -> listener.onEventClick(event));
     }
 
@@ -114,6 +141,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         TextView titleTextView;
         TextView subtitleTextView;
         ImageView posterImageView;
+        TextView badgeRegistration;
+        TextView badgeWaitlist;
 
         /**
          * Binds view references from the given item view.
@@ -122,9 +151,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
          */
         EventViewHolder(@NonNull View itemView) {
             super(itemView);
-            titleTextView   = itemView.findViewById(R.id.text_event_title);
-            subtitleTextView = itemView.findViewById(R.id.text_event_subtitle);
-            posterImageView  = itemView.findViewById(R.id.image_event_poster);
+            titleTextView     = itemView.findViewById(R.id.text_event_title);
+            subtitleTextView  = itemView.findViewById(R.id.text_event_subtitle);
+            posterImageView   = itemView.findViewById(R.id.image_event_poster);
+            badgeRegistration = itemView.findViewById(R.id.badge_registration);
+            badgeWaitlist     = itemView.findViewById(R.id.badge_waitlist);
         }
     }
 }
