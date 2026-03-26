@@ -21,6 +21,14 @@ import android.view.View;
 public class MainActivity extends AppCompatActivity {
 
     private String deviceId;
+    private int currentTabIndex = 0;
+
+    private static final java.util.Map<Integer, Integer> TAB_ORDER = new java.util.HashMap<Integer, Integer>() {{
+        put(R.id.nav_home, 0);
+        put(R.id.nav_my_events, 1);
+        put(R.id.nav_notifications, 2);
+        put(R.id.nav_profile, 3);
+    }};
 
     /**
      * Reads the device ID from the intent, hides the action bar, sets up the bottom navigation
@@ -75,7 +83,15 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if (selectedFragment != null) {
+                int newTabIndex = TAB_ORDER.containsKey(itemId) ? TAB_ORDER.get(itemId) : 0;
+                boolean goingRight = newTabIndex > currentTabIndex;
+                currentTabIndex = newTabIndex;
+
                 getSupportFragmentManager().beginTransaction()
+                        .setCustomAnimations(
+                                goingRight ? R.anim.slide_in_right : R.anim.slide_in_left,
+                                goingRight ? R.anim.slide_out_left : R.anim.slide_out_right
+                        )
                         .replace(R.id.fragment_container, selectedFragment)
                         .commit();
                 return true;
