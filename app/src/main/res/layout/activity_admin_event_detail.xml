@@ -14,91 +14,123 @@
             android:id="@+id/textTitleHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Event Details"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_primary"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp"
+            android:text="Event Details"
+            android:textColor="@color/color_primary"
+            android:textSize="28sp"
+            android:textStyle="bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Event ID"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark" />
+            android:textColor="@color/color_text_dark"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textEventId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="event id"
-            android:textColor="@color/color_text_medium"
-            android:layout_marginBottom="16dp" />
+            android:textColor="@color/color_text_medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Title"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark" />
+            android:textColor="@color/color_text_dark"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textEventTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="title"
-            android:textColor="@color/color_text_medium"
-            android:layout_marginBottom="16dp" />
+            android:textColor="@color/color_text_medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Description"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark" />
+            android:textColor="@color/color_text_dark"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textEventDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
             android:text="description"
-            android:textColor="@color/color_text_medium"
-            android:layout_marginBottom="16dp" />
+            android:textColor="@color/color_text_medium" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Organizer ID"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark" />
+            android:textColor="@color/color_text_dark"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/textOrganizerId"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
             android:text="organizer id"
-            android:textColor="@color/color_text_medium"
-            android:layout_marginBottom="32dp" />
+            android:textColor="@color/color_text_medium" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/color_border" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="Comments"
+            android:textColor="@color/color_text_dark"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:id="@+id/comments_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_no_comments"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="8dp"
+                android:text="No comments yet."
+                android:textColor="@color/color_text_medium"
+                android:textSize="14sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/btnDeleteEvent"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:text="Delete Event"
-            android:textSize="16sp"
+            android:layout_marginBottom="12dp"
             android:backgroundTint="#D32F2F"
+            android:text="Delete Event"
             android:textColor="#FFFFFF"
-            android:layout_marginBottom="12dp" />
+            android:textSize="16sp" />
 
         <Button
             android:id="@+id/btnBack"
             android:layout_width="match_parent"
             android:layout_height="56dp"
+            android:backgroundTint="@color/color_background"
             android:text="Back"
-            android:textSize="16sp"
             android:textColor="@color/color_primary"
-            android:backgroundTint="@color/color_background" />
+            android:textSize="16sp" />
 
     </LinearLayout>
 </ScrollView>
