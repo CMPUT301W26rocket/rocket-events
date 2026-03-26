@@ -14,7 +14,5 @@
         <item name="colorOnSurfaceVariant">@android:color/black</item>
         <item name="colorOnSecondaryContainer">@android:color/black</item>
         <item name="colorSecondaryContainer">@color/color_bottom_nav</item>
-    <style name="Theme.EventLotteryApp" parent="Base.Theme.EventLotteryApp">
-        <item name="android:windowSplashScreenBackground">@color/color_background</item>
     </style>
 </resources>
