@@ -17,7 +17,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.FirebaseConnector;
 import com.example.eventlotteryapp.repository.UserRepository;
+import com.example.eventlotteryapp.ui.admin.AdminActivity;
 import com.example.eventlotteryapp.ui.auth.ProfileSetupActivity;
 
 /**
@@ -38,6 +40,7 @@ public class ProfileFragment extends Fragment {
     private EditText editTextName, editTextEmail, editTextPhone;
     private Button buttonSave, buttonNotifications;
     private UserRepository userRepository;
+    private FirebaseConnector firebaseConnector;
     private String deviceId;
     private boolean notificationsEnabled = true;
 
@@ -75,19 +78,23 @@ public class ProfileFragment extends Fragment {
         }
 
         if (userRepository == null) userRepository = new UserRepository();
+        if (firebaseConnector == null) firebaseConnector = new FirebaseConnector();
 
         editTextName = view.findViewById(R.id.editTextName);
         editTextEmail = view.findViewById(R.id.editTextEmail);
         editTextPhone = view.findViewById(R.id.editTextPhone);
         buttonSave = view.findViewById(R.id.buttonSaveProfile);
         buttonNotifications = view.findViewById(R.id.buttonOptOutNotifications);
+        Button buttonAdminPanel = view.findViewById(R.id.buttonAdminPanel);
 
         loadProfile();
+        checkAdminEligibility(buttonAdminPanel);
 
         buttonSave.setOnClickListener(v -> saveProfile());
         buttonNotifications.setOnClickListener(v -> showNotificationsDialog());
         view.findViewById(R.id.buttonEventHistory).setOnClickListener(v -> openEventHistory());
         view.findViewById(R.id.buttonDeleteProfile).setOnClickListener(v -> showDeleteProfileDialog());
+        buttonAdminPanel.setOnClickListener(v -> openAdminPanel());
 
         return view;
     }
@@ -117,6 +124,29 @@ public class ProfileFragment extends Fragment {
                 }
             }
         });
+    }
+
+    /**
+     * Checks whether this device is in the {@code adminDevices} collection.
+     * If so, makes the Admin Panel button visible.
+     *
+     * @param buttonAdminPanel the button to show if this device is admin-eligible
+     */
+    private void checkAdminEligibility(Button buttonAdminPanel) {
+        firebaseConnector.isAdminDevice(deviceId, isAdmin -> {
+            if (isAdmin && isAdded()) {
+                buttonAdminPanel.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    /**
+     * Launches {@link AdminActivity}, passing the device ID as an extra.
+     */
+    private void openAdminPanel() {
+        Intent intent = new Intent(requireActivity(), AdminActivity.class);
+        intent.putExtra("deviceId", deviceId);
+        startActivity(intent);
     }
 
     /**

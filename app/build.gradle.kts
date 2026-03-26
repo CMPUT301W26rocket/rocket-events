@@ -75,6 +75,8 @@ dependencies {
     implementation("com.google.zxing:core:3.5.2")
     // Image loading for event posters
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    // Lottie for splash screen animation
+    implementation("com.airbnb.android:lottie:6.4.0")
     // Google Maps + Location (geolocation feature)
     implementation("com.google.android.gms:play-services-maps:18.2.0")
     implementation("com.google.android.gms:play-services-location:21.2.0")
