@@ -78,7 +78,8 @@ public class HomeFragment extends Fragment {
     /**
      * Inflates the fragment layout, sets up the RecyclerView with a LinearLayoutManager,
      * and attaches click listeners for the create event button and the QR scan placeholder.
-     * Also reads the device ID from fragment arguments and triggers the initial event load.
+     * Also reads the device ID from fragment arguments, initialises search and filter chips,
+     * and triggers the initial event load.
      *
      * @param inflater  the LayoutInflater used to inflate the fragment's view
      * @param container the parent view that the fragment's UI will be attached to, or null
@@ -230,6 +231,8 @@ public class HomeFragment extends Fragment {
 
     /**
      * Updates the RecyclerView adapter with the given event list and toggles the empty state text.
+     *
+     * @param events the filtered list of {@link Event} objects to display
      */
     private void updateEventList(List<Event> events) {
         if (getContext() == null) return;

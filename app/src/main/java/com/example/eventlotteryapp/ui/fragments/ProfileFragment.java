@@ -167,10 +167,7 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
-     * Shows a confirmation dialog before toggling the user's notification preference.
-     * The dialog title and message adapt based on whether the user is opting in or out.
-     * On confirmation, updates the preference in Firestore via {@link UserRepository#setNotificationsEnabled}
-     * and refreshes the button state.
+     * Navigates to {@link EventHistoryFragment}, passing the device ID as an argument.
      */
     private void openEventHistory() {
         EventHistoryFragment historyFragment = new EventHistoryFragment();
@@ -185,6 +182,12 @@ public class ProfileFragment extends Fragment {
                 .commit();
     }
 
+    /**
+     * Shows a confirmation dialog before toggling the user's notification preference.
+     * The dialog title and message adapt based on whether the user is opting in or out.
+     * On confirmation, updates the preference in Firestore via {@link UserRepository#setNotificationsEnabled}
+     * and refreshes the button state.
+     */
     private void showNotificationsDialog() {
         boolean willEnable = !notificationsEnabled;
         String title = willEnable ? "Opt In to Notifications" : "Opt Out of Notifications";

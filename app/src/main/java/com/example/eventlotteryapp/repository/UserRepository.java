@@ -9,6 +9,7 @@ import java.util.Map;
 /**
  * Handles all Firestore read and write operations for the {@code users} collection.
  * Uses {@link FirebaseConnector} to obtain collection references.
+ * @author William
  */
 public class UserRepository {
 
