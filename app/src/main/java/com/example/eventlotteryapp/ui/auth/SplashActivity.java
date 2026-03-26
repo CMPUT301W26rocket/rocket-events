@@ -2,8 +2,14 @@ package com.example.eventlotteryapp.ui.auth;
 
 import android.content.Intent;
 import android.os.Bundle;
+
+import com.example.eventlotteryapp.R;
 import android.provider.Settings;
 import android.util.Log;
+
+import com.airbnb.lottie.LottieAnimationView;
+import com.airbnb.lottie.LottieProperty;
+import com.airbnb.lottie.value.LottieValueCallback;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -72,6 +78,24 @@ public class SplashActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.activity_splash);
+
+        LottieAnimationView animation = findViewById(R.id.splashAnimation);
+        int magenta = getResources().getColor(R.color.color_primary, null);
+        animation.addValueCallback(
+                new com.airbnb.lottie.model.KeyPath("**"),
+                LottieProperty.COLOR,
+                frameInfo -> {
+                    int color = frameInfo.getStartValue();
+                    int r = android.graphics.Color.red(color);
+                    int g = android.graphics.Color.green(color);
+                    int b = android.graphics.Color.blue(color);
+                    // Keep white and near-white as-is, recolor everything else
+                    if (r > 200 && g > 200 && b > 200) return color;
+                    return magenta;
+                }
+        );
 
         // Use test doubles if injected, otherwise create real implementations
         if (adminCheckProviderForTest != null) {

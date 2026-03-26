@@ -5,5 +5,7 @@
         <item name="android:colorBackground">@color/color_background</item>
     </style>
 
-    <style name="Theme.EventLotteryApp" parent="Base.Theme.EventLotteryApp" />
+    <style name="Theme.EventLotteryApp" parent="Base.Theme.EventLotteryApp">
+        <item name="android:windowSplashScreenBackground">@color/color_background</item>
+    </style>
 </resources>

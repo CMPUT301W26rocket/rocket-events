@@ -61,4 +61,32 @@ public class FirebaseConnector {
     public CollectionReference getHistoryCollection() {
         return db.collection("history");
     }
+
+    /**
+     * Returns a reference to the {@code adminDevices} collection.
+     * Each document ID is a device ID that has been granted admin privileges.
+     *
+     * @return {@link CollectionReference} for {@code adminDevices}
+     */
+    public CollectionReference getAdminDevicesCollection() {
+        return db.collection("adminDevices");
+    }
+
+    /**
+     * Checks whether the given device ID has admin privileges by looking up
+     * its document in the {@code adminDevices} collection.
+     *
+     * @param deviceId the device ID to check
+     * @param callback called with {@code true} if admin, {@code false} otherwise
+     */
+    public void isAdminDevice(String deviceId, IsAdminCallback callback) {
+        getAdminDevicesCollection().document(deviceId).get()
+                .addOnSuccessListener(doc -> callback.onResult(doc.exists()))
+                .addOnFailureListener(e -> callback.onResult(false));
+    }
+
+    /** Callback for {@link #isAdminDevice}. */
+    public interface IsAdminCallback {
+        void onResult(boolean isAdmin);
+    }
 }
