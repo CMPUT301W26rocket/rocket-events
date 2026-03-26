@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.EventLotteryApp" parent="Base.Theme.EventLotteryApp">
+        <item name="android:windowSplashScreenBackground">@color/color_background</item>
+    </style>
+</resources>
