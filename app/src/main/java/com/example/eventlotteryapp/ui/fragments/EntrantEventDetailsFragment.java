@@ -254,54 +254,59 @@ public class EntrantEventDetailsFragment extends Fragment {
         if (currentEntrant == null) {
             if (currentEvent != null && currentEvent.isRegistrationNotYetOpen()) {
                 actionButton.setText("Registration Not Open Yet");
-                actionButton.setEnabled(false);
-                actionButton.setAlpha(0.5f);
+                setButtonDisabled();
                 return;
             }
             if (currentEvent != null && !currentEvent.isRegistrationOpen()) {
                 actionButton.setText("Registration Closed");
-                actionButton.setEnabled(false);
-                actionButton.setAlpha(0.5f);
+                setButtonDisabled();
                 return;
             }
             actionButton.setText("Join Waitlist");
-            actionButton.setEnabled(true);
-            actionButton.setAlpha(1f);
+            setButtonEnabled();
             return;
         }
 
         switch (currentEntrant.getStatus()) {
             case Entrant.STATUS_WAITLIST:
                 actionButton.setText("Leave Waitlist");
-                actionButton.setEnabled(true);
-                actionButton.setAlpha(1f);
+                setButtonEnabled();
                 break;
             case Entrant.STATUS_INVITED:
                 actionButton.setText("Invited");
-                actionButton.setEnabled(true);
-                actionButton.setAlpha(1f);
+                setButtonEnabled();
                 break;
             case Entrant.STATUS_NOT_SELECTED:
                 actionButton.setText("Leave Waitlist");
-                actionButton.setEnabled(true);
-                actionButton.setAlpha(1f);
+                setButtonEnabled();
                 break;
             case Entrant.STATUS_ENROLLED:
                 actionButton.setText("Enrolled");
-                actionButton.setEnabled(false);
-                actionButton.setAlpha(0.5f);
+                setButtonDisabled();
                 break;
             case Entrant.STATUS_DECLINED:
                 actionButton.setText("Declined");
-                actionButton.setEnabled(false);
-                actionButton.setAlpha(0.5f);
+                setButtonDisabled();
                 break;
             case Entrant.STATUS_CANCELLED:
                 actionButton.setText("Cancelled");
-                actionButton.setEnabled(false);
-                actionButton.setAlpha(0.5f);
+                setButtonDisabled();
                 break;
         }
+    }
+
+    private void setButtonDisabled() {
+        actionButton.setEnabled(false);
+        actionButton.setAlpha(1f);
+        actionButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#616161")));
+    }
+
+    private void setButtonEnabled() {
+        actionButton.setEnabled(true);
+        actionButton.setAlpha(1f);
+        actionButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(getResources().getColor(R.color.color_primary, null)));
     }
 
     /**
