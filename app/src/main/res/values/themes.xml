@@ -6,4 +6,13 @@
     </style>
 
     <style name="Theme.EventLotteryApp" parent="Base.Theme.EventLotteryApp" />
+
+    <style name="ThemeOverlay.App.BottomNav" parent="">
+        <item name="colorSurface">@color/color_bottom_nav</item>
+        <item name="colorSurfaceContainer">@color/color_bottom_nav</item>
+        <item name="colorOutlineVariant">@android:color/transparent</item>
+        <item name="colorOnSurfaceVariant">@android:color/black</item>
+        <item name="colorOnSecondaryContainer">@android:color/black</item>
+        <item name="colorSecondaryContainer">@color/color_bottom_nav</item>
+    </style>
 </resources>
