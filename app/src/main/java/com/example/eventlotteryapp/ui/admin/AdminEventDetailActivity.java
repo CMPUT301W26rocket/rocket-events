@@ -1,10 +1,11 @@
 package com.example.eventlotteryapp.ui.admin;
 
 import android.app.AlertDialog;
-import android.graphics.Typeface;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -13,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Comment;
+import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.repository.CommentRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
 
@@ -20,28 +22,19 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Admin screen for viewing event details, moderating event comments,
- * and deleting an event.
- *
- * User Stories Implemented:
- * US 03.01.01 As an administrator, I want to be able to remove events.
- * US 03.10.01 As an administrator, I want to remove event comments that violate app policy.
- *
- * @author Mazen
- */
 public class AdminEventDetailActivity extends AppCompatActivity {
 
-    private TextView textEventId;
-    private TextView textEventTitle;
-    private TextView textEventDescription;
-    private TextView textOrganizerId;
+    private TextView textDetailTitle;
+    private TextView textDetailOrganizerName;
+    private TextView textDetailOrganizerId;
+    private TextView textDetailDescription;
+    private TextView textDetailEventId;
     private TextView textNoComments;
 
     private LinearLayout commentsContainer;
 
+    private ImageButton buttonBack;
     private Button btnDeleteEvent;
-    private Button btnBack;
 
     private EventRepository eventRepository;
     private CommentRepository commentRepository;
@@ -53,16 +46,17 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin_event_detail);
 
-        textEventId = findViewById(R.id.textEventId);
-        textEventTitle = findViewById(R.id.textEventTitle);
-        textEventDescription = findViewById(R.id.textEventDescription);
-        textOrganizerId = findViewById(R.id.textOrganizerId);
+        textDetailTitle = findViewById(R.id.text_detail_title);
+        textDetailOrganizerName = findViewById(R.id.text_detail_organizer_name);
+        textDetailOrganizerId = findViewById(R.id.text_detail_organizer_id);
+        textDetailDescription = findViewById(R.id.text_detail_description);
+        textDetailEventId = findViewById(R.id.text_detail_event_id);
         textNoComments = findViewById(R.id.text_no_comments);
 
         commentsContainer = findViewById(R.id.comments_container);
 
+        buttonBack = findViewById(R.id.button_back);
         btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
-        btnBack = findViewById(R.id.btnBack);
 
         eventRepository = new EventRepository();
         commentRepository = new CommentRepository();
@@ -72,20 +66,49 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         String description = getIntent().getStringExtra("description");
         String organizerId = getIntent().getStringExtra("organizerId");
 
-        textEventId.setText(eventId == null || eventId.isEmpty() ? "No event ID" : eventId);
-        textEventTitle.setText(title == null || title.isEmpty() ? "No title" : title);
-        textEventDescription.setText(description == null || description.isEmpty() ? "No description" : description);
-        textOrganizerId.setText(organizerId == null || organizerId.isEmpty() ? "No organizer ID" : organizerId);
+        textDetailTitle.setText(title == null || title.isEmpty() ? "No title" : title);
+        textDetailOrganizerName.setText("Organizer");
+        textDetailOrganizerId.setText("Organizer ID: " + safeText(organizerId));
+        textDetailDescription.setText(description == null || description.isEmpty() ? "No description" : description);
+        textDetailEventId.setText("Event ID: " + safeText(eventId));
 
+        buttonBack.setOnClickListener(v -> finish());
         btnDeleteEvent.setOnClickListener(v -> showDeleteEventConfirmation());
-        btnBack.setOnClickListener(v -> finish());
 
+        loadEventDetails();
         loadComments();
     }
 
-    /**
-     * Loads all comments for the current event and displays them in the comments container.
-     */
+    private void loadEventDetails() {
+        if (eventId == null || eventId.isEmpty()) {
+            return;
+        }
+
+        eventRepository.getEventById(eventId, new EventRepository.FirestoreCallback<Event>() {
+            @Override
+            public void onSuccess(Event event) {
+                if (event == null) {
+                    return;
+                }
+
+                textDetailTitle.setText(safeText(event.getTitle()));
+                textDetailOrganizerName.setText(safeText(event.getOrganizerName()));
+                textDetailOrganizerId.setText("Organizer ID: " + safeText(event.getOrganizerId()));
+                textDetailDescription.setText(safeText(event.getDescription()));
+                textDetailEventId.setText("Event ID: " + safeText(eventId));
+            }
+
+            @Override
+            public void onFailure(Exception e) {
+                Toast.makeText(
+                        AdminEventDetailActivity.this,
+                        "Failed to load event details: " + e.getMessage(),
+                        Toast.LENGTH_SHORT
+                ).show();
+            }
+        });
+    }
+
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) {
             textNoComments.setText("Missing event ID. Cannot load comments.");
@@ -133,70 +156,27 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Creates one admin comment view with comment text and a delete button.
-     *
-     * @param comment the comment to render
-     * @return a fully built view for the comment
-     */
     private View createCommentView(Comment comment) {
-        LinearLayout wrapper = new LinearLayout(this);
-        wrapper.setOrientation(LinearLayout.VERTICAL);
-        wrapper.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-
-        LinearLayout.LayoutParams wrapperParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
+        View commentView = LayoutInflater.from(this).inflate(
+                R.layout.item_admin_comment,
+                commentsContainer,
+                false
         );
-        wrapperParams.bottomMargin = dpToPx(12);
-        wrapper.setLayoutParams(wrapperParams);
-        wrapper.setBackgroundResource(android.R.drawable.dialog_holo_light_frame);
 
-        TextView authorView = new TextView(this);
-        authorView.setText("Author ID: " + safeText(comment.getAuthorId()));
-        authorView.setTypeface(null, Typeface.BOLD);
-        authorView.setTextSize(14f);
+        TextView textCommentAuthor = commentView.findViewById(R.id.textCommentAuthor);
+        TextView textCommentTime = commentView.findViewById(R.id.textCommentTime);
+        TextView textCommentBody = commentView.findViewById(R.id.textCommentBody);
+        Button btnDeleteComment = commentView.findViewById(R.id.btnDeleteComment);
 
-        TextView timeView = new TextView(this);
-        timeView.setText("Time: " + formatTimestamp(comment));
-        timeView.setTextSize(12f);
+        textCommentAuthor.setText("Author ID: " + safeText(comment.getAuthorId()));
+        textCommentTime.setText("Time: " + formatTimestamp(comment));
+        textCommentBody.setText(safeText(comment.getText()));
 
-        TextView commentTextView = new TextView(this);
-        commentTextView.setText(safeText(comment.getText()));
-        commentTextView.setTextSize(15f);
+        btnDeleteComment.setOnClickListener(v -> showDeleteCommentConfirmation(comment));
 
-        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        textParams.topMargin = dpToPx(8);
-        commentTextView.setLayoutParams(textParams);
-
-        Button deleteButton = new Button(this);
-        deleteButton.setText("Delete Comment");
-
-        LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-        );
-        buttonParams.topMargin = dpToPx(10);
-        deleteButton.setLayoutParams(buttonParams);
-
-        deleteButton.setOnClickListener(v -> showDeleteCommentConfirmation(comment));
-
-        wrapper.addView(authorView);
-        wrapper.addView(timeView);
-        wrapper.addView(commentTextView);
-        wrapper.addView(deleteButton);
-
-        return wrapper;
+        return commentView;
     }
 
-    /**
-     * Shows a confirmation dialog before deleting a comment.
-     *
-     * @param comment the comment to delete
-     */
     private void showDeleteCommentConfirmation(Comment comment) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Comment")
@@ -206,11 +186,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Deletes a selected comment and refreshes the comment list.
-     *
-     * @param comment the comment to delete
-     */
     private void deleteComment(Comment comment) {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -245,9 +220,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 });
     }
 
-    /**
-     * Shows a confirmation dialog before deleting the selected event.
-     */
     private void showDeleteEventConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Event")
@@ -257,9 +229,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Deletes the selected event through the shared event repository.
-     */
     private void deleteEvent() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -284,22 +253,10 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Safely formats comment text values for display.
-     *
-     * @param value input string
-     * @return display-safe text
-     */
     private String safeText(String value) {
         return value == null || value.trim().isEmpty() ? "(empty)" : value;
     }
 
-    /**
-     * Formats a comment timestamp for display.
-     *
-     * @param comment the comment
-     * @return formatted timestamp text
-     */
     private String formatTimestamp(Comment comment) {
         if (comment == null || comment.getTimestamp() == null || comment.getTimestamp().toDate() == null) {
             return "Unknown time";
@@ -307,16 +264,5 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault());
         return formatter.format(comment.getTimestamp().toDate());
-    }
-
-    /**
-     * Converts dp to px.
-     *
-     * @param dp density-independent pixels
-     * @return pixel value
-     */
-    private int dpToPx(int dp) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(dp * density);
     }
 }
