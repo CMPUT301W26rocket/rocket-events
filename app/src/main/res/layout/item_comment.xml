@@ -37,6 +37,16 @@
         android:textColor="@color/color_text_dark"
         android:layout_marginTop="3dp" />
 
+    <TextView
+        android:id="@+id/comment_delete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Delete"
+        android:textSize="12sp"
+        android:textColor="#B00020"
+        android:layout_marginTop="4dp"
+        android:visibility="gone" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"

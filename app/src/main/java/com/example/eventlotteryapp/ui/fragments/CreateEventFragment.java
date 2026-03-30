@@ -69,7 +69,7 @@ public class CreateEventFragment extends Fragment {
     private EditText titleInput, descriptionInput, locationInput;
     private EditText registrationFeeInput, lotteryCapacityInput, waitlistLimitInput;
     private EditText eventStartDateInput, registrationOpenDateInput, registrationCloseDateInput;
-    private CheckBox hasWaitlistLimitCheckBox, geolocationRequiredCheckBox;
+    private CheckBox hasWaitlistLimitCheckBox, geolocationRequiredCheckBox, privateEventCheckBox;
     private Button createButton;
 
     private EventRepository eventRepository;
@@ -141,8 +141,9 @@ public class CreateEventFragment extends Fragment {
         eventStartDateInput      = view.findViewById(R.id.edit_event_start_date);
         registrationOpenDateInput  = view.findViewById(R.id.edit_registration_open_date);
         registrationCloseDateInput = view.findViewById(R.id.edit_registration_close_date);
-        hasWaitlistLimitCheckBox   = view.findViewById(R.id.checkbox_has_waitlist_limit);
+        hasWaitlistLimitCheckBox    = view.findViewById(R.id.checkbox_has_waitlist_limit);
         geolocationRequiredCheckBox = view.findViewById(R.id.checkbox_geolocation_required);
+        privateEventCheckBox        = view.findViewById(R.id.checkbox_private_event);
         createButton             = view.findViewById(R.id.button_create_event);
 
         if (getArguments() != null) {
@@ -214,6 +215,7 @@ public class CreateEventFragment extends Fragment {
 
         boolean hasWaitlistLimit    = hasWaitlistLimitCheckBox.isChecked();
         boolean geolocationRequired = geolocationRequiredCheckBox.isChecked();
+        boolean isPrivate           = privateEventCheckBox.isChecked();
 
         // --- Validation ---
         if (TextUtils.isEmpty(title)) {
@@ -319,11 +321,11 @@ public class CreateEventFragment extends Fragment {
                 if (selectedImageUri != null) {
                     uploadPosterThenSave(organizerName, title, description, location,
                             finalFee, finalLotteryCapacity, finalWaitlistLimit,
-                            hasWaitlistLimit, geolocationRequired);
+                            hasWaitlistLimit, geolocationRequired, isPrivate);
                 } else {
                     buildAndSaveEvent(organizerName, "", title, description, location,
                             finalFee, finalLotteryCapacity, finalWaitlistLimit,
-                            hasWaitlistLimit, geolocationRequired);
+                            hasWaitlistLimit, geolocationRequired, isPrivate);
                 }
             }
 
@@ -353,7 +355,7 @@ public class CreateEventFragment extends Fragment {
     private void uploadPosterThenSave(String organizerName, String title, String description,
                                       String location, double fee, int lotteryCapacity,
                                       int waitlistLimit, boolean hasWaitlistLimit,
-                                      boolean geolocationRequired) {
+                                      boolean geolocationRequired, boolean isPrivate) {
         Toast.makeText(getContext(), "Uploading poster...", Toast.LENGTH_SHORT).show();
 
         imageRepository.uploadEventPoster(requireContext(), deviceId, selectedImageUri,
@@ -362,7 +364,7 @@ public class CreateEventFragment extends Fragment {
                     public void onSuccess(String downloadUrl) {
                         buildAndSaveEvent(organizerName, downloadUrl, title, description,
                                 location, fee, lotteryCapacity, waitlistLimit,
-                                hasWaitlistLimit, geolocationRequired);
+                                hasWaitlistLimit, geolocationRequired, isPrivate);
                     }
 
                     @Override
@@ -374,7 +376,7 @@ public class CreateEventFragment extends Fragment {
                         }
                         buildAndSaveEvent(organizerName, "", title, description,
                                 location, fee, lotteryCapacity, waitlistLimit,
-                                hasWaitlistLimit, geolocationRequired);
+                                hasWaitlistLimit, geolocationRequired, isPrivate);
                     }
                 });
     }
@@ -398,7 +400,8 @@ public class CreateEventFragment extends Fragment {
     private void buildAndSaveEvent(String organizerName, String posterUrl,
                                    String title, String description, String location,
                                    double fee, int lotteryCapacity, int waitlistLimit,
-                                   boolean hasWaitlistLimit, boolean geolocationRequired) {
+                                   boolean hasWaitlistLimit, boolean geolocationRequired,
+                                   boolean isPrivate) {
         Event event = new Event();
         event.setTitle(title);
         event.setDescription(description);
@@ -415,12 +418,22 @@ public class CreateEventFragment extends Fragment {
         event.setGeolocationRequired(geolocationRequired);
         event.setHasWaitlistLimit(hasWaitlistLimit);
         event.setWaitlistLimit(waitlistLimit);
+        event.setPrivateEvent(isPrivate);
 
         eventRepository.addEvent(event, new EventRepository.FirestoreCallback<String>() {
             @Override
             public void onSuccess(String eventId) {
                 if (getContext() == null) {
                     clearForm();
+                    return;
+                }
+
+                if (isPrivate) {
+                    clearForm();
+                    Toast.makeText(getContext(), "Private event created", Toast.LENGTH_SHORT).show();
+                    if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                        getParentFragmentManager().popBackStack();
+                    }
                     return;
                 }
 
@@ -511,6 +524,7 @@ public class CreateEventFragment extends Fragment {
         registrationCloseDateInput.setText("");
         hasWaitlistLimitCheckBox.setChecked(false);
         geolocationRequiredCheckBox.setChecked(false);
+        privateEventCheckBox.setChecked(false);
         selectedImageUri = null;
         selectedEventStartDate = null;
         selectedRegistrationOpenDate = null;

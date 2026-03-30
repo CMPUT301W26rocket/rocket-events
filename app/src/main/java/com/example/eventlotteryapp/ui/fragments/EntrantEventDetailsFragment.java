@@ -52,6 +52,8 @@ import java.util.Locale;
  * US 01.05.04 As an entrant, I want to know how many total entrants are on the waiting list for an event.
  * US 01.05.05 As an entrant, I want to be informed about the criteria or guidelines for the lottery selection process.
  * US 01.06.02 As an entrant I want to be able to sign up for an event from the event details.
+ * US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
+ * US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
  * @author Leyla
  * @author Santiago
  * @co-author Daniel
@@ -272,7 +274,7 @@ public class EntrantEventDetailsFragment extends Fragment {
                 if (user != null) currentUserName = user.getName();
             }
             @Override
-            public void onFailure(Exception e) { /* name stays null; handled in send */ }
+            public void onFailure(Exception e) { }
         });
     }
 
@@ -285,7 +287,7 @@ public class EntrantEventDetailsFragment extends Fragment {
                         renderComments(comments);
                     }
                     @Override
-                    public void onFailure(Exception e) { /* leave placeholder visible */ }
+                    public void onFailure(Exception e) {  }
                 });
     }
 

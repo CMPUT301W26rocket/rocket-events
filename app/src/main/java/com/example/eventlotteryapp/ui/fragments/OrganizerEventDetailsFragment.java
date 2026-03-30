@@ -39,6 +39,8 @@ import java.util.Locale;
  * Fragment that displays the details of an event from the organizer's perspective.
  * Shows event information such as poster, title, description, dates, capacity, etc.
  * User Stories Implemented:
+ * US 02.08.01 As an organizer, I want to view and delete entrant comments on my event.
+ * US 02.08.02 As an organizer, I want to comment on my events so that I can share updates, answer questions, or engage with entrants in the event discussion.
  *
  * User Stories Left:
  * US 02.04.02 As an organizer I want to update an event poster to provide visual information to entrants.
@@ -330,6 +332,19 @@ public class OrganizerEventDetailsFragment extends Fragment {
                     ? COMMENT_DATE_FORMAT.format(comment.getTimestamp().toDate())
                     : "";
             ((TextView) item.findViewById(R.id.comment_timestamp)).setText(time);
+
+            TextView deleteButton = item.findViewById(R.id.comment_delete);
+            deleteButton.setVisibility(View.VISIBLE);
+            deleteButton.setOnClickListener(v ->
+                    commentRepository.deleteComment(eventId, comment.getCommentId(),
+                            new CommentRepository.FirestoreCallback<Void>() {
+                                @Override public void onSuccess(Void unused) {}
+                                @Override public void onFailure(Exception e) {
+                                    if (isAdded()) Toast.makeText(getContext(),
+                                            "Failed to delete comment", Toast.LENGTH_SHORT).show();
+                                }
+                            }));
+
             commentsContainer.addView(item);
         }
     }
