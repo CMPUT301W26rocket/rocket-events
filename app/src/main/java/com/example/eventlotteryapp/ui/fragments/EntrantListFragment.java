@@ -50,10 +50,12 @@ public class EntrantListFragment extends Fragment {
     private static final String[] TAB_TITLES = {"Invited", "Enrolled", "Cancelled", "Waitlist"};
 
     private String eventId;
+    private Entrant selectedEntrant = null;
     private EntrantRepository entrantRepository;
     private UserRepository userRepository;
 
-    private final List<List<String>> tabData = new ArrayList<>();
+    private final List<List<Entrant>> tabData = new ArrayList<>(); //private final List<List<String>> tabData = new ArrayList<>();
+
 
     public EntrantListFragment() {}
 
@@ -147,19 +149,36 @@ public class EntrantListFragment extends Fragment {
 
     private void groupIntoTabs(List<Entrant> entrants, Map<String, String> names,
                                 EntrantPagerAdapter pagerAdapter) {
-        for (List<String> list : tabData) list.clear();
+        //for (List<String> list : tabData) list.clear();
+        for (List<Entrant> list : tabData) list.clear();
 
         for (Entrant e : entrants) {
             String display = names.getOrDefault(e.getDeviceId(), e.getDeviceId());
+//            switch (e.getStatus()) {
+//                case Entrant.STATUS_INVITED:      tabData.get(TAB_INVITED).add(display);   break;
+//                case Entrant.STATUS_ENROLLED:     tabData.get(TAB_ENROLLED).add(display);  break;
+//                case Entrant.STATUS_CANCELLED:    tabData.get(TAB_CANCELLED).add(display); break;
+//                case Entrant.STATUS_WAITLIST:
+//                case Entrant.STATUS_NOT_SELECTED: tabData.get(TAB_WAITLIST).add(display);  break;
             switch (e.getStatus()) {
-                case Entrant.STATUS_INVITED:      tabData.get(TAB_INVITED).add(display);   break;
-                case Entrant.STATUS_ENROLLED:     tabData.get(TAB_ENROLLED).add(display);  break;
-                case Entrant.STATUS_CANCELLED:    tabData.get(TAB_CANCELLED).add(display); break;
+                case Entrant.STATUS_INVITED:
+                    tabData.get(TAB_INVITED).add(e);
+                    break;
+                case Entrant.STATUS_ENROLLED:
+                    tabData.get(TAB_ENROLLED).add(e);
+                    break;
+                case Entrant.STATUS_CANCELLED:
+                    tabData.get(TAB_CANCELLED).add(e);
+                    break;
                 case Entrant.STATUS_WAITLIST:
-                case Entrant.STATUS_NOT_SELECTED: tabData.get(TAB_WAITLIST).add(display);  break;
+                case Entrant.STATUS_NOT_SELECTED:
+                    tabData.get(TAB_WAITLIST).add(e);
+                    break;
+
                 // STATUS_DECLINED intentionally excluded
             }
         }
+        pagerAdapter.setNamesMap(names);
         pagerAdapter.notifyDataSetChanged();
     }
 
@@ -167,6 +186,10 @@ public class EntrantListFragment extends Fragment {
 
     private class EntrantPagerAdapter extends RecyclerView.Adapter<EntrantPagerAdapter.PageVH> {
 
+        private Map<String, String> names;
+        public void setNamesMap(Map<String, String> names) {
+            this.names = names;
+        }
         @NonNull
         @Override
         public PageVH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -177,11 +200,55 @@ public class EntrantListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull PageVH holder, int position) {
-            List<String> names = tabData.get(position);
+//            List<String> names = tabData.get(position);
+//
+//            holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
+//            holder.recycler.setAdapter(new NamesAdapter(names, (name, pos) -> {
+//                Toast.makeText(holder.recycler.getContext(),
+//                        "Clicked: " + name,
+//                        Toast.LENGTH_SHORT).show();
+//
+//                // TODO: handle real action (open profile, select entrant, etc.)
+//            }));
+            List<Entrant> entrants = tabData.get(position);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
-            holder.recycler.setAdapter(new NamesAdapter(names));
-            holder.emptyText.setVisibility(names.isEmpty() ? View.VISIBLE : View.GONE);
+            holder.recycler.setAdapter(new NamesAdapter(entrants, names, (entrant, pos) -> {
+                selectedEntrant = entrant;
+
+                Toast.makeText(holder.recycler.getContext(),
+                        "Clicked: " + entrant.getDeviceId(),
+                        Toast.LENGTH_SHORT).show();
+
+                holder.layoutButtonsInvited.findViewById(R.id.button_cancel_entrant)
+                        .setOnClickListener(v -> {
+                            if (selectedEntrant == null) {
+                                Toast.makeText(holder.itemView.getContext(), "Select an entrant first", Toast.LENGTH_SHORT).show();
+                                return;
+                            }
+
+                            entrantRepository.updateStatus(eventId, selectedEntrant.getDeviceId(), Entrant.STATUS_CANCELLED,
+                                    new EntrantRepository.FirestoreCallback<Void>() {
+                                        @Override
+                                        public void onSuccess(Void unused) {
+                                            Toast.makeText(holder.itemView.getContext(),
+                                                    "Cancelled: " + selectedEntrant.getDeviceId(),
+                                                    Toast.LENGTH_SHORT).show();
+                                            loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView().findViewById(R.id.view_pager)).getAdapter());
+                                            selectedEntrant = null;
+                                        }
+
+                                        @Override
+                                        public void onFailure(Exception e) {
+                                            Toast.makeText(holder.itemView.getContext(), "Failed to cancel entrant", Toast.LENGTH_SHORT).show();
+                                        }
+                                    });
+                        });
+            }));
+
+            holder.emptyText.setVisibility(entrants.isEmpty() ? View.VISIBLE : View.GONE);
+            //holder.emptyText.setVisibility(names.isEmpty() ? View.VISIBLE : View.GONE);
+
 
             // Show the correct button section per tab
             holder.layoutButtonsInvited.setVisibility(  position == TAB_INVITED   ? View.VISIBLE : View.GONE);
@@ -215,36 +282,146 @@ public class EntrantListFragment extends Fragment {
 
     // --- Simple names list adapter ---
 
-    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
-        private final List<String> names;
+//    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
+//        interface OnItemClickListener {
+//            void onItemClick(String name, int position);
+//        }
+//
+//        private final List<String> names;
+//        private final OnItemClickListener listener;
+//        private int selectedPosition = -1;
+//
+//        NamesAdapter(List<String> names, OnItemClickListener listener) {
+//            this.names = names;
+//            this.listener = listener;
+//        }
+//        @NonNull
+//        @Override
+//        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+//            View v = LayoutInflater.from(parent.getContext())
+//                    .inflate(R.layout.item_entrant, parent, false);
+//            return new VH(v);
+//        }
+//
+//        @Override
+//        public void onBindViewHolder(@NonNull VH holder, int position) {
+//            String name = names.get(position);
+//
+//            holder.nameView.setText(name);
+//            holder.nameView.setVisibility(View.VISIBLE);
+//            holder.headerView.setVisibility(View.GONE);
+//
+//            if (position == selectedPosition) {
+//                holder.itemView.setBackgroundColor(
+//                        holder.itemView.getContext().getColor(R.color.color_selected_item)
+//                );            } else {
+//                holder.itemView.setBackgroundColor(
+//                        holder.itemView.getContext().getColor(android.R.color.transparent)
+//                );            }
+//
+//            holder.itemView.setOnClickListener(v -> {
+//                int oldPos = selectedPosition;
+//                selectedPosition = position;
+//
+//                notifyItemChanged(oldPos);
+//                notifyItemChanged(selectedPosition);
+//
+//                if (listener != null) {
+//                    listener.onItemClick(name, position);
+//                }
+//            });
+//        }
+//
+//        @Override
+//        public int getItemCount() { return names.size(); }
+//
+//        static class VH extends RecyclerView.ViewHolder {
+//            final TextView nameView, headerView;
+//            VH(View v) {
+//                super(v);
+//                nameView   = v.findViewById(R.id.text_device_id);
+//                headerView = v.findViewById(R.id.text_section_header);
+//            }
+//        }
+//    }
+private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
 
-        NamesAdapter(List<String> names) { this.names = names; }
+    interface OnItemClickListener {
+        void onItemClick(Entrant entrant, int position);
+    }
 
-        @NonNull
-        @Override
-        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-            View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.item_entrant, parent, false);
-            return new VH(v);
+    private final List<Entrant> entrants;
+    private final Map<String, String> names;
+    private final OnItemClickListener listener;
+    private int selectedPosition = -1;
+
+    NamesAdapter(List<Entrant> entrants,
+                 Map<String, String> names,
+                 OnItemClickListener listener) {
+        this.entrants = entrants;
+        this.names = names;
+        this.listener = listener;
+    }
+
+    @NonNull
+    @Override
+    public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.item_entrant, parent, false);
+        return new VH(v);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull VH holder, int position) {
+        Entrant entrant = entrants.get(position);
+
+        String name = names != null
+                ? names.getOrDefault(entrant.getDeviceId(), entrant.getDeviceId())
+                : entrant.getDeviceId();
+
+        holder.nameView.setText(name);
+        holder.nameView.setVisibility(View.VISIBLE);
+        holder.headerView.setVisibility(View.GONE);
+
+        if (position == selectedPosition) {
+            holder.itemView.setBackgroundColor(
+                    holder.itemView.getContext().getColor(R.color.color_selected_item)
+            );
+        } else {
+            holder.itemView.setBackgroundColor(
+                    holder.itemView.getContext().getColor(android.R.color.transparent)
+            );
         }
 
-        @Override
-        public void onBindViewHolder(@NonNull VH holder, int position) {
-            holder.nameView.setText(names.get(position));
-            holder.nameView.setVisibility(View.VISIBLE);
-            holder.headerView.setVisibility(View.GONE);
-        }
+        holder.itemView.setOnClickListener(v -> {
+            int oldPos = selectedPosition;
+            selectedPosition = position;
 
-        @Override
-        public int getItemCount() { return names.size(); }
+            notifyItemChanged(oldPos);
+            notifyItemChanged(selectedPosition);
 
-        static class VH extends RecyclerView.ViewHolder {
-            final TextView nameView, headerView;
-            VH(View v) {
-                super(v);
-                nameView   = v.findViewById(R.id.text_device_id);
-                headerView = v.findViewById(R.id.text_section_header);
+            if (listener != null) {
+                listener.onItemClick(entrant, position);
             }
+        });
+    }
+
+    @Override
+    public int getItemCount() {
+        return entrants.size();
+    }
+
+    static class VH extends RecyclerView.ViewHolder {
+        final TextView nameView, headerView;
+
+        VH(View v) {
+            super(v);
+            nameView   = v.findViewById(R.id.text_device_id);
+            headerView = v.findViewById(R.id.text_section_header);
         }
     }
 }
+}
+
+
+
