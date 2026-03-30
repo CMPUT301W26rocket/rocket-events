@@ -158,11 +158,8 @@ public class OrganizerEventDetailsFragment extends Fragment {
             @Override
             public void onSuccess(Event event) {
                 if (event == null || !isAdded()) return;
-                if (event.isLotteryCompleted()) {
-                    lotteryButton.setEnabled(false);
-                    lotteryButton.setText("Lottery Completed");
-                }
                 populateViews(event);
+                updateLotteryButton(event);
             }
 
             @Override
@@ -237,6 +234,22 @@ public class OrganizerEventDetailsFragment extends Fragment {
      * chooses entrants from the waitlist based on the event's lottery
      * capacity.</p>
      */
+    private void updateLotteryButton(Event event) {
+        if (event.isLotteryCompleted()) {
+            lotteryButton.setText("Lottery Completed");
+            lotteryButton.setEnabled(false);
+        } else if (event.isRegistrationNotYetOpen()) {
+            lotteryButton.setText("Registration Not Open Yet");
+            lotteryButton.setEnabled(false);
+        } else if (event.isRegistrationOpen()) {
+            lotteryButton.setText("Registration Open — Lottery Pending");
+            lotteryButton.setEnabled(false);
+        } else {
+            lotteryButton.setText("Draw Lottery");
+            lotteryButton.setEnabled(true);
+        }
+    }
+
     private void handleLotteryClick() {
         if (currentEvent == null) return; // event not loaded yet
 
@@ -270,6 +283,11 @@ public class OrganizerEventDetailsFragment extends Fragment {
         EntrantListFragment fragment = new EntrantListFragment();
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
+        args.putString("eventTitle", currentEvent != null ? currentEvent.getTitle() : "Event");
+        args.putBoolean("lotteryCompleted", currentEvent != null && currentEvent.isLotteryCompleted());
+        args.putLong("registrationCloseDate",
+                currentEvent != null && currentEvent.getRegistrationCloseDate() != null
+                        ? currentEvent.getRegistrationCloseDate().getTime() : -1);
         fragment.setArguments(args);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
@@ -434,6 +452,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
                             @Override
                             public void onSuccess(Void result) {
                                 currentEvent.setLotteryCompleted(true);
+                                if (isAdded()) updateLotteryButton(currentEvent);
                             }
 
                             @Override
