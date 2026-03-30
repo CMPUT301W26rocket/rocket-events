@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collections;
+
 
 /**
  * Displays all entrants for an event in a tabbed slider view grouped by status.
@@ -200,16 +202,6 @@ public class EntrantListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull PageVH holder, int position) {
-//            List<String> names = tabData.get(position);
-//
-//            holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
-//            holder.recycler.setAdapter(new NamesAdapter(names, (name, pos) -> {
-//                Toast.makeText(holder.recycler.getContext(),
-//                        "Clicked: " + name,
-//                        Toast.LENGTH_SHORT).show();
-//
-//                // TODO: handle real action (open profile, select entrant, etc.)
-//            }));
             List<Entrant> entrants = tabData.get(position);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
@@ -245,6 +237,117 @@ public class EntrantListFragment extends Fragment {
                                     });
                         });
             }));
+            holder.layoutButtonsInvited.findViewById(R.id.button_draw_replacement)
+                    .setOnClickListener(v -> {
+                                entrantRepository.getAllEntrantsForEvent(eventId, new EntrantRepository.FirestoreCallback<List<Entrant>>() {
+                                    @Override
+                                    public void onSuccess(List<Entrant> allEntrants) {
+                                        if (allEntrants == null || allEntrants.isEmpty()) return;
+
+                                        int openSpots = 0;
+                                        for (Entrant e : allEntrants) {
+                                            if (Entrant.STATUS_CANCELLED.equals(e.getStatus()) || Entrant.STATUS_DECLINED.equals(e.getStatus())) {
+                                                openSpots++;
+                                            }
+                                        }
+                                        if (openSpots == 0) {
+                                            Toast.makeText(getContext(), "No open spots for replacements", Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
+
+                                        // 2. Collect waitlist / not-selected entrants
+                                        List<Entrant> candidates = new ArrayList<>();
+                                        for (Entrant e : allEntrants) {
+                                            if (Entrant.STATUS_WAITLIST.equals(e.getStatus()) ||
+                                                    Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) {
+                                                candidates.add(e);
+                                            }
+                                        }
+
+                                        if (candidates.isEmpty()) {
+                                            Toast.makeText(getContext(), "No candidates available for replacement", Toast.LENGTH_SHORT).show();
+                                            return;
+                                        }
+
+                                        // 3. Promote candidates to ENROLLED for open spots
+                                        int spotsToFill = Math.min(openSpots, candidates.size());
+                                        for (int i = 0; i < spotsToFill; i++) {
+                                            Entrant replacement = candidates.get(i);
+
+                                            entrantRepository.updateStatus(eventId, replacement.getDeviceId(), Entrant.STATUS_ENROLLED,
+                                                    new EntrantRepository.FirestoreCallback<Void>() {
+                                                        @Override
+                                                        public void onSuccess(Void unused) {
+                                                            Toast.makeText(getContext(),
+                                                                    "Replacement enrolled: " + replacement.getDeviceId(),
+                                                                    Toast.LENGTH_SHORT).show();
+                                                            loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView().findViewById(R.id.view_pager)).getAdapter());
+//
+                                                        }
+
+                                                        @Override
+                                                        public void onFailure(Exception e) {
+                                                            Toast.makeText(getContext(),
+                                                                    "Failed to enroll replacement: " + replacement.getDeviceId(),
+                                                                    Toast.LENGTH_SHORT).show();
+                                                        }
+                                                    });
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        Toast.makeText(getContext(), "Failed to load entrants", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                    });
+//                        entrantRepository.getEntrantsByStatus(eventId, Entrant.STATUS_NOT_SELECTED,
+//                                new EntrantRepository.FirestoreCallback<List<Entrant>>() {
+//                                    @Override
+//                                    public void onSuccess(List<Entrant> candidates) {
+//                                        if (candidates == null || candidates.isEmpty()) {
+//                                            Toast.makeText(holder.itemView.getContext(),
+//                                                    "No replacements available", Toast.LENGTH_SHORT).show();
+//                                            return;
+//                                        }
+//                                        Collections.shuffle(candidates);
+//                                        // For demonstration, pick the first replacement (you can add your logic)
+//                                        Entrant replacement = candidates.get(0);
+//                                        Toast.makeText(holder.itemView.getContext(),
+//                                                "Replacement drawn: " + replacement.getDeviceId(),
+//                                                Toast.LENGTH_SHORT).show();
+//                                        // Optionally, update status to INVITED
+//                                        int spotsToFill = Math.min(openSpots, candidates.size());
+//                                        int k = 0;
+//
+//                                        while (k < spotsToFill) {
+//                                            entrantRepository.updateStatus(eventId, replacement.getDeviceId(), Entrant.STATUS_INVITED,
+//                                                    new EntrantRepository.FirestoreCallback<Void>() {
+//                                                        @Override
+//                                                        public void onSuccess(Void unused) {
+//                                                            Toast.makeText(holder.itemView.getContext(),
+//                                                                    "Replacements invited: " + replacement.getDeviceId(),
+//                                                                    Toast.LENGTH_SHORT).show();
+//                                                            // Refresh tabs
+//                                                            loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView().findViewById(R.id.view_pager)).getAdapter());
+//                                                        }
+//
+//                                                        @Override
+//                                                        public void onFailure(Exception e) {
+//                                                            Toast.makeText(holder.itemView.getContext(),
+//                                                                    "Failed to invite replacements", Toast.LENGTH_SHORT).show();
+//                                                        }
+//                                            });
+//                                        }
+//                                    }
+
+//                                    @Override
+//                                    public void onFailure(Exception e) {
+//                                        Toast.makeText(holder.itemView.getContext(),
+//                                                "Failed to retrieve replacements", Toast.LENGTH_SHORT).show();
+//                                    }
+//                                });
+//                    });
 
             holder.emptyText.setVisibility(entrants.isEmpty() ? View.VISIBLE : View.GONE);
             //holder.emptyText.setVisibility(names.isEmpty() ? View.VISIBLE : View.GONE);
@@ -280,70 +383,6 @@ public class EntrantListFragment extends Fragment {
         }
     }
 
-    // --- Simple names list adapter ---
-
-//    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
-//        interface OnItemClickListener {
-//            void onItemClick(String name, int position);
-//        }
-//
-//        private final List<String> names;
-//        private final OnItemClickListener listener;
-//        private int selectedPosition = -1;
-//
-//        NamesAdapter(List<String> names, OnItemClickListener listener) {
-//            this.names = names;
-//            this.listener = listener;
-//        }
-//        @NonNull
-//        @Override
-//        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//            View v = LayoutInflater.from(parent.getContext())
-//                    .inflate(R.layout.item_entrant, parent, false);
-//            return new VH(v);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(@NonNull VH holder, int position) {
-//            String name = names.get(position);
-//
-//            holder.nameView.setText(name);
-//            holder.nameView.setVisibility(View.VISIBLE);
-//            holder.headerView.setVisibility(View.GONE);
-//
-//            if (position == selectedPosition) {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(R.color.color_selected_item)
-//                );            } else {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(android.R.color.transparent)
-//                );            }
-//
-//            holder.itemView.setOnClickListener(v -> {
-//                int oldPos = selectedPosition;
-//                selectedPosition = position;
-//
-//                notifyItemChanged(oldPos);
-//                notifyItemChanged(selectedPosition);
-//
-//                if (listener != null) {
-//                    listener.onItemClick(name, position);
-//                }
-//            });
-//        }
-//
-//        @Override
-//        public int getItemCount() { return names.size(); }
-//
-//        static class VH extends RecyclerView.ViewHolder {
-//            final TextView nameView, headerView;
-//            VH(View v) {
-//                super(v);
-//                nameView   = v.findViewById(R.id.text_device_id);
-//                headerView = v.findViewById(R.id.text_section_header);
-//            }
-//        }
-//    }
 private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
 
     interface OnItemClickListener {
