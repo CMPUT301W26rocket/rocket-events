@@ -68,7 +68,6 @@ public class EntrantListFragment extends Fragment {
 
     private final List<List<Entrant>> tabData = new ArrayList<>();
 
-
     public EntrantListFragment() {}
 
     /** Injects a mock {@link EntrantRepository} for testing. */
