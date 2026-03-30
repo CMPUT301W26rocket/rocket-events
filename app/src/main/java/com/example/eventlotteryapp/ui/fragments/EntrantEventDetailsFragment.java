@@ -6,7 +6,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,13 +18,19 @@ import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlotteryapp.R;
+import com.example.eventlotteryapp.models.Comment;
 import com.example.eventlotteryapp.models.Entrant;
 import com.example.eventlotteryapp.models.Event;
+import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.CommentRepository;
 import com.example.eventlotteryapp.repository.EntrantRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.repository.UserRepository;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -44,8 +52,11 @@ import java.util.Locale;
  * US 01.05.04 As an entrant, I want to know how many total entrants are on the waiting list for an event.
  * US 01.05.05 As an entrant, I want to be informed about the criteria or guidelines for the lottery selection process.
  * US 01.06.02 As an entrant I want to be able to sign up for an event from the event details.
+ * US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
+ * US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
  * @author Leyla
  * @author Santiago
+ * @co-author Daniel
  */
 public class EntrantEventDetailsFragment extends Fragment {
 
@@ -57,15 +68,26 @@ public class EntrantEventDetailsFragment extends Fragment {
     private Entrant currentEntrant;
     private Event currentEvent;
 
+    private static final SimpleDateFormat COMMENT_DATE_FORMAT =
+            new SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault());
+
     private ImageView posterImageView;
     private TextView titleView, organizerView, descriptionView, locationView;
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
     private TextView geolocationView, waitlistView, waitlistCountView;
     private Button actionButton;
+    private LinearLayout commentsContainer;
+    private TextView noCommentsText;
+    private EditText commentInput;
+    private Button sendCommentButton;
 
     private EventRepository eventRepository;
     private EntrantRepository entrantRepository;
+    private CommentRepository commentRepository;
+    private UserRepository userRepository;
     private ListenerRegistration waitlistCountListener;
+    private ListenerRegistration commentsListener;
+    private String currentUserName;
 
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
@@ -108,6 +130,10 @@ public class EntrantEventDetailsFragment extends Fragment {
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
         actionButton    = view.findViewById(R.id.action_button);
         waitlistCountView = view.findViewById(R.id.text_detail_waitlist_count);
+        commentsContainer = view.findViewById(R.id.comments_container);
+        noCommentsText    = view.findViewById(R.id.text_no_comments);
+        commentInput      = view.findViewById(R.id.edit_comment_input);
+        sendCommentButton = view.findViewById(R.id.button_send_comment);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -117,11 +143,16 @@ public class EntrantEventDetailsFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        if (eventRepository == null)   eventRepository   = new EventRepository();
-        if (entrantRepository == null) entrantRepository = new EntrantRepository();
+        if (eventRepository == null)    eventRepository    = new EventRepository();
+        if (entrantRepository == null)  entrantRepository  = new EntrantRepository();
+        if (commentRepository == null)  commentRepository  = new CommentRepository();
+        if (userRepository == null)     userRepository     = new UserRepository();
 
         loadEventDetails();
+        loadCurrentUserName();
+        attachCommentsListener();
         actionButton.setOnClickListener(v -> handleButtonClick());
+        sendCommentButton.setOnClickListener(v -> handleSendComment());
 
         return view;
     }
@@ -236,11 +267,82 @@ public class EntrantEventDetailsFragment extends Fragment {
                 });
     }
 
+    private void loadCurrentUserName() {
+        userRepository.getUser(deviceId, new UserRepository.FirestoreCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null) currentUserName = user.getName();
+            }
+            @Override
+            public void onFailure(Exception e) { }
+        });
+    }
+
+    private void attachCommentsListener() {
+        commentsListener = commentRepository.listenToComments(eventId,
+                new CommentRepository.FirestoreCallback<List<Comment>>() {
+                    @Override
+                    public void onSuccess(List<Comment> comments) {
+                        if (!isAdded()) return;
+                        renderComments(comments);
+                    }
+                    @Override
+                    public void onFailure(Exception e) {  }
+                });
+    }
+
+    private void renderComments(List<Comment> comments) {
+        commentsContainer.removeAllViews();
+        if (comments.isEmpty()) {
+            commentsContainer.addView(noCommentsText);
+            return;
+        }
+        for (Comment comment : comments) {
+            View item = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_comment, commentsContainer, false);
+            ((TextView) item.findViewById(R.id.comment_author)).setText(comment.getAuthorName());
+            ((TextView) item.findViewById(R.id.comment_text)).setText(comment.getText());
+            String time = comment.getTimestamp() != null
+                    ? COMMENT_DATE_FORMAT.format(comment.getTimestamp().toDate())
+                    : "";
+            ((TextView) item.findViewById(R.id.comment_timestamp)).setText(time);
+            commentsContainer.addView(item);
+        }
+    }
+
+    private void handleSendComment() {
+        String text = commentInput.getText().toString().trim();
+        if (text.isEmpty()) return;
+
+        String authorName = currentUserName != null ? currentUserName : "Unknown";
+        Comment comment = new Comment(deviceId, authorName, text, Timestamp.now());
+
+        sendCommentButton.setEnabled(false);
+        commentRepository.addComment(eventId, comment, new CommentRepository.FirestoreCallback<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                if (!isAdded()) return;
+                commentInput.setText("");
+                sendCommentButton.setEnabled(true);
+            }
+            @Override
+            public void onFailure(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Failed to post comment", Toast.LENGTH_SHORT).show();
+                    sendCommentButton.setEnabled(true);
+                }
+            }
+        });
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (waitlistCountListener != null) {
             waitlistCountListener.remove();
+        }
+        if (commentsListener != null) {
+            commentsListener.remove();
         }
     }
 

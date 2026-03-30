@@ -302,7 +302,10 @@ public class HomeFragment extends Fragment {
                     return;
                 }
 
-                allEvents = result;
+                allEvents = new ArrayList<>();
+                for (Event event : result) {
+                    if (!event.isPrivateEvent()) allEvents.add(event);
+                }
                 applyFilters();
             }
 

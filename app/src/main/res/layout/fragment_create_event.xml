@@ -239,6 +239,14 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Require geolocation check (optional)"
+            android:layout_marginBottom="8dp"/>
+
+        <!-- Private Event -->
+        <CheckBox
+            android:id="@+id/checkbox_private_event"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Private event (hidden from public listing, no QR code)"
             android:layout_marginBottom="28dp"/>
 
         <!-- Create Button -->
