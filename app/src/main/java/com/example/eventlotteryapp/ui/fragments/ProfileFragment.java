@@ -293,7 +293,7 @@ public class ProfileFragment extends Fragment {
         buttonSave.setEnabled(false);
         buttonSave.setText("Saving...");
 
-        userRepository.saveUserProfile(deviceId, name, email, phone,
+        userRepository.saveUserProfile(deviceId, name, email, phone, notificationsEnabled,
                 new UserRepository.FirestoreCallback<Void>() {
                     @Override
                     public void onSuccess(Void unused) {

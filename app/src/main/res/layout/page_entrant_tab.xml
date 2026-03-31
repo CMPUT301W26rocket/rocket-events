@@ -118,10 +118,19 @@
         android:visibility="gone">
 
         <Button
-            android:id="@+id/button_send_notification_waitlist"
+            android:id="@+id/button_send_custom_notification_waitlist"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Send Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_send_notification_waitlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Loss Notification"
             android:textColor="#FFFFFF"
             android:backgroundTint="@color/color_primary"
             android:layout_marginBottom="8dp"/>

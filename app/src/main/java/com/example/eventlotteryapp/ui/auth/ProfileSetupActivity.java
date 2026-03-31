@@ -108,7 +108,7 @@ public class ProfileSetupActivity extends AppCompatActivity {
         buttonSave.setText("Saving...");
 
         // set+merge creates the doc if it doesn't exist, or updates existing fields
-        userRepository.saveUserProfile(deviceId, name, email, phone,
+        userRepository.saveUserProfile(deviceId, name, email, phone, true,
                 new UserRepository.FirestoreCallback<Void>() {
                     @Override
                     public void onSuccess(Void unused) {

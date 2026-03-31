@@ -1,9 +1,19 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,6 +34,10 @@ import com.example.eventlotteryapp.repository.UserRepository;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -41,11 +55,18 @@ import java.util.concurrent.atomic.AtomicInteger;
  * US 01.04.02 As an entrant I want to receive notification when I am not chosen (loss notification).
  * US 01.05.01 As an entrant I want another chance to be chosen if a selected user declines.
  * US 02.02.01 As an organizer I want to view the list of entrants who joined my event waiting list.
+ * US 02.05.03 As an organizer I want to draw a replacement applicant from the waitlist.
  * US 02.06.01 As an organizer I want to view a list of all chosen entrants who are invited to apply.
  * US 02.06.02 As an organizer I want to see a list of all the cancelled entrants.
  * US 02.06.04 As an organizer I want to cancel entrants that did not sign up for the event.
+ * US 02.06.05 As an organizer I want to export a final list of enrolled entrants as a CSV file.
+ * US 02.07.01 As an organizer I want to send notifications to all entrants on the waiting list.
+ * US 02.07.02 As an organizer I want to send notifications to all selected entrants.
+ * US 02.07.03 As an organizer I want to send notifications to all cancelled entrants.
  * @author Daniel
  * @author Leyla
+ * @author Santiago
+ * @author William
  */
 public class EntrantListFragment extends Fragment {
 
@@ -60,6 +81,7 @@ public class EntrantListFragment extends Fragment {
     private String eventTitle;
     private boolean lotteryCompleted;
     private long registrationCloseDate = -1;
+    private int lotteryCapacity = 0;
     private Entrant selectedEntrant = null;
 
     private EntrantRepository entrantRepository;
@@ -95,6 +117,7 @@ public class EntrantListFragment extends Fragment {
             eventTitle            = getArguments().getString("eventTitle", "Event");
             lotteryCompleted      = getArguments().getBoolean("lotteryCompleted", false);
             registrationCloseDate = getArguments().getLong("registrationCloseDate", -1);
+            lotteryCapacity       = getArguments().getInt("lotteryCapacity", 0);
         }
 
         // Initialise empty lists for each tab
@@ -118,6 +141,11 @@ public class EntrantListFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches all entrants for the event from Firestore, then resolves their display names.
+     *
+     * @param pagerAdapter the adapter to notify once data is ready
+     */
     private void loadEntrants(EntrantPagerAdapter pagerAdapter) {
         entrantRepository.getAllEntrantsForEvent(eventId, new EntrantRepository.FirestoreCallback<List<Entrant>>() {
             @Override
@@ -139,6 +167,13 @@ public class EntrantListFragment extends Fragment {
         });
     }
 
+    /**
+     * Looks up the display name for each entrant from the {@code users} collection concurrently.
+     * Once all lookups complete, calls {@link #groupIntoTabs} to populate the tabs.
+     *
+     * @param entrants     the full list of entrants to resolve
+     * @param pagerAdapter the adapter to notify once tabs are populated
+     */
     private void resolveNamesAndDisplay(List<Entrant> entrants, EntrantPagerAdapter pagerAdapter) {
         Map<String, String> names = new ConcurrentHashMap<>();
         AtomicInteger remaining = new AtomicInteger(entrants.size());
@@ -165,19 +200,19 @@ public class EntrantListFragment extends Fragment {
         }
     }
 
+    /**
+     * Clears and re-populates {@link #tabData} by bucketing each entrant into the correct tab
+     * based on their status, then notifies the adapter to refresh the UI.
+     *
+     * @param entrants     all entrants for the event
+     * @param names        map of deviceId → display name resolved from Firestore
+     * @param pagerAdapter the adapter to notify after grouping
+     */
     private void groupIntoTabs(List<Entrant> entrants, Map<String, String> names,
                                 EntrantPagerAdapter pagerAdapter) {
-        //for (List<String> list : tabData) list.clear();
         for (List<Entrant> list : tabData) list.clear();
 
         for (Entrant e : entrants) {
-            String display = names.getOrDefault(e.getDeviceId(), e.getDeviceId());
-//            switch (e.getStatus()) {
-//                case Entrant.STATUS_INVITED:      tabData.get(TAB_INVITED).add(display);   break;
-//                case Entrant.STATUS_ENROLLED:     tabData.get(TAB_ENROLLED).add(display);  break;
-//                case Entrant.STATUS_CANCELLED:    tabData.get(TAB_CANCELLED).add(display); break;
-//                case Entrant.STATUS_WAITLIST:
-//                case Entrant.STATUS_NOT_SELECTED: tabData.get(TAB_WAITLIST).add(display);  break;
             switch (e.getStatus()) {
                 case Entrant.STATUS_INVITED:
                     tabData.get(TAB_INVITED).add(e);
@@ -193,8 +228,7 @@ public class EntrantListFragment extends Fragment {
                 case Entrant.STATUS_NOT_SELECTED:
                     tabData.get(TAB_WAITLIST).add(e);
                     break;
-
-                // STATUS_DECLINED shown in Cancelled tab, annotated as "Declined"
+                // STATUS_DECLINED falls through to Cancelled tab (shown with label)
             }
         }
         pagerAdapter.setNamesMap(names);
@@ -229,49 +263,181 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Draws one replacement entrant from the waitlist, updates their status to INVITED,
-     * and sends a TYPE_REPLACEMENT notification.
+     * Exports the list of enrolled entrants to a CSV file in the device's Downloads folder.
+     * Uses MediaStore on API 29+ (no permission needed) and direct file write on older APIs.
+     * US 02.06.05 As an organizer I want to export a final list of entrants who enrolled for the event in CSV format.
+     */
+    private void exportEnrolledToCsv(List<Entrant> enrolled, Map<String, String> names, Context ctx) {
+        if (enrolled.isEmpty()) {
+            Toast.makeText(ctx, "No enrolled entrants to export.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        StringBuilder csv = new StringBuilder("Name,Device ID\n");
+        for (Entrant e : enrolled) {
+            String name = names != null
+                    ? names.getOrDefault(e.getDeviceId(), e.getDeviceId())
+                    : e.getDeviceId();
+            // Escape any commas or quotes inside the name
+            name = name.replace("\"", "\"\"");
+            if (name.contains(",")) name = "\"" + name + "\"";
+            csv.append(name).append(",").append(e.getDeviceId()).append("\n");
+        }
+
+        String safeName = eventTitle.replaceAll("[^a-zA-Z0-9_\\- ]", "").trim().replace(" ", "_");
+        if (safeName.isEmpty()) safeName = "entrants";
+        String baseName = "enrolled_" + safeName;
+        String fileName = baseName + ".csv";
+        byte[] bytes = csv.toString().getBytes();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                ContentResolver resolver = ctx.getContentResolver();
+                Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IOException("Failed to create file in Downloads.");
+
+                try (OutputStream os = resolver.openOutputStream(uri)) {
+                    if (os == null) throw new IOException("Could not open output stream.");
+                    os.write(bytes);
+                }
+                values.clear();
+                values.put(MediaStore.Downloads.IS_PENDING, 0);
+                resolver.update(uri, values, null, null);
+
+                // Query the actual filename MediaStore assigned (may have added a counter)
+                try (Cursor cursor = resolver.query(uri,
+                        new String[]{MediaStore.Downloads.DISPLAY_NAME}, null, null, null)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        fileName = cursor.getString(0);
+                    }
+                }
+            } else {
+                File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                File file = new File(dir, fileName);
+                int counter = 1;
+                while (file.exists()) {
+                    file = new File(dir, baseName + " (" + counter++ + ").csv");
+                }
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(bytes);
+                }
+                fileName = file.getName();
+            }
+            Toast.makeText(ctx, "Saved to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(ctx, "Export failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * Shows a dialog for the organizer to type a custom message,
+     * then sends it to every entrant in {@code targets}.
+     */
+    private void showCustomNotificationDialog(List<Entrant> targets, String type, Context ctx) {
+        if (targets.isEmpty()) {
+            Toast.makeText(ctx, "No entrants in this category.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EditText input = new EditText(ctx);
+        input.setHint("Enter your message...");
+        input.setPadding(48, 24, 48, 24);
+
+        new AlertDialog.Builder(ctx)
+                .setTitle("Send Notification")
+                .setMessage("Your message will be sent to " + targets.size() + " entrant(s).")
+                .setView(input)
+                .setPositiveButton("Send", (dialog, which) -> {
+                    String message = input.getText().toString().trim();
+                    if (message.isEmpty()) {
+                        Toast.makeText(ctx, "Message cannot be empty.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    sendNotificationsToAll(targets, type, message, ctx);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Fills all open spots by drawing replacements from the waitlist in one go.
+     * Open spots = lotteryCapacity - invited - enrolled.
+     * Draws up to that many entrants randomly; draws fewer if the waitlist is smaller.
      * US 01.05.01 US 02.05.03
      */
     private void drawReplacement(android.content.Context ctx) {
-        List<Entrant> waitlistTab = tabData.get(TAB_WAITLIST);
-        List<Entrant> eligible = new ArrayList<>();
-        for (Entrant e : waitlistTab) {
-            if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())
-                    || Entrant.STATUS_WAITLIST.equals(e.getStatus())) eligible.add(e);
-        }
-        if (eligible.isEmpty()) {
-            Toast.makeText(ctx, "No waitlisted entrants to draw from", Toast.LENGTH_SHORT).show();
+        int currentInvited = tabData.get(TAB_INVITED).size();
+        int currentEnrolled = tabData.get(TAB_ENROLLED).size();
+        int spotsToFill = lotteryCapacity - currentInvited - currentEnrolled;
+
+        if (spotsToFill <= 0) {
+            Toast.makeText(ctx, "No open spots left to draw a replacement.", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        List<Entrant> eligible = new ArrayList<>();
+        for (Entrant e : tabData.get(TAB_WAITLIST)) {
+            if (Entrant.STATUS_WAITLIST.equals(e.getStatus())
+                    || Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) {
+                eligible.add(e);
+            }
+        }
+
+        if (eligible.isEmpty()) {
+            Toast.makeText(ctx, "No one on the waitlist to draw from.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Collections.shuffle(eligible);
-        Entrant chosen = eligible.get(0);
-        entrantRepository.updateStatus(eventId, chosen.getDeviceId(), Entrant.STATUS_INVITED,
-                new EntrantRepository.FirestoreCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Notification n = new Notification(eventId, eventTitle,
-                                Notification.TYPE_REPLACEMENT,
-                                "You have been given a replacement invitation for " + eventTitle + "!");
-                        notificationRepository.addNotification(chosen.getDeviceId(), n,
-                                new NotificationRepository.FirestoreCallback<String>() {
-                                    @Override public void onSuccess(String id) {}
-                                    @Override public void onFailure(Exception ex) {}
-                                });
-                        if (isAdded()) {
-                            Toast.makeText(ctx,
-                                    "Replacement drawn: " + chosen.getDeviceId(),
-                                    Toast.LENGTH_SHORT).show();
-                            loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView()
-                                    .findViewById(R.id.view_pager)).getAdapter());
+        List<Entrant> toDraw = eligible.subList(0, Math.min(spotsToFill, eligible.size()));
+        int drawCount = toDraw.size();
+
+        AtomicInteger remaining = new AtomicInteger(drawCount);
+        AtomicInteger failures = new AtomicInteger(0);
+
+        for (Entrant chosen : toDraw) {
+            entrantRepository.updateStatus(eventId, chosen.getDeviceId(), Entrant.STATUS_INVITED,
+                    new EntrantRepository.FirestoreCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            Notification n = new Notification(eventId, eventTitle,
+                                    Notification.TYPE_REPLACEMENT,
+                                    "You have been given a replacement invitation for " + eventTitle + "!");
+                            notificationRepository.addNotification(chosen.getDeviceId(), n,
+                                    new NotificationRepository.FirestoreCallback<String>() {
+                                        @Override public void onSuccess(String id) {}
+                                        @Override public void onFailure(Exception ex) {}
+                                    });
+                            checkDone();
                         }
-                    }
-                    @Override
-                    public void onFailure(Exception e) {
-                        if (isAdded()) Toast.makeText(ctx,
-                                "Failed to draw replacement", Toast.LENGTH_SHORT).show();
-                    }
-                });
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            failures.incrementAndGet();
+                            checkDone();
+                        }
+
+                        private void checkDone() {
+                            if (remaining.decrementAndGet() == 0 && isAdded()) {
+                                int succeeded = drawCount - failures.get();
+                                if (succeeded > 0) {
+                                    Toast.makeText(ctx,
+                                            "Drew " + succeeded + " replacement(s) from the waitlist.",
+                                            Toast.LENGTH_SHORT).show();
+                                    loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView()
+                                            .findViewById(R.id.view_pager)).getAdapter());
+                                } else {
+                                    Toast.makeText(ctx, "Failed to draw replacements.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                    });
+        }
     }
 
     // --- ViewPager2 adapter ---
@@ -292,14 +458,22 @@ public class EntrantListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull PageVH holder, int position) {
-            List<Entrant> entrants = tabData.get(position);
+            final int tabIndex = holder.getBindingAdapterPosition();
+            if (tabIndex == RecyclerView.NO_ID) return;
+
+            List<Entrant> entrants = tabData.get(tabIndex);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
-            holder.recycler.setAdapter(new NamesAdapter(entrants, names, (entrant, pos) -> {
+
+            NamesAdapter.OnItemClickListener clickListener = null;
+            if (tabIndex == TAB_INVITED) clickListener = (entrant, pos) -> {
                 selectedEntrant = entrant;
 
+                String displayName = names != null
+                        ? names.getOrDefault(entrant.getDeviceId(), entrant.getDeviceId())
+                        : entrant.getDeviceId();
                 Toast.makeText(holder.recycler.getContext(),
-                        "Clicked: " + entrant.getDeviceId(),
+                        "Selected: " + displayName,
                         Toast.LENGTH_SHORT).show();
 
                 holder.layoutButtonsInvited.findViewById(R.id.button_cancel_entrant)
@@ -314,7 +488,7 @@ public class EntrantListFragment extends Fragment {
                                         @Override
                                         public void onSuccess(Void unused) {
                                             Toast.makeText(holder.itemView.getContext(),
-                                                    "Cancelled: " + selectedEntrant.getDeviceId(),
+                                                    "Cancelled: " + displayName,
                                                     Toast.LENGTH_SHORT).show();
                                             loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView().findViewById(R.id.view_pager)).getAdapter());
                                             selectedEntrant = null;
@@ -326,7 +500,9 @@ public class EntrantListFragment extends Fragment {
                                         }
                                     });
                         });
-            }));
+            };
+
+            holder.recycler.setAdapter(new NamesAdapter(entrants, names, clickListener));
 
             // Send Win Notification to all invited entrants — US 01.04.01
             holder.btnSendWin.setOnClickListener(v ->
@@ -334,11 +510,10 @@ public class EntrantListFragment extends Fragment {
                             "You have been selected for " + eventTitle + "! Please accept or decline.",
                             holder.itemView.getContext()));
 
-            // General notification to invited entrants — US 02.07.02
+            // Custom notification to invited entrants — US 02.07.02
             holder.btnSendNotificationInvited.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_INVITED), Notification.TYPE_GENERAL,
-                            "A message from the organizer of " + eventTitle + ".",
-                            holder.itemView.getContext()));
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_INVITED)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
 
             // Draw replacement — US 01.05.01 US 02.05.03; only enabled when lottery done + reg closed
             boolean regClosed = registrationCloseDate > 0
@@ -356,25 +531,39 @@ public class EntrantListFragment extends Fragment {
             holder.btnDrawReplacement.setOnClickListener(v ->
                     drawReplacement(holder.itemView.getContext()));
 
-            // Notify cancelled entrants — US 02.07.03
-            holder.btnSendNotificationCancelled.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_CANCELLED), Notification.TYPE_GENERAL,
-                            "You have been removed from " + eventTitle + ".",
+            // Export enrolled entrants to CSV
+            holder.btnExportCsv.setOnClickListener(v ->
+                    exportEnrolledToCsv(new ArrayList<>(tabData.get(TAB_ENROLLED)), names,
                             holder.itemView.getContext()));
 
-            // Notify waitlist / not-selected entrants — US 01.04.02 US 02.07.01
-            holder.btnSendNotificationWaitlist.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_WAITLIST), Notification.TYPE_LOST,
-                            "Unfortunately you were not selected for " + eventTitle + ".",
-                            holder.itemView.getContext()));
+            // Custom notification to cancelled entrants — US 02.07.03
+            holder.btnSendNotificationCancelled.setOnClickListener(v ->
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_CANCELLED)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
+
+            // Custom notification to all waitlist entrants — US 02.07.01
+            holder.btnSendCustomNotificationWaitlist.setOnClickListener(v ->
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_WAITLIST)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
+
+            // Send Loss Notification to not-selected entrants only — US 01.04.02
+            holder.btnSendNotificationWaitlist.setOnClickListener(v -> {
+                List<Entrant> notSelected = new ArrayList<>();
+                for (Entrant e : tabData.get(TAB_WAITLIST)) {
+                    if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) notSelected.add(e);
+                }
+                sendNotificationsToAll(notSelected, Notification.TYPE_LOST,
+                        "Unfortunately you were not selected for " + eventTitle + ".",
+                        holder.itemView.getContext());
+            });
 
             holder.emptyText.setVisibility(entrants.isEmpty() ? View.VISIBLE : View.GONE);
 
             // Show the correct button section per tab
-            holder.layoutButtonsInvited.setVisibility(  position == TAB_INVITED   ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsEnrolled.setVisibility( position == TAB_ENROLLED  ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsCancelled.setVisibility(position == TAB_CANCELLED ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsWaitlist.setVisibility( position == TAB_WAITLIST  ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsInvited.setVisibility(  tabIndex == TAB_INVITED   ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsEnrolled.setVisibility( tabIndex == TAB_ENROLLED  ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsCancelled.setVisibility(tabIndex == TAB_CANCELLED ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsWaitlist.setVisibility( tabIndex == TAB_WAITLIST  ? View.VISIBLE : View.GONE);
         }
 
         @Override
@@ -390,7 +579,9 @@ public class EntrantListFragment extends Fragment {
             final android.widget.Button btnSendWin;
             final android.widget.Button btnSendNotificationInvited;
             final android.widget.Button btnDrawReplacement;
+            final android.widget.Button btnExportCsv;
             final android.widget.Button btnSendNotificationCancelled;
+            final android.widget.Button btnSendCustomNotificationWaitlist;
             final android.widget.Button btnSendNotificationWaitlist;
 
             PageVH(@NonNull View itemView) {
@@ -404,77 +595,17 @@ public class EntrantListFragment extends Fragment {
                 btnSendWin                   = itemView.findViewById(R.id.button_send_win_notification);
                 btnSendNotificationInvited   = itemView.findViewById(R.id.button_send_notification_invited);
                 btnDrawReplacement           = itemView.findViewById(R.id.button_draw_replacement);
-                btnSendNotificationCancelled = itemView.findViewById(R.id.button_send_notification_cancelled);
-                btnSendNotificationWaitlist  = itemView.findViewById(R.id.button_send_notification_waitlist);
+                btnExportCsv                        = itemView.findViewById(R.id.button_export_csv);
+                btnSendNotificationCancelled        = itemView.findViewById(R.id.button_send_notification_cancelled);
+                btnSendCustomNotificationWaitlist   = itemView.findViewById(R.id.button_send_custom_notification_waitlist);
+                btnSendNotificationWaitlist         = itemView.findViewById(R.id.button_send_notification_waitlist);
             }
         }
     }
 
-    // --- Simple names list adapter ---
+    // --- Names list adapter ---
 
-//    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
-//        interface OnItemClickListener {
-//            void onItemClick(String name, int position);
-//        }
-//
-//        private final List<String> names;
-//        private final OnItemClickListener listener;
-//        private int selectedPosition = -1;
-//
-//        NamesAdapter(List<String> names, OnItemClickListener listener) {
-//            this.names = names;
-//            this.listener = listener;
-//        }
-//        @NonNull
-//        @Override
-//        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//            View v = LayoutInflater.from(parent.getContext())
-//                    .inflate(R.layout.item_entrant, parent, false);
-//            return new VH(v);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(@NonNull VH holder, int position) {
-//            String name = names.get(position);
-//
-//            holder.nameView.setText(name);
-//            holder.nameView.setVisibility(View.VISIBLE);
-//            holder.headerView.setVisibility(View.GONE);
-//
-//            if (position == selectedPosition) {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(R.color.color_selected_item)
-//                );            } else {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(android.R.color.transparent)
-//                );            }
-//
-//            holder.itemView.setOnClickListener(v -> {
-//                int oldPos = selectedPosition;
-//                selectedPosition = position;
-//
-//                notifyItemChanged(oldPos);
-//                notifyItemChanged(selectedPosition);
-//
-//                if (listener != null) {
-//                    listener.onItemClick(name, position);
-//                }
-//            });
-//        }
-//
-//        @Override
-//        public int getItemCount() { return names.size(); }
-//
-//        static class VH extends RecyclerView.ViewHolder {
-//            final TextView nameView, headerView;
-//            VH(View v) {
-//                super(v);
-//                nameView   = v.findViewById(R.id.text_device_id);
-//                headerView = v.findViewById(R.id.text_section_header);
-//            }
-//        }
-//    }
-private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
+    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
 
     interface OnItemClickListener {
         void onItemClick(Entrant entrant, int position);
@@ -520,27 +651,27 @@ private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> 
         holder.nameView.setVisibility(View.VISIBLE);
         holder.headerView.setVisibility(View.GONE);
 
-        if (position == selectedPosition) {
+        if (listener != null && position == selectedPosition) {
             holder.itemView.setBackgroundColor(
-                    holder.itemView.getContext().getColor(R.color.color_selected_item)
-            );
+                    holder.itemView.getContext().getColor(R.color.color_selected_item));
         } else {
             holder.itemView.setBackgroundColor(
-                    holder.itemView.getContext().getColor(android.R.color.transparent)
-            );
+                    holder.itemView.getContext().getColor(android.R.color.transparent));
         }
 
-        holder.itemView.setOnClickListener(v -> {
-            int oldPos = selectedPosition;
-            selectedPosition = position;
-
-            notifyItemChanged(oldPos);
-            notifyItemChanged(selectedPosition);
-
-            if (listener != null) {
-                listener.onItemClick(entrant, position);
-            }
-        });
+        if (listener != null) {
+            holder.itemView.setOnClickListener(v -> {
+                int adapterPos = holder.getBindingAdapterPosition();
+                if (adapterPos == RecyclerView.NO_ID) return;
+                int oldPos = selectedPosition;
+                selectedPosition = adapterPos;
+                notifyItemChanged(oldPos);
+                notifyItemChanged(selectedPosition);
+                listener.onItemClick(entrant, adapterPos);
+            });
+        } else {
+            holder.itemView.setOnClickListener(null);
+        }
     }
 
     @Override
@@ -559,6 +690,3 @@ private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> 
     }
 }
 }
-
-
-

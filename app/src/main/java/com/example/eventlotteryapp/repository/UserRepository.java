@@ -65,22 +65,23 @@ public class UserRepository {
 
     /**
      * Creates or updates a user's profile fields in Firestore.
-     * Uses set+merge so it works whether the document already exists or not,
-     * and only writes the four profile fields without touching any other stored data.
+     * Uses set+merge so it works whether the document already exists or not.
      *
-     * @param deviceId the device's unique ANDROID_ID, used as the Firestore document ID
-     * @param name     the user's display name
-     * @param email    the user's email address
-     * @param phone    the user's phone number, or empty string if not provided
-     * @param callback receives {@code null} on success
+     * @param deviceId             the device's unique ANDROID_ID, used as the Firestore document ID
+     * @param name                 the user's display name
+     * @param email                the user's email address
+     * @param phone                the user's phone number, or empty string if not provided
+     * @param notificationsEnabled whether the user wants to receive notifications
+     * @param callback             receives {@code null} on success
      */
     public void saveUserProfile(String deviceId, String name, String email, String phone,
-                                FirestoreCallback<Void> callback) {
+                                boolean notificationsEnabled, FirestoreCallback<Void> callback) {
         Map<String, Object> data = new HashMap<>();
         data.put("deviceId", deviceId);
         data.put("name", name);
         data.put("email", email);
         data.put("phone", phone);
+        data.put("notificationsEnabled", notificationsEnabled);
 
         firebaseConnector.getUsersCollection()
                 .document(deviceId)
