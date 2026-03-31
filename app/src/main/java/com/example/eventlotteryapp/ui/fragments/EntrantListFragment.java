@@ -1,8 +1,15 @@
 package com.example.eventlotteryapp.ui.fragments;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,6 +34,10 @@ import com.example.eventlotteryapp.repository.UserRepository;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,9 +55,14 @@ import java.util.concurrent.atomic.AtomicInteger;
  * US 01.04.02 As an entrant I want to receive notification when I am not chosen (loss notification).
  * US 01.05.01 As an entrant I want another chance to be chosen if a selected user declines.
  * US 02.02.01 As an organizer I want to view the list of entrants who joined my event waiting list.
+ * US 02.05.03 As an organizer I want to draw a replacement applicant from the waitlist.
  * US 02.06.01 As an organizer I want to view a list of all chosen entrants who are invited to apply.
  * US 02.06.02 As an organizer I want to see a list of all the cancelled entrants.
  * US 02.06.04 As an organizer I want to cancel entrants that did not sign up for the event.
+ * US 02.06.05 As an organizer I want to export a final list of enrolled entrants as a CSV file.
+ * US 02.07.01 As an organizer I want to send notifications to all entrants on the waiting list.
+ * US 02.07.02 As an organizer I want to send notifications to all selected entrants.
+ * US 02.07.03 As an organizer I want to send notifications to all cancelled entrants.
  * @author Daniel
  * @author Leyla
  * @author Santiago
@@ -125,6 +141,11 @@ public class EntrantListFragment extends Fragment {
         return view;
     }
 
+    /**
+     * Fetches all entrants for the event from Firestore, then resolves their display names.
+     *
+     * @param pagerAdapter the adapter to notify once data is ready
+     */
     private void loadEntrants(EntrantPagerAdapter pagerAdapter) {
         entrantRepository.getAllEntrantsForEvent(eventId, new EntrantRepository.FirestoreCallback<List<Entrant>>() {
             @Override
@@ -146,6 +167,13 @@ public class EntrantListFragment extends Fragment {
         });
     }
 
+    /**
+     * Looks up the display name for each entrant from the {@code users} collection concurrently.
+     * Once all lookups complete, calls {@link #groupIntoTabs} to populate the tabs.
+     *
+     * @param entrants     the full list of entrants to resolve
+     * @param pagerAdapter the adapter to notify once tabs are populated
+     */
     private void resolveNamesAndDisplay(List<Entrant> entrants, EntrantPagerAdapter pagerAdapter) {
         Map<String, String> names = new ConcurrentHashMap<>();
         AtomicInteger remaining = new AtomicInteger(entrants.size());
@@ -172,19 +200,19 @@ public class EntrantListFragment extends Fragment {
         }
     }
 
+    /**
+     * Clears and re-populates {@link #tabData} by bucketing each entrant into the correct tab
+     * based on their status, then notifies the adapter to refresh the UI.
+     *
+     * @param entrants     all entrants for the event
+     * @param names        map of deviceId → display name resolved from Firestore
+     * @param pagerAdapter the adapter to notify after grouping
+     */
     private void groupIntoTabs(List<Entrant> entrants, Map<String, String> names,
                                 EntrantPagerAdapter pagerAdapter) {
-        //for (List<String> list : tabData) list.clear();
         for (List<Entrant> list : tabData) list.clear();
 
         for (Entrant e : entrants) {
-            String display = names.getOrDefault(e.getDeviceId(), e.getDeviceId());
-//            switch (e.getStatus()) {
-//                case Entrant.STATUS_INVITED:      tabData.get(TAB_INVITED).add(display);   break;
-//                case Entrant.STATUS_ENROLLED:     tabData.get(TAB_ENROLLED).add(display);  break;
-//                case Entrant.STATUS_CANCELLED:    tabData.get(TAB_CANCELLED).add(display); break;
-//                case Entrant.STATUS_WAITLIST:
-//                case Entrant.STATUS_NOT_SELECTED: tabData.get(TAB_WAITLIST).add(display);  break;
             switch (e.getStatus()) {
                 case Entrant.STATUS_INVITED:
                     tabData.get(TAB_INVITED).add(e);
@@ -200,8 +228,7 @@ public class EntrantListFragment extends Fragment {
                 case Entrant.STATUS_NOT_SELECTED:
                     tabData.get(TAB_WAITLIST).add(e);
                     break;
-
-                // STATUS_DECLINED shown in Cancelled tab, annotated as "Declined"
+                // STATUS_DECLINED falls through to Cancelled tab (shown with label)
             }
         }
         pagerAdapter.setNamesMap(names);
@@ -233,6 +260,78 @@ public class EntrantListFragment extends Fragment {
         Toast.makeText(ctx,
                 "Notifications sent to " + targets.size() + " entrant(s)",
                 Toast.LENGTH_SHORT).show();
+    }
+
+    /**
+     * Exports the list of enrolled entrants to a CSV file in the device's Downloads folder.
+     * Uses MediaStore on API 29+ (no permission needed) and direct file write on older APIs.
+     * US 02.06.05 As an organizer I want to export a final list of entrants who enrolled for the event in CSV format.
+     */
+    private void exportEnrolledToCsv(List<Entrant> enrolled, Map<String, String> names, Context ctx) {
+        if (enrolled.isEmpty()) {
+            Toast.makeText(ctx, "No enrolled entrants to export.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        StringBuilder csv = new StringBuilder("Name,Device ID\n");
+        for (Entrant e : enrolled) {
+            String name = names != null
+                    ? names.getOrDefault(e.getDeviceId(), e.getDeviceId())
+                    : e.getDeviceId();
+            // Escape any commas or quotes inside the name
+            name = name.replace("\"", "\"\"");
+            if (name.contains(",")) name = "\"" + name + "\"";
+            csv.append(name).append(",").append(e.getDeviceId()).append("\n");
+        }
+
+        String safeName = eventTitle.replaceAll("[^a-zA-Z0-9_\\- ]", "").trim().replace(" ", "_");
+        if (safeName.isEmpty()) safeName = "entrants";
+        String baseName = "enrolled_" + safeName;
+        String fileName = baseName + ".csv";
+        byte[] bytes = csv.toString().getBytes();
+
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                ContentValues values = new ContentValues();
+                values.put(MediaStore.Downloads.DISPLAY_NAME, fileName);
+                values.put(MediaStore.Downloads.MIME_TYPE, "text/csv");
+                values.put(MediaStore.Downloads.IS_PENDING, 1);
+
+                ContentResolver resolver = ctx.getContentResolver();
+                Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) throw new IOException("Failed to create file in Downloads.");
+
+                try (OutputStream os = resolver.openOutputStream(uri)) {
+                    if (os == null) throw new IOException("Could not open output stream.");
+                    os.write(bytes);
+                }
+                values.clear();
+                values.put(MediaStore.Downloads.IS_PENDING, 0);
+                resolver.update(uri, values, null, null);
+
+                // Query the actual filename MediaStore assigned (may have added a counter)
+                try (Cursor cursor = resolver.query(uri,
+                        new String[]{MediaStore.Downloads.DISPLAY_NAME}, null, null, null)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        fileName = cursor.getString(0);
+                    }
+                }
+            } else {
+                File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                File file = new File(dir, fileName);
+                int counter = 1;
+                while (file.exists()) {
+                    file = new File(dir, baseName + " (" + counter++ + ").csv");
+                }
+                try (FileOutputStream fos = new FileOutputStream(file)) {
+                    fos.write(bytes);
+                }
+                fileName = file.getName();
+            }
+            Toast.makeText(ctx, "Saved to Downloads: " + fileName, Toast.LENGTH_LONG).show();
+        } catch (IOException e) {
+            Toast.makeText(ctx, "Export failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     /**
@@ -432,6 +531,11 @@ public class EntrantListFragment extends Fragment {
             holder.btnDrawReplacement.setOnClickListener(v ->
                     drawReplacement(holder.itemView.getContext()));
 
+            // Export enrolled entrants to CSV
+            holder.btnExportCsv.setOnClickListener(v ->
+                    exportEnrolledToCsv(new ArrayList<>(tabData.get(TAB_ENROLLED)), names,
+                            holder.itemView.getContext()));
+
             // Custom notification to cancelled entrants — US 02.07.03
             holder.btnSendNotificationCancelled.setOnClickListener(v ->
                     showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_CANCELLED)),
@@ -475,6 +579,7 @@ public class EntrantListFragment extends Fragment {
             final android.widget.Button btnSendWin;
             final android.widget.Button btnSendNotificationInvited;
             final android.widget.Button btnDrawReplacement;
+            final android.widget.Button btnExportCsv;
             final android.widget.Button btnSendNotificationCancelled;
             final android.widget.Button btnSendCustomNotificationWaitlist;
             final android.widget.Button btnSendNotificationWaitlist;
@@ -490,6 +595,7 @@ public class EntrantListFragment extends Fragment {
                 btnSendWin                   = itemView.findViewById(R.id.button_send_win_notification);
                 btnSendNotificationInvited   = itemView.findViewById(R.id.button_send_notification_invited);
                 btnDrawReplacement           = itemView.findViewById(R.id.button_draw_replacement);
+                btnExportCsv                        = itemView.findViewById(R.id.button_export_csv);
                 btnSendNotificationCancelled        = itemView.findViewById(R.id.button_send_notification_cancelled);
                 btnSendCustomNotificationWaitlist   = itemView.findViewById(R.id.button_send_custom_notification_waitlist);
                 btnSendNotificationWaitlist         = itemView.findViewById(R.id.button_send_notification_waitlist);
