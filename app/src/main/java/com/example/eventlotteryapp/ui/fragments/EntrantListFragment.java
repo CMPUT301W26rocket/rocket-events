@@ -49,6 +49,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * US 02.06.04 As an organizer I want to cancel entrants that did not sign up for the event.
  * @author Daniel
  * @author Leyla
+ * @author Santiago
+ * @author William
  */
 public class EntrantListFragment extends Fragment {
 
@@ -264,9 +266,9 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Fills all open spots in the invited list by drawing from the waitlist in one go.
-     * Calculates how many spots are open (lotteryCapacity - currentInvitedCount),
-     * then randomly selects that many from the waitlist (or fewer if the waitlist is smaller).
+     * Fills all open spots by drawing replacements from the waitlist in one go.
+     * Open spots = lotteryCapacity - invited - enrolled.
+     * Draws up to that many entrants randomly; draws fewer if the waitlist is smaller.
      * US 01.05.01 US 02.05.03
      */
     private void drawReplacement(android.content.Context ctx) {
@@ -361,8 +363,8 @@ public class EntrantListFragment extends Fragment {
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
 
-            NamesAdapter.OnItemClickListener clickListener = position != TAB_INVITED ? null
-                    : (entrant, pos) -> {
+            NamesAdapter.OnItemClickListener clickListener = null;
+            if (position == TAB_INVITED) clickListener = (entrant, pos) -> {
                 selectedEntrant = entrant;
 
                 String displayName = names != null
@@ -492,71 +494,9 @@ public class EntrantListFragment extends Fragment {
         }
     }
 
-    // --- Simple names list adapter ---
+    // --- Names list adapter ---
 
-//    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
-//        interface OnItemClickListener {
-//            void onItemClick(String name, int position);
-//        }
-//
-//        private final List<String> names;
-//        private final OnItemClickListener listener;
-//        private int selectedPosition = -1;
-//
-//        NamesAdapter(List<String> names, OnItemClickListener listener) {
-//            this.names = names;
-//            this.listener = listener;
-//        }
-//        @NonNull
-//        @Override
-//        public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-//            View v = LayoutInflater.from(parent.getContext())
-//                    .inflate(R.layout.item_entrant, parent, false);
-//            return new VH(v);
-//        }
-//
-//        @Override
-//        public void onBindViewHolder(@NonNull VH holder, int position) {
-//            String name = names.get(position);
-//
-//            holder.nameView.setText(name);
-//            holder.nameView.setVisibility(View.VISIBLE);
-//            holder.headerView.setVisibility(View.GONE);
-//
-//            if (position == selectedPosition) {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(R.color.color_selected_item)
-//                );            } else {
-//                holder.itemView.setBackgroundColor(
-//                        holder.itemView.getContext().getColor(android.R.color.transparent)
-//                );            }
-//
-//            holder.itemView.setOnClickListener(v -> {
-//                int oldPos = selectedPosition;
-//                selectedPosition = position;
-//
-//                notifyItemChanged(oldPos);
-//                notifyItemChanged(selectedPosition);
-//
-//                if (listener != null) {
-//                    listener.onItemClick(name, position);
-//                }
-//            });
-//        }
-//
-//        @Override
-//        public int getItemCount() { return names.size(); }
-//
-//        static class VH extends RecyclerView.ViewHolder {
-//            final TextView nameView, headerView;
-//            VH(View v) {
-//                super(v);
-//                nameView   = v.findViewById(R.id.text_device_id);
-//                headerView = v.findViewById(R.id.text_section_header);
-//            }
-//        }
-//    }
-private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
+    private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> {
 
     interface OnItemClickListener {
         void onItemClick(Entrant entrant, int position);
@@ -612,11 +552,13 @@ private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> 
 
         if (listener != null) {
             holder.itemView.setOnClickListener(v -> {
+                int adapterPos = holder.getAdapterPosition();
+                if (adapterPos == RecyclerView.NO_ID) return;
                 int oldPos = selectedPosition;
-                selectedPosition = position;
+                selectedPosition = adapterPos;
                 notifyItemChanged(oldPos);
                 notifyItemChanged(selectedPosition);
-                listener.onItemClick(entrant, position);
+                listener.onItemClick(entrant, adapterPos);
             });
         } else {
             holder.itemView.setOnClickListener(null);
@@ -639,6 +581,3 @@ private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> 
     }
 }
 }
-
-
-
