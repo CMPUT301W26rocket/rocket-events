@@ -359,12 +359,15 @@ public class EntrantListFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull PageVH holder, int position) {
-            List<Entrant> entrants = tabData.get(position);
+            final int tabIndex = holder.getBindingAdapterPosition();
+            if (tabIndex == RecyclerView.NO_ID) return;
+
+            List<Entrant> entrants = tabData.get(tabIndex);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
 
             NamesAdapter.OnItemClickListener clickListener = null;
-            if (position == TAB_INVITED) clickListener = (entrant, pos) -> {
+            if (tabIndex == TAB_INVITED) clickListener = (entrant, pos) -> {
                 selectedEntrant = entrant;
 
                 String displayName = names != null
@@ -453,10 +456,10 @@ public class EntrantListFragment extends Fragment {
             holder.emptyText.setVisibility(entrants.isEmpty() ? View.VISIBLE : View.GONE);
 
             // Show the correct button section per tab
-            holder.layoutButtonsInvited.setVisibility(  position == TAB_INVITED   ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsEnrolled.setVisibility( position == TAB_ENROLLED  ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsCancelled.setVisibility(position == TAB_CANCELLED ? View.VISIBLE : View.GONE);
-            holder.layoutButtonsWaitlist.setVisibility( position == TAB_WAITLIST  ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsInvited.setVisibility(  tabIndex == TAB_INVITED   ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsEnrolled.setVisibility( tabIndex == TAB_ENROLLED  ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsCancelled.setVisibility(tabIndex == TAB_CANCELLED ? View.VISIBLE : View.GONE);
+            holder.layoutButtonsWaitlist.setVisibility( tabIndex == TAB_WAITLIST  ? View.VISIBLE : View.GONE);
         }
 
         @Override
@@ -552,7 +555,7 @@ public class EntrantListFragment extends Fragment {
 
         if (listener != null) {
             holder.itemView.setOnClickListener(v -> {
-                int adapterPos = holder.getAdapterPosition();
+                int adapterPos = holder.getBindingAdapterPosition();
                 if (adapterPos == RecyclerView.NO_ID) return;
                 int oldPos = selectedPosition;
                 selectedPosition = adapterPos;
