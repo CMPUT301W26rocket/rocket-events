@@ -228,7 +228,6 @@ public class EntrantListFragment extends Fragment {
                 case Entrant.STATUS_NOT_SELECTED:
                     tabData.get(TAB_WAITLIST).add(e);
                     break;
-                // STATUS_DECLINED falls through to Cancelled tab (shown with label)
             }
         }
         pagerAdapter.setNamesMap(names);
@@ -407,7 +406,8 @@ public class EntrantListFragment extends Fragment {
                         public void onSuccess(Void unused) {
                             Notification n = new Notification(eventId, eventTitle,
                                     Notification.TYPE_REPLACEMENT,
-                                    "You have been given a replacement invitation for " + eventTitle + "!");
+                                    "Great news! A spot has opened up and you've been given a replacement invitation for \""
+                                            + eventTitle + "\". Open the event to accept or decline.");
                             notificationRepository.addNotification(chosen.getDeviceId(), n,
                                     new NotificationRepository.FirestoreCallback<String>() {
                                         @Override public void onSuccess(String id) {}
@@ -507,7 +507,8 @@ public class EntrantListFragment extends Fragment {
             // Send Win Notification to all invited entrants — US 01.04.01
             holder.btnSendWin.setOnClickListener(v ->
                     sendNotificationsToAll(tabData.get(TAB_INVITED), Notification.TYPE_WON,
-                            "You have been selected for " + eventTitle + "! Please accept or decline.",
+                            "Congratulations! You've been selected to enroll in \""
+                                    + eventTitle + "\". Open the event to accept or decline your invitation.",
                             holder.itemView.getContext()));
 
             // Custom notification to invited entrants — US 02.07.02
@@ -553,7 +554,8 @@ public class EntrantListFragment extends Fragment {
                     if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) notSelected.add(e);
                 }
                 sendNotificationsToAll(notSelected, Notification.TYPE_LOST,
-                        "Unfortunately you were not selected for " + eventTitle + ".",
+                        "Unfortunately, you were not selected for \""
+                                + eventTitle + "\". We hope to see you at a future event.",
                         holder.itemView.getContext());
             });
 

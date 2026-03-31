@@ -1,9 +1,13 @@
 package com.example.eventlotteryapp.repository;
 
 import com.example.eventlotteryapp.models.User;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.SetOptions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -105,6 +109,34 @@ public class UserRepository {
                 .document(deviceId)
                 .set(data, SetOptions.merge())
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Searches users whose name, email, or phone contains the given query string (case-insensitive).
+     * Fetches the entire users collection and filters client-side.
+     *
+     * @param query    the search term to match against name, email, or phone
+     * @param callback receives the list of matching {@link User} objects on success
+     */
+    public void searchUsers(String query, FirestoreCallback<List<User>> callback) {
+        String queryLower = query.toLowerCase(Locale.getDefault()).trim();
+        firebaseConnector.getUsersCollection()
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    List<User> results = new ArrayList<>();
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        User user = doc.toObject(User.class);
+                        if (user == null) continue;
+                        String name  = user.getName()  != null ? user.getName().toLowerCase(Locale.getDefault())  : "";
+                        String email = user.getEmail() != null ? user.getEmail().toLowerCase(Locale.getDefault()) : "";
+                        String phone = user.getPhone() != null ? user.getPhone()  : "";
+                        if (name.contains(queryLower) || email.contains(queryLower) || phone.contains(queryLower)) {
+                            results.add(user);
+                        }
+                    }
+                    callback.onSuccess(results);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
 

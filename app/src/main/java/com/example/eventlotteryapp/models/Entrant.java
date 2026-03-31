@@ -20,7 +20,11 @@ public class Entrant {
     /** Status constant indicating the user cancelled their enrollment. */
     public static final String STATUS_CANCELLED    = "cancelled";
     /** Status constant indicating the user was not selected in the lottery draw. */
-    public static final String STATUS_NOT_SELECTED = "not_selected";
+    public static final String STATUS_NOT_SELECTED  = "not_selected";
+    /** Status constant indicating the user has been invited to join a private event's waitlist. */
+    public static final String STATUS_WAITLIST_INVITED  = "waitlist_invited";
+    /** Status constant indicating the user declined an invitation to join a private event's waitlist. */
+    public static final String STATUS_DECLINED_WAITLIST = "declined_waitlist";
 
     private String deviceId;
     private String eventId;   // not stored in Firestore doc, populated after query
