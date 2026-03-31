@@ -288,6 +288,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         args.putLong("registrationCloseDate",
                 currentEvent != null && currentEvent.getRegistrationCloseDate() != null
                         ? currentEvent.getRegistrationCloseDate().getTime() : -1);
+        args.putInt("lotteryCapacity", currentEvent != null ? currentEvent.getLotteryCapacity() : 0);
         fragment.setArguments(args);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()

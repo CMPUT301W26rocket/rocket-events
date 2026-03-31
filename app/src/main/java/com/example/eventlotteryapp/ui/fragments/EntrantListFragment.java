@@ -60,6 +60,7 @@ public class EntrantListFragment extends Fragment {
     private String eventTitle;
     private boolean lotteryCompleted;
     private long registrationCloseDate = -1;
+    private int lotteryCapacity = 0;
     private Entrant selectedEntrant = null;
 
     private EntrantRepository entrantRepository;
@@ -95,6 +96,7 @@ public class EntrantListFragment extends Fragment {
             eventTitle            = getArguments().getString("eventTitle", "Event");
             lotteryCompleted      = getArguments().getBoolean("lotteryCompleted", false);
             registrationCloseDate = getArguments().getLong("registrationCloseDate", -1);
+            lotteryCapacity       = getArguments().getInt("lotteryCapacity", 0);
         }
 
         // Initialise empty lists for each tab
@@ -229,49 +231,79 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
-     * Draws one replacement entrant from the waitlist, updates their status to INVITED,
-     * and sends a TYPE_REPLACEMENT notification.
+     * Fills all open spots in the invited list by drawing from the waitlist in one go.
+     * Calculates how many spots are open (lotteryCapacity - currentInvitedCount),
+     * then randomly selects that many from the waitlist (or fewer if the waitlist is smaller).
      * US 01.05.01 US 02.05.03
      */
     private void drawReplacement(android.content.Context ctx) {
-        List<Entrant> waitlistTab = tabData.get(TAB_WAITLIST);
-        List<Entrant> eligible = new ArrayList<>();
-        for (Entrant e : waitlistTab) {
-            if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())
-                    || Entrant.STATUS_WAITLIST.equals(e.getStatus())) eligible.add(e);
-        }
-        if (eligible.isEmpty()) {
-            Toast.makeText(ctx, "No waitlisted entrants to draw from", Toast.LENGTH_SHORT).show();
+        int currentInvited = tabData.get(TAB_INVITED).size();
+        int currentEnrolled = tabData.get(TAB_ENROLLED).size();
+        int spotsToFill = lotteryCapacity - currentInvited - currentEnrolled;
+
+        if (spotsToFill <= 0) {
+            Toast.makeText(ctx, "No open spots left to draw a replacement.", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        List<Entrant> eligible = new ArrayList<>();
+        for (Entrant e : tabData.get(TAB_WAITLIST)) {
+            if (Entrant.STATUS_WAITLIST.equals(e.getStatus())
+                    || Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) {
+                eligible.add(e);
+            }
+        }
+
+        if (eligible.isEmpty()) {
+            Toast.makeText(ctx, "No one on the waitlist to draw from.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Collections.shuffle(eligible);
-        Entrant chosen = eligible.get(0);
-        entrantRepository.updateStatus(eventId, chosen.getDeviceId(), Entrant.STATUS_INVITED,
-                new EntrantRepository.FirestoreCallback<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        Notification n = new Notification(eventId, eventTitle,
-                                Notification.TYPE_REPLACEMENT,
-                                "You have been given a replacement invitation for " + eventTitle + "!");
-                        notificationRepository.addNotification(chosen.getDeviceId(), n,
-                                new NotificationRepository.FirestoreCallback<String>() {
-                                    @Override public void onSuccess(String id) {}
-                                    @Override public void onFailure(Exception ex) {}
-                                });
-                        if (isAdded()) {
-                            Toast.makeText(ctx,
-                                    "Replacement drawn: " + chosen.getDeviceId(),
-                                    Toast.LENGTH_SHORT).show();
-                            loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView()
-                                    .findViewById(R.id.view_pager)).getAdapter());
+        List<Entrant> toDraw = eligible.subList(0, Math.min(spotsToFill, eligible.size()));
+        int drawCount = toDraw.size();
+
+        AtomicInteger remaining = new AtomicInteger(drawCount);
+        AtomicInteger failures = new AtomicInteger(0);
+
+        for (Entrant chosen : toDraw) {
+            entrantRepository.updateStatus(eventId, chosen.getDeviceId(), Entrant.STATUS_INVITED,
+                    new EntrantRepository.FirestoreCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            Notification n = new Notification(eventId, eventTitle,
+                                    Notification.TYPE_REPLACEMENT,
+                                    "You have been given a replacement invitation for " + eventTitle + "!");
+                            notificationRepository.addNotification(chosen.getDeviceId(), n,
+                                    new NotificationRepository.FirestoreCallback<String>() {
+                                        @Override public void onSuccess(String id) {}
+                                        @Override public void onFailure(Exception ex) {}
+                                    });
+                            checkDone();
                         }
-                    }
-                    @Override
-                    public void onFailure(Exception e) {
-                        if (isAdded()) Toast.makeText(ctx,
-                                "Failed to draw replacement", Toast.LENGTH_SHORT).show();
-                    }
-                });
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            failures.incrementAndGet();
+                            checkDone();
+                        }
+
+                        private void checkDone() {
+                            if (remaining.decrementAndGet() == 0 && isAdded()) {
+                                int succeeded = drawCount - failures.get();
+                                if (succeeded > 0) {
+                                    Toast.makeText(ctx,
+                                            "Drew " + succeeded + " replacement(s) from the waitlist.",
+                                            Toast.LENGTH_SHORT).show();
+                                    loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView()
+                                            .findViewById(R.id.view_pager)).getAdapter());
+                                } else {
+                                    Toast.makeText(ctx, "Failed to draw replacements.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        }
+                    });
+        }
     }
 
     // --- ViewPager2 adapter ---
@@ -295,11 +327,16 @@ public class EntrantListFragment extends Fragment {
             List<Entrant> entrants = tabData.get(position);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
-            holder.recycler.setAdapter(new NamesAdapter(entrants, names, (entrant, pos) -> {
+
+            NamesAdapter.OnItemClickListener clickListener = position != TAB_INVITED ? null
+                    : (entrant, pos) -> {
                 selectedEntrant = entrant;
 
+                String displayName = names != null
+                        ? names.getOrDefault(entrant.getDeviceId(), entrant.getDeviceId())
+                        : entrant.getDeviceId();
                 Toast.makeText(holder.recycler.getContext(),
-                        "Clicked: " + entrant.getDeviceId(),
+                        "Selected: " + displayName,
                         Toast.LENGTH_SHORT).show();
 
                 holder.layoutButtonsInvited.findViewById(R.id.button_cancel_entrant)
@@ -314,7 +351,7 @@ public class EntrantListFragment extends Fragment {
                                         @Override
                                         public void onSuccess(Void unused) {
                                             Toast.makeText(holder.itemView.getContext(),
-                                                    "Cancelled: " + selectedEntrant.getDeviceId(),
+                                                    "Cancelled: " + displayName,
                                                     Toast.LENGTH_SHORT).show();
                                             loadEntrants((EntrantPagerAdapter) ((ViewPager2) requireView().findViewById(R.id.view_pager)).getAdapter());
                                             selectedEntrant = null;
@@ -326,7 +363,9 @@ public class EntrantListFragment extends Fragment {
                                         }
                                     });
                         });
-            }));
+            };
+
+            holder.recycler.setAdapter(new NamesAdapter(entrants, names, clickListener));
 
             // Send Win Notification to all invited entrants — US 01.04.01
             holder.btnSendWin.setOnClickListener(v ->
@@ -520,27 +559,25 @@ private static class NamesAdapter extends RecyclerView.Adapter<NamesAdapter.VH> 
         holder.nameView.setVisibility(View.VISIBLE);
         holder.headerView.setVisibility(View.GONE);
 
-        if (position == selectedPosition) {
+        if (listener != null && position == selectedPosition) {
             holder.itemView.setBackgroundColor(
-                    holder.itemView.getContext().getColor(R.color.color_selected_item)
-            );
+                    holder.itemView.getContext().getColor(R.color.color_selected_item));
         } else {
             holder.itemView.setBackgroundColor(
-                    holder.itemView.getContext().getColor(android.R.color.transparent)
-            );
+                    holder.itemView.getContext().getColor(android.R.color.transparent));
         }
 
-        holder.itemView.setOnClickListener(v -> {
-            int oldPos = selectedPosition;
-            selectedPosition = position;
-
-            notifyItemChanged(oldPos);
-            notifyItemChanged(selectedPosition);
-
-            if (listener != null) {
+        if (listener != null) {
+            holder.itemView.setOnClickListener(v -> {
+                int oldPos = selectedPosition;
+                selectedPosition = position;
+                notifyItemChanged(oldPos);
+                notifyItemChanged(selectedPosition);
                 listener.onItemClick(entrant, position);
-            }
-        });
+            });
+        } else {
+            holder.itemView.setOnClickListener(null);
+        }
     }
 
     @Override
