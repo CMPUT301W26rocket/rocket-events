@@ -1,9 +1,12 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -231,6 +234,36 @@ public class EntrantListFragment extends Fragment {
     }
 
     /**
+     * Shows a dialog for the organizer to type a custom message,
+     * then sends it to every entrant in {@code targets}.
+     */
+    private void showCustomNotificationDialog(List<Entrant> targets, String type, Context ctx) {
+        if (targets.isEmpty()) {
+            Toast.makeText(ctx, "No entrants in this category.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        EditText input = new EditText(ctx);
+        input.setHint("Enter your message...");
+        input.setPadding(48, 24, 48, 24);
+
+        new AlertDialog.Builder(ctx)
+                .setTitle("Send Notification")
+                .setMessage("Your message will be sent to " + targets.size() + " entrant(s).")
+                .setView(input)
+                .setPositiveButton("Send", (dialog, which) -> {
+                    String message = input.getText().toString().trim();
+                    if (message.isEmpty()) {
+                        Toast.makeText(ctx, "Message cannot be empty.", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    sendNotificationsToAll(targets, type, message, ctx);
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
      * Fills all open spots in the invited list by drawing from the waitlist in one go.
      * Calculates how many spots are open (lotteryCapacity - currentInvitedCount),
      * then randomly selects that many from the waitlist (or fewer if the waitlist is smaller).
@@ -373,11 +406,10 @@ public class EntrantListFragment extends Fragment {
                             "You have been selected for " + eventTitle + "! Please accept or decline.",
                             holder.itemView.getContext()));
 
-            // General notification to invited entrants — US 02.07.02
+            // Custom notification to invited entrants — US 02.07.02
             holder.btnSendNotificationInvited.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_INVITED), Notification.TYPE_GENERAL,
-                            "A message from the organizer of " + eventTitle + ".",
-                            holder.itemView.getContext()));
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_INVITED)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
 
             // Draw replacement — US 01.05.01 US 02.05.03; only enabled when lottery done + reg closed
             boolean regClosed = registrationCloseDate > 0
@@ -395,17 +427,26 @@ public class EntrantListFragment extends Fragment {
             holder.btnDrawReplacement.setOnClickListener(v ->
                     drawReplacement(holder.itemView.getContext()));
 
-            // Notify cancelled entrants — US 02.07.03
+            // Custom notification to cancelled entrants — US 02.07.03
             holder.btnSendNotificationCancelled.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_CANCELLED), Notification.TYPE_GENERAL,
-                            "You have been removed from " + eventTitle + ".",
-                            holder.itemView.getContext()));
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_CANCELLED)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
 
-            // Notify waitlist / not-selected entrants — US 01.04.02 US 02.07.01
-            holder.btnSendNotificationWaitlist.setOnClickListener(v ->
-                    sendNotificationsToAll(tabData.get(TAB_WAITLIST), Notification.TYPE_LOST,
-                            "Unfortunately you were not selected for " + eventTitle + ".",
-                            holder.itemView.getContext()));
+            // Custom notification to all waitlist entrants — US 02.07.01
+            holder.btnSendCustomNotificationWaitlist.setOnClickListener(v ->
+                    showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_WAITLIST)),
+                            Notification.TYPE_GENERAL, holder.itemView.getContext()));
+
+            // Send Loss Notification to not-selected entrants only — US 01.04.02
+            holder.btnSendNotificationWaitlist.setOnClickListener(v -> {
+                List<Entrant> notSelected = new ArrayList<>();
+                for (Entrant e : tabData.get(TAB_WAITLIST)) {
+                    if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) notSelected.add(e);
+                }
+                sendNotificationsToAll(notSelected, Notification.TYPE_LOST,
+                        "Unfortunately you were not selected for " + eventTitle + ".",
+                        holder.itemView.getContext());
+            });
 
             holder.emptyText.setVisibility(entrants.isEmpty() ? View.VISIBLE : View.GONE);
 
@@ -430,6 +471,7 @@ public class EntrantListFragment extends Fragment {
             final android.widget.Button btnSendNotificationInvited;
             final android.widget.Button btnDrawReplacement;
             final android.widget.Button btnSendNotificationCancelled;
+            final android.widget.Button btnSendCustomNotificationWaitlist;
             final android.widget.Button btnSendNotificationWaitlist;
 
             PageVH(@NonNull View itemView) {
@@ -443,8 +485,9 @@ public class EntrantListFragment extends Fragment {
                 btnSendWin                   = itemView.findViewById(R.id.button_send_win_notification);
                 btnSendNotificationInvited   = itemView.findViewById(R.id.button_send_notification_invited);
                 btnDrawReplacement           = itemView.findViewById(R.id.button_draw_replacement);
-                btnSendNotificationCancelled = itemView.findViewById(R.id.button_send_notification_cancelled);
-                btnSendNotificationWaitlist  = itemView.findViewById(R.id.button_send_notification_waitlist);
+                btnSendNotificationCancelled        = itemView.findViewById(R.id.button_send_notification_cancelled);
+                btnSendCustomNotificationWaitlist   = itemView.findViewById(R.id.button_send_custom_notification_waitlist);
+                btnSendNotificationWaitlist         = itemView.findViewById(R.id.button_send_notification_waitlist);
             }
         }
     }
