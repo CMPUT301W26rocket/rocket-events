@@ -31,6 +31,9 @@ import java.util.Locale;
  * US 01.04.02 As an entrant I want to receive notification when I am not chosen (loss notification).
  * US 01.05.01 As an entrant I want another chance when a selected user declines (replacement notification).
  * US 01.05.02 As an entrant I want to accept the invitation (tap notification → event details).
+ * US 01.05.06 As an entrant, I want to receive a notification that I've been invited to join the waiting list for a private event.
+ * US 01.09.01 As an entrant, I want to receive a notification if I have been invited to be a co-organizer for an event.
+ * @author William
  */
 public class NotificationsFragment extends Fragment {
 

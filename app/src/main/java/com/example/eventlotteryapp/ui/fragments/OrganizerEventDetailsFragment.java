@@ -1,5 +1,6 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +12,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -24,6 +27,7 @@ import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.CommentRepository;
 import com.example.eventlotteryapp.repository.EntrantRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.repository.ImageRepository;
 import com.example.eventlotteryapp.repository.UserRepository;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ListenerRegistration;
@@ -39,12 +43,9 @@ import java.util.Locale;
  * Fragment that displays the details of an event from the organizer's perspective.
  * Shows event information such as poster, title, description, dates, capacity, etc.
  * User Stories Implemented:
+ * US 02.04.02 As an organizer I want to update an event poster to provide visual information to entrants.
  * US 02.08.01 As an organizer, I want to view and delete entrant comments on my event.
  * US 02.08.02 As an organizer, I want to comment on my events so that I can share updates, answer questions, or engage with entrants in the event discussion.
- *
- * User Stories Left:
- * US 02.04.02 As an organizer I want to update an event poster to provide visual information to entrants.
- * US 02.05.03 As an organizer I want to be able to draw a replacement applicant from the pooling system when a previously selected applicant cancels or rejects the invitation.
  * @author Santiago
  * @author Leyla
  * @co-author Daniel
@@ -77,8 +78,14 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private EntrantRepository entrantRepository;
     private CommentRepository commentRepository;
     private UserRepository userRepository;
+    private ImageRepository imageRepository;
     private ListenerRegistration commentsListener;
     private String currentUserName;
+
+    private final ActivityResultLauncher<String> posterGalleryLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) uploadNewPoster(uri);
+            });
 
 
     /**
@@ -142,10 +149,14 @@ public class OrganizerEventDetailsFragment extends Fragment {
         if (entrantRepository == null) entrantRepository = new EntrantRepository();
         if (commentRepository == null) commentRepository = new CommentRepository();
         if (userRepository == null)    userRepository    = new UserRepository();
+        if (imageRepository == null)   imageRepository   = new ImageRepository();
 
         loadEventDetails();
         loadCurrentUserName();
         attachCommentsListener();
+        view.findViewById(R.id.button_update_poster).setOnClickListener(v ->
+                posterGalleryLauncher.launch("image/*"));
+
         lotteryButton.setOnClickListener(v -> handleLotteryClick());
         entrantsButton.setOnClickListener(v -> openEntrantList());
         inviteWaitlistButton.setOnClickListener(v -> openInviteToWaitlist());
@@ -323,6 +334,53 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    /**
+     * Uploads a new poster image to Firebase Storage and updates the event's
+     * {@code posterUrl} field in Firestore. Shows the new image immediately on success.
+     *
+     * @param uri the URI of the image selected from the gallery
+     */
+    private void uploadNewPoster(Uri uri) {
+        if (eventId == null || deviceId == null) return;
+        Toast.makeText(getContext(), "Uploading poster...", Toast.LENGTH_SHORT).show();
+
+        imageRepository.uploadEventPoster(requireContext(), deviceId, uri,
+                new ImageRepository.UploadCallback() {
+                    @Override
+                    public void onSuccess(String downloadUrl) {
+                        if (!isAdded()) return;
+                        eventRepository.updatePosterUrl(eventId, downloadUrl,
+                                new EventRepository.FirestoreCallback<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        if (!isAdded()) return;
+                                        if (currentEvent != null) currentEvent.setPosterUrl(downloadUrl);
+                                        com.bumptech.glide.Glide.with(OrganizerEventDetailsFragment.this)
+                                                .load(downloadUrl)
+                                                .centerCrop()
+                                                .placeholder(R.drawable.ic_image_placeholder)
+                                                .into(posterImageView);
+                                        Toast.makeText(getContext(), "Poster updated!", Toast.LENGTH_SHORT).show();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Exception e) {
+                                        if (isAdded()) {
+                                            Toast.makeText(getContext(), "Failed to save poster URL.", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Failed to upload poster.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     /**

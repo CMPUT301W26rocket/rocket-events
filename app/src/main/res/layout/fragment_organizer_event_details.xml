@@ -36,6 +36,18 @@
                 android:background="@drawable/poster_placeholder_bg"
                 android:src="@drawable/ic_image_placeholder" />
 
+            <Button
+                android:id="@+id/button_update_poster"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="12dp"
+                android:layout_marginTop="8dp"
+                android:text="Update Poster"
+                android:textSize="13sp"
+                android:backgroundTint="@color/color_primary"
+                android:textColor="#FFFFFF" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
