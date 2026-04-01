@@ -371,11 +371,34 @@ public class OrganizerEventDetailsFragment extends Fragment {
             View item = LayoutInflater.from(getContext())
                     .inflate(R.layout.item_comment, commentsContainer, false);
             ((TextView) item.findViewById(R.id.comment_author)).setText(comment.getAuthorName());
-            ((TextView) item.findViewById(R.id.comment_text)).setText(comment.getText());
+            TextView commentText = item.findViewById(R.id.comment_text);
+            TextView showMore = item.findViewById(R.id.comment_show_more);
+            commentText.setText(comment.getText());
             String time = comment.getTimestamp() != null
                     ? COMMENT_DATE_FORMAT.format(comment.getTimestamp().toDate())
                     : "";
             ((TextView) item.findViewById(R.id.comment_timestamp)).setText(time);
+            commentsContainer.addView(item);
+            commentText.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    commentText.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    android.text.Layout layout = commentText.getLayout();
+                    if (layout != null && layout.getLineCount() >= 4
+                            && layout.getEllipsisCount(layout.getLineCount() - 1) > 0) {
+                        showMore.setVisibility(View.VISIBLE);
+                        showMore.setOnClickListener(v -> {
+                            if (commentText.getMaxLines() == 4) {
+                                commentText.setMaxLines(Integer.MAX_VALUE);
+                                showMore.setText("Show less");
+                            } else {
+                                commentText.setMaxLines(4);
+                                showMore.setText("Show more");
+                            }
+                        });
+                    }
+                }
+            });
 
             TextView deleteButton = item.findViewById(R.id.comment_delete);
             deleteButton.setVisibility(View.VISIBLE);
@@ -388,8 +411,6 @@ public class OrganizerEventDetailsFragment extends Fragment {
                                             "Failed to delete comment", Toast.LENGTH_SHORT).show();
                                 }
                             }));
-
-            commentsContainer.addView(item);
         }
     }
 

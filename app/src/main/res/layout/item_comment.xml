@@ -35,7 +35,19 @@
         android:layout_height="wrap_content"
         android:textSize="14sp"
         android:textColor="@color/color_text_dark"
-        android:layout_marginTop="3dp" />
+        android:layout_marginTop="3dp"
+        android:maxLines="4"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/comment_show_more"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show more"
+        android:textSize="12sp"
+        android:textColor="@color/color_primary"
+        android:layout_marginTop="2dp"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/comment_delete"
