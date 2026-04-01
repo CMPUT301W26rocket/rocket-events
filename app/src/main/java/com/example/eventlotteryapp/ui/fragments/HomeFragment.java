@@ -137,6 +137,7 @@ public class HomeFragment extends Fragment {
 
         setupSearch();
         setupFilterChips();
+        chipAvailable.setSelected(true);
         loadAllEvents();
 
         return view;
