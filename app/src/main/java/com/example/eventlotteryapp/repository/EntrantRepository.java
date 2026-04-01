@@ -228,6 +228,28 @@ public class EntrantRepository {
     }
 
     /**
+     * Assigns a user as a co-organizer for an event by creating an entrant document with
+     * status {@link Entrant#STATUS_CO_ORGANIZER}. This prevents the user from joining
+     * the event's waitlist pool.
+     *
+     * @param eventId  the ID of the event
+     * @param deviceId the device ID of the user being assigned as co-organizer
+     * @param callback receives {@code null} on success
+     */
+    public void assignCoOrganizer(String eventId, String deviceId,
+                                  FirestoreCallback<Void> callback) {
+        Timestamp now = Timestamp.now();
+        Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_CO_ORGANIZER, now, now);
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(deviceId)
+                .set(entrant)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Invites a user to a private event's waitlist by creating an entrant document with
      * status {@link Entrant#STATUS_WAITLIST_INVITED}. Does not increment the waitlist count
      * since the user has not yet accepted.

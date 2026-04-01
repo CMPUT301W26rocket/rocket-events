@@ -25,6 +25,8 @@ public class Entrant {
     public static final String STATUS_WAITLIST_INVITED  = "waitlist_invited";
     /** Status constant indicating the user declined an invitation to join a private event's waitlist. */
     public static final String STATUS_DECLINED_WAITLIST = "declined_waitlist";
+    /** Status constant indicating the user has been assigned as a co-organizer for this event. */
+    public static final String STATUS_CO_ORGANIZER      = "co_organizer";
 
     private String deviceId;
     private String eventId;   // not stored in Firestore doc, populated after query

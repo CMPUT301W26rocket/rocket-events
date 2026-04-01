@@ -128,6 +128,7 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
             case Entrant.STATUS_NOT_SELECTED:      return "Not Selected";
             case Entrant.STATUS_WAITLIST_INVITED:  return "Invited to Join Waitlist";
             case Entrant.STATUS_DECLINED_WAITLIST: return "Waitlist Invite Declined";
+            case Entrant.STATUS_CO_ORGANIZER:      return "Co-organizer";
             default:                               return status;
         }
     }

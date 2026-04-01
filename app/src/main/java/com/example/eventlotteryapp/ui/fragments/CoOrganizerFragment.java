@@ -25,25 +25,29 @@ import com.example.eventlotteryapp.repository.NotificationRepository;
 import com.example.eventlotteryapp.repository.UserRepository;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Fragment that allows an organizer to invite specific users to a private event's waitlist.
- * Provides a search bar to find users by name, email, or phone number. Inviting a user
- * creates an entrant document with status {@link Entrant#STATUS_WAITLIST_INVITED} and sends
- * a {@link Notification#TYPE_WAITLIST_INVITE} notification to the invited user.
+ * Fragment that allows an organizer to assign a user as a co-organizer for their event.
+ * Provides a search bar to find users by name, email, or phone number. Assigning a user
+ * creates an entrant document with status {@link Entrant#STATUS_CO_ORGANIZER}, which
+ * prevents them from joining the event's waitlist pool, and sends a
+ * {@link Notification#TYPE_CO_ORGANIZER} notification to inform them of the assignment.
  *
- * <p>Navigate here from {@link OrganizerEventDetailsFragment} for private events.
- * Pass {@code eventId}, {@code eventTitle}, and {@code organizerDeviceId} as fragment arguments.
+ * <p>Navigate here from {@link OrganizerEventDetailsFragment} via the "Assign Co-Organizer"
+ * button. Pass {@code eventId}, {@code eventTitle}, and {@code organizerDeviceId} as
+ * fragment arguments.
  *
  * User Stories Implemented:
- * US 02.01.03 As an organizer, I want to invite specific entrants to a private event's waiting
- *             list by searching via name, phone number and/or email.
- * US 01.05.06 As an entrant, I want to receive a notification that I've been invited to join
- *             the waiting list for a private event.
+ * US 02.01.04 As an organizer, I want to assign an entrant as a co-organizer for my event,
+ *             which prevents them from joining the entrant pool for that event.
+ * US 01.05.08 As an entrant, I want to receive a notification if I have been invited to be
+ *             a co-organizer for an event.
  * @author Leyla
  */
-public class InviteToWaitlistFragment extends Fragment {
+public class CoOrganizerFragment extends Fragment {
 
     private String eventId;
     private String eventTitle;
@@ -59,10 +63,10 @@ public class InviteToWaitlistFragment extends Fragment {
     private NotificationRepository notificationRepository;
 
     /** Maps deviceId → status for all existing entrants of this event. Populated on load. */
-    private final java.util.Map<String, String> existingStatuses = new java.util.HashMap<>();
+    private final Map<String, String> existingStatuses = new HashMap<>();
 
     /** Required empty public constructor. */
-    public InviteToWaitlistFragment() {}
+    public CoOrganizerFragment() {}
 
     @Nullable
     @Override
@@ -70,7 +74,7 @@ public class InviteToWaitlistFragment extends Fragment {
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_invite_to_waitlist, container, false);
+        View view = inflater.inflate(R.layout.fragment_co_organizer, container, false);
 
         if (getArguments() != null) {
             eventId           = getArguments().getString("eventId");
@@ -78,12 +82,12 @@ public class InviteToWaitlistFragment extends Fragment {
             organizerDeviceId = getArguments().getString("organizerDeviceId");
         }
 
-        userRepository        = new UserRepository();
-        entrantRepository     = new EntrantRepository();
+        userRepository         = new UserRepository();
+        entrantRepository      = new EntrantRepository();
         notificationRepository = new NotificationRepository();
 
-        editSearch    = view.findViewById(R.id.edit_search);
-        textStatus    = view.findViewById(R.id.text_status);
+        editSearch      = view.findViewById(R.id.edit_search);
+        textStatus      = view.findViewById(R.id.text_status);
         recyclerResults = view.findViewById(R.id.recycler_search_results);
 
         adapter = new SearchResultsAdapter();
@@ -109,15 +113,14 @@ public class InviteToWaitlistFragment extends Fragment {
     }
 
     /**
-     * Fetches all existing entrant docs for this event and caches their statuses in
-     * {@code existingStatuses}. Called once on fragment load so search results can
-     * immediately reflect who has already been invited.
+     * Fetches all existing entrant docs for this event and caches their statuses so
+     * search results immediately reflect who is already assigned or on the event.
      */
     private void loadExistingEntrants() {
         entrantRepository.getAllEntrantsForEvent(eventId,
-                new EntrantRepository.FirestoreCallback<java.util.List<Entrant>>() {
+                new EntrantRepository.FirestoreCallback<List<Entrant>>() {
                     @Override
-                    public void onSuccess(java.util.List<Entrant> entrants) {
+                    public void onSuccess(List<Entrant> entrants) {
                         existingStatuses.clear();
                         for (Entrant e : entrants) {
                             existingStatuses.put(e.getDeviceId(), e.getStatus());
@@ -125,14 +128,13 @@ public class InviteToWaitlistFragment extends Fragment {
                         adapter.notifyDataSetChanged();
                     }
                     @Override
-                    public void onFailure(Exception e) { /* statuses stay empty; invite buttons enabled */ }
+                    public void onFailure(Exception e) { /* buttons default to enabled */ }
                 });
     }
 
     /**
-     * Reads the search query from the input field and searches users via
-     * {@link UserRepository#searchUsers}. Excludes the organizer from results.
-     * Updates the RecyclerView with matching users.
+     * Searches users by name, email, or phone and displays matching results.
+     * Excludes the organizer from results.
      */
     private void runSearch() {
         String query = editSearch.getText().toString().trim();
@@ -148,12 +150,9 @@ public class InviteToWaitlistFragment extends Fragment {
             @Override
             public void onSuccess(List<User> users) {
                 if (!isAdded()) return;
-                // Exclude the organizer themselves
                 List<User> filtered = new ArrayList<>();
                 for (User u : users) {
-                    if (!u.getDeviceId().equals(organizerDeviceId)) {
-                        filtered.add(u);
-                    }
+                    if (!u.getDeviceId().equals(organizerDeviceId)) filtered.add(u);
                 }
                 adapter.setResults(filtered);
                 if (filtered.isEmpty()) {
@@ -172,15 +171,14 @@ public class InviteToWaitlistFragment extends Fragment {
     }
 
     /**
-     * Invites the given user to the private event's waitlist.
-     * Checks if the user is already an entrant first; if so, shows an appropriate message.
-     * On success, creates the entrant doc with {@link Entrant#STATUS_WAITLIST_INVITED}
-     * and sends a {@link Notification#TYPE_WAITLIST_INVITE} notification.
+     * Assigns the given user as co-organizer. Checks first if they already have a status
+     * on this event — if they are already a co-organizer or an active entrant, shows an
+     * appropriate message instead of reassigning.
      *
-     * @param user   the user to invite
-     * @param button the "Invite" button in the row (disabled during the operation)
+     * @param user   the user to assign
+     * @param button the "Assign" button in the row (updated on completion)
      */
-    private void inviteUser(User user, Button button) {
+    private void assignCoOrganizer(User user, Button button) {
         button.setEnabled(false);
         button.setText("...");
 
@@ -189,27 +187,15 @@ public class InviteToWaitlistFragment extends Fragment {
                     @Override
                     public void onSuccess(Entrant existing) {
                         if (!isAdded()) return;
-                        if (existing != null) {
-                            String status = existing.getStatus();
-                            if (Entrant.STATUS_WAITLIST_INVITED.equals(status)) {
-                                Toast.makeText(getContext(),
-                                        user.getName() + " is already invited.",
-                                        Toast.LENGTH_SHORT).show();
-                            } else if (Entrant.STATUS_WAITLIST.equals(status)
-                                    || Entrant.STATUS_INVITED.equals(status)
-                                    || Entrant.STATUS_ENROLLED.equals(status)) {
-                                Toast.makeText(getContext(),
-                                        user.getName() + " is already on this event.",
-                                        Toast.LENGTH_SHORT).show();
-                            } else {
-                                // Declined waitlist or other terminal state — re-invite
-                                proceedWithInvite(user, button);
-                                return;
-                            }
-                            button.setEnabled(true);
-                            button.setText("Invite");
+                        if (existing != null
+                                && Entrant.STATUS_CO_ORGANIZER.equals(existing.getStatus())) {
+                            Toast.makeText(getContext(),
+                                    user.getName() + " is already a co-organizer.",
+                                    Toast.LENGTH_SHORT).show();
+                            button.setEnabled(false);
+                            button.setText("Assigned");
                         } else {
-                            proceedWithInvite(user, button);
+                            proceedWithAssignment(user, button);
                         }
                     }
 
@@ -218,57 +204,57 @@ public class InviteToWaitlistFragment extends Fragment {
                         if (isAdded()) {
                             Toast.makeText(getContext(), "Failed to check status.", Toast.LENGTH_SHORT).show();
                             button.setEnabled(true);
-                            button.setText("Invite");
+                            button.setText("Assign");
                         }
                     }
                 });
     }
 
     /**
-     * Performs the actual invite: creates the entrant doc and sends the notification.
+     * Creates the co-organizer entrant doc and sends the assignment notification.
      *
-     * @param user   the user to invite
-     * @param button the row's invite button (re-enabled on completion)
+     * @param user   the user to assign
+     * @param button the row's assign button
      */
-    private void proceedWithInvite(User user, Button button) {
-        entrantRepository.inviteToPrivateWaitlist(eventId, user.getDeviceId(),
+    private void proceedWithAssignment(User user, Button button) {
+        entrantRepository.assignCoOrganizer(eventId, user.getDeviceId(),
                 new EntrantRepository.FirestoreCallback<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
                         if (!isAdded()) return;
-                        existingStatuses.put(user.getDeviceId(), Entrant.STATUS_WAITLIST_INVITED);
-                        sendInviteNotification(user.getDeviceId());
+                        existingStatuses.put(user.getDeviceId(), Entrant.STATUS_CO_ORGANIZER);
+                        sendCoOrganizerNotification(user.getDeviceId());
                         Toast.makeText(getContext(),
-                                user.getName() + " invited!", Toast.LENGTH_SHORT).show();
+                                user.getName() + " assigned as co-organizer!", Toast.LENGTH_SHORT).show();
                         button.setEnabled(false);
-                        button.setText("Invited");
+                        button.setText("Assigned");
                     }
 
                     @Override
                     public void onFailure(Exception e) {
                         if (isAdded()) {
-                            Toast.makeText(getContext(), "Failed to invite. Please try again.",
+                            Toast.makeText(getContext(), "Failed to assign. Please try again.",
                                     Toast.LENGTH_SHORT).show();
                             button.setEnabled(true);
-                            button.setText("Invite");
+                            button.setText("Assign");
                         }
                     }
                 });
     }
 
     /**
-     * Sends a waitlist invitation notification to the specified user.
+     * Sends a co-organizer assignment notification to the specified user.
      *
-     * @param recipientDeviceId the device ID of the invited user
+     * @param recipientDeviceId the device ID of the assigned co-organizer
      */
-    private void sendInviteNotification(String recipientDeviceId) {
+    private void sendCoOrganizerNotification(String recipientDeviceId) {
         String title = eventTitle != null ? eventTitle : "an event";
         Notification notification = new Notification(
                 eventId,
                 title,
-                Notification.TYPE_WAITLIST_INVITE,
-                "You've been personally invited to join the waitlist for the private event \""
-                        + title + "\". Click to accept or decline your invitation."
+                Notification.TYPE_CO_ORGANIZER,
+                "You've been assigned as a co-organizer for the event \"" + title + "\". "
+                        + "You can view the event in your event history."
         );
         notificationRepository.addNotification(recipientDeviceId, notification,
                 new NotificationRepository.FirestoreCallback<String>() {
@@ -281,10 +267,6 @@ public class InviteToWaitlistFragment extends Fragment {
     // Adapter
     // -----------------------------------------------------------------------------------------
 
-    /**
-     * RecyclerView adapter that displays a list of {@link User} search results,
-     * each with an "Invite" button.
-     */
     private class SearchResultsAdapter extends RecyclerView.Adapter<SearchResultsAdapter.ViewHolder> {
 
         private List<User> results = new ArrayList<>();
@@ -314,20 +296,15 @@ public class InviteToWaitlistFragment extends Fragment {
             } else {
                 holder.textPhone.setVisibility(View.GONE);
             }
+
             String status = existingStatuses.get(user.getDeviceId());
-            if (Entrant.STATUS_WAITLIST_INVITED.equals(status)) {
-                holder.buttonInvite.setEnabled(false);
-                holder.buttonInvite.setText("Invited");
-            } else if (status != null
-                    && (Entrant.STATUS_WAITLIST.equals(status)
-                    || Entrant.STATUS_INVITED.equals(status)
-                    || Entrant.STATUS_ENROLLED.equals(status))) {
-                holder.buttonInvite.setEnabled(false);
-                holder.buttonInvite.setText("On Event");
+            if (Entrant.STATUS_CO_ORGANIZER.equals(status)) {
+                holder.buttonAssign.setEnabled(false);
+                holder.buttonAssign.setText("Assigned");
             } else {
-                holder.buttonInvite.setEnabled(true);
-                holder.buttonInvite.setText("Invite");
-                holder.buttonInvite.setOnClickListener(v -> inviteUser(user, holder.buttonInvite));
+                holder.buttonAssign.setEnabled(true);
+                holder.buttonAssign.setText("Assign");
+                holder.buttonAssign.setOnClickListener(v -> assignCoOrganizer(user, holder.buttonAssign));
             }
         }
 
@@ -336,14 +313,14 @@ public class InviteToWaitlistFragment extends Fragment {
 
         class ViewHolder extends RecyclerView.ViewHolder {
             TextView textName, textEmail, textPhone;
-            Button buttonInvite;
+            Button buttonAssign;
 
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                textName    = itemView.findViewById(R.id.text_user_name);
-                textEmail   = itemView.findViewById(R.id.text_user_email);
-                textPhone   = itemView.findViewById(R.id.text_user_phone);
-                buttonInvite = itemView.findViewById(R.id.button_invite);
+                textName     = itemView.findViewById(R.id.text_user_name);
+                textEmail    = itemView.findViewById(R.id.text_user_email);
+                textPhone    = itemView.findViewById(R.id.text_user_phone);
+                buttonAssign = itemView.findViewById(R.id.button_invite); // reuses item_user_search layout
             }
         }
     }

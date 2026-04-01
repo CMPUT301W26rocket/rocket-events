@@ -66,6 +66,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private Button lotteryButton;
     private Button entrantsButton;
     private Button inviteWaitlistButton;
+    private Button coOrganizerButton;
     private LinearLayout commentsContainer;
     private TextView noCommentsText;
     private EditText commentInput;
@@ -123,6 +124,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         lotteryButton        = view.findViewById(R.id.lottery_button);
         entrantsButton       = view.findViewById(R.id.entrants_button);
         inviteWaitlistButton = view.findViewById(R.id.invite_waitlist_button);
+        coOrganizerButton    = view.findViewById(R.id.co_organizer_button);
         commentsContainer = view.findViewById(R.id.comments_container);
         noCommentsText    = view.findViewById(R.id.text_no_comments);
         commentInput      = view.findViewById(R.id.edit_comment_input);
@@ -147,6 +149,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         lotteryButton.setOnClickListener(v -> handleLotteryClick());
         entrantsButton.setOnClickListener(v -> openEntrantList());
         inviteWaitlistButton.setOnClickListener(v -> openInviteToWaitlist());
+        coOrganizerButton.setOnClickListener(v -> openCoOrganizer());
         sendCommentButton.setOnClickListener(v -> handleSendComment());
 
         return view;
@@ -308,6 +311,26 @@ public class OrganizerEventDetailsFragment extends Fragment {
      */
     private void openInviteToWaitlist() {
         InviteToWaitlistFragment fragment = new InviteToWaitlistFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        args.putString("eventTitle", currentEvent != null ? currentEvent.getTitle() : "Event");
+        args.putString("organizerDeviceId", deviceId);
+        fragment.setArguments(args);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+                        R.anim.slide_in_left, R.anim.slide_out_right)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    /**
+     * Opens {@link CoOrganizerFragment} so the organizer can search and assign a
+     * co-organizer for this event.
+     */
+    private void openCoOrganizer() {
+        CoOrganizerFragment fragment = new CoOrganizerFragment();
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
         args.putString("eventTitle", currentEvent != null ? currentEvent.getTitle() : "Event");

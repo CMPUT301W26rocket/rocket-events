@@ -228,12 +228,24 @@
     <!-- Fixed action button at bottom -->
 
     <Button
-        android:id="@+id/invite_waitlist_button"
+        android:id="@+id/co_organizer_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp"
+        android:padding="14dp"
+        android:text="Assign Co-Organizer"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/invite_waitlist_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="0dp"
         android:layout_marginBottom="6dp"
         android:padding="14dp"
         android:text="Invite to Waitlist"
