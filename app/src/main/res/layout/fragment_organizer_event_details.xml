@@ -228,12 +228,25 @@
     <!-- Fixed action button at bottom -->
 
     <Button
-        android:id="@+id/entrants_button"
+        android:id="@+id/invite_waitlist_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp"
+        android:padding="14dp"
+        android:text="Invite to Waitlist"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/entrants_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="0dp"
         android:layout_marginBottom="6dp"
         android:padding="14dp"
         android:text="See Entrant Lists"

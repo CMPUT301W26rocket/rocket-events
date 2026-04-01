@@ -65,6 +65,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
     private TextView geolocationView, waitlistView;
     private Button lotteryButton;
     private Button entrantsButton;
+    private Button inviteWaitlistButton;
     private LinearLayout commentsContainer;
     private TextView noCommentsText;
     private EditText commentInput;
@@ -119,8 +120,9 @@ public class OrganizerEventDetailsFragment extends Fragment {
         regCloseView    = view.findViewById(R.id.text_detail_reg_close);
         geolocationView = view.findViewById(R.id.text_detail_geolocation);
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
-        lotteryButton     = view.findViewById(R.id.lottery_button);
-        entrantsButton    = view.findViewById(R.id.entrants_button);
+        lotteryButton        = view.findViewById(R.id.lottery_button);
+        entrantsButton       = view.findViewById(R.id.entrants_button);
+        inviteWaitlistButton = view.findViewById(R.id.invite_waitlist_button);
         commentsContainer = view.findViewById(R.id.comments_container);
         noCommentsText    = view.findViewById(R.id.text_no_comments);
         commentInput      = view.findViewById(R.id.edit_comment_input);
@@ -144,6 +146,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
         attachCommentsListener();
         lotteryButton.setOnClickListener(v -> handleLotteryClick());
         entrantsButton.setOnClickListener(v -> openEntrantList());
+        inviteWaitlistButton.setOnClickListener(v -> openInviteToWaitlist());
         sendCommentButton.setOnClickListener(v -> handleSendComment());
 
         return view;
@@ -226,6 +229,8 @@ public class OrganizerEventDetailsFragment extends Fragment {
                     .placeholder(R.drawable.ic_image_placeholder)
                     .into(posterImageView);
         }
+
+        inviteWaitlistButton.setVisibility(event.isPrivateEvent() ? View.VISIBLE : View.GONE);
     }
     /**
      * Handles clicks on the lottery button.
@@ -297,6 +302,26 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
+    /**
+     * Opens {@link InviteToWaitlistFragment} so the organizer can search and invite
+     * specific users to this private event's waitlist.
+     */
+    private void openInviteToWaitlist() {
+        InviteToWaitlistFragment fragment = new InviteToWaitlistFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        args.putString("eventTitle", currentEvent != null ? currentEvent.getTitle() : "Event");
+        args.putString("organizerDeviceId", deviceId);
+        fragment.setArguments(args);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+                        R.anim.slide_in_left, R.anim.slide_out_right)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     /**
      * Executes the lottery selection for the current event.
      *

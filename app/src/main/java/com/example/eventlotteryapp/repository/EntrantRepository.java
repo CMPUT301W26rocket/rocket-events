@@ -228,6 +228,28 @@ public class EntrantRepository {
     }
 
     /**
+     * Invites a user to a private event's waitlist by creating an entrant document with
+     * status {@link Entrant#STATUS_WAITLIST_INVITED}. Does not increment the waitlist count
+     * since the user has not yet accepted.
+     *
+     * @param eventId  the ID of the private event
+     * @param deviceId the device ID of the user being invited
+     * @param callback receives {@code null} on success
+     */
+    public void inviteToPrivateWaitlist(String eventId, String deviceId,
+                                        FirestoreCallback<Void> callback) {
+        Timestamp now = Timestamp.now();
+        Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_WAITLIST_INVITED, now, now);
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(deviceId)
+                .set(entrant)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Removes a user from an event's waitlist by deleting their entrant document.
      * Used when the user chooses to leave the waitlist or remove themselves after not being selected.
      *

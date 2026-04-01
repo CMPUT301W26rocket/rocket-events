@@ -120,13 +120,15 @@ public class EventHistoryAdapter extends RecyclerView.Adapter<EventHistoryAdapte
     private String formatStatus(String status) {
         if (status == null) return "Unknown";
         switch (status) {
-            case Entrant.STATUS_WAITLIST:      return "Waitlisted";
-            case Entrant.STATUS_INVITED:       return "Invited — Awaiting Response";
-            case Entrant.STATUS_ENROLLED:      return "Enrolled";
-            case Entrant.STATUS_DECLINED:      return "Declined";
-            case Entrant.STATUS_CANCELLED:     return "Cancelled";
-            case Entrant.STATUS_NOT_SELECTED:  return "Not Selected";
-            default:                           return status;
+            case Entrant.STATUS_WAITLIST:          return "Waitlisted";
+            case Entrant.STATUS_INVITED:           return "Invited to Enroll";
+            case Entrant.STATUS_ENROLLED:          return "Enrolled";
+            case Entrant.STATUS_DECLINED:          return "Declined";
+            case Entrant.STATUS_CANCELLED:         return "Cancelled";
+            case Entrant.STATUS_NOT_SELECTED:      return "Not Selected";
+            case Entrant.STATUS_WAITLIST_INVITED:  return "Invited to Join Waitlist";
+            case Entrant.STATUS_DECLINED_WAITLIST: return "Waitlist Invite Declined";
+            default:                               return status;
         }
     }
 

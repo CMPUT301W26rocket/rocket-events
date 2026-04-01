@@ -52,6 +52,7 @@ import java.util.Locale;
  * US 01.05.04 As an entrant, I want to know how many total entrants are on the waiting list for an event.
  * US 01.05.05 As an entrant, I want to be informed about the criteria or guidelines for the lottery selection process.
  * US 01.06.02 As an entrant I want to be able to sign up for an event from the event details.
+ * US 01.05.07 As an entrant, I want to accept or decline an invitation to join the waiting list for a private event.
  * US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
  * US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
  * @author Leyla
@@ -394,6 +395,14 @@ public class EntrantEventDetailsFragment extends Fragment {
                 actionButton.setText("Cancelled");
                 setButtonDisabled();
                 break;
+            case Entrant.STATUS_WAITLIST_INVITED:
+                actionButton.setText("Invited to Waitlist");
+                setButtonEnabled();
+                break;
+            case Entrant.STATUS_DECLINED_WAITLIST:
+                actionButton.setText("Waitlist Invite Declined");
+                setButtonEnabled();
+                break;
         }
     }
 
@@ -426,6 +435,12 @@ public class EntrantEventDetailsFragment extends Fragment {
                     break;
                 case Entrant.STATUS_INVITED:
                     showInvitationDialog();
+                    break;
+                case Entrant.STATUS_WAITLIST_INVITED:
+                    showWaitlistInvitationDialog();
+                    break;
+                case Entrant.STATUS_DECLINED_WAITLIST:
+                    showRejoinWaitlistDialog();
                     break;
             }
         }
@@ -495,28 +510,51 @@ public class EntrantEventDetailsFragment extends Fragment {
     }
 
     /**
-     * Removes the user from the event's waitlist via {@link EntrantRepository#leaveWaitlist}.
-     * Updates the button to "Join Waitlist" on success.
+     * Removes the user from the event's waitlist.
+     * For private events, the entrant doc is kept with status {@link Entrant#STATUS_DECLINED_WAITLIST}
+     * so the user can reconsider later via their event history. For public events, the doc is deleted.
      */
     private void leaveWaitlist() {
         actionButton.setEnabled(false);
-        entrantRepository.leaveWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
-            @Override
-            public void onSuccess(Void unused) {
-                if (!isAdded()) return;
-                Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
-                currentEntrant = null;
-                updateButton();
-            }
 
-            @Override
-            public void onFailure(Exception e) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
-                    actionButton.setEnabled(true);
+        if (currentEvent != null && currentEvent.isPrivateEvent()) {
+            entrantRepository.updateStatus(eventId, deviceId, Entrant.STATUS_DECLINED_WAITLIST,
+                    new EntrantRepository.FirestoreCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            if (!isAdded()) return;
+                            Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+                            currentEntrant.setStatus(Entrant.STATUS_DECLINED_WAITLIST);
+                            updateButton();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (isAdded()) {
+                                Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
+                                actionButton.setEnabled(true);
+                            }
+                        }
+                    });
+        } else {
+            entrantRepository.leaveWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
+                @Override
+                public void onSuccess(Void unused) {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+                    currentEntrant = null;
+                    updateButton();
                 }
-            }
-        });
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (isAdded()) {
+                        Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
+                        actionButton.setEnabled(true);
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -533,6 +571,71 @@ public class EntrantEventDetailsFragment extends Fragment {
                 .setNegativeButton("Decline", (dialog, which) -> respondToInvitation(Entrant.STATUS_DECLINED))
                 .setCancelable(false)
                 .show();
+    }
+
+    /**
+     * Shows a dialog for the user to accept or decline a private event waitlist invitation.
+     * Accepting updates the status to {@link Entrant#STATUS_WAITLIST} (regular waitlist member);
+     * declining updates it to {@link Entrant#STATUS_DECLINED_WAITLIST}.
+     */
+    private void showWaitlistInvitationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Waitlist Invitation")
+                .setMessage("You've been invited to join the waitlist for this event. "
+                        + "Would you like to accept or decline?")
+                .setPositiveButton("Accept", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_WAITLIST))
+                .setNegativeButton("Decline", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_DECLINED_WAITLIST))
+                .setCancelable(false)
+                .show();
+    }
+
+    /**
+     * Shows a dialog asking if the user wants to reconsider and join the waitlist
+     * after having previously declined a private event waitlist invitation.
+     */
+    private void showRejoinWaitlistDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Reconsider?")
+                .setMessage("You previously declined this waitlist invitation. "
+                        + "Would you like to join the waitlist?")
+                .setPositiveButton("Join Waitlist", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_WAITLIST))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Updates the user's entrant status in response to a private event waitlist invitation.
+     * Called when accepting ({@link Entrant#STATUS_WAITLIST}) or declining
+     * ({@link Entrant#STATUS_DECLINED_WAITLIST}) the waitlist invitation.
+     *
+     * @param newStatus the status to set
+     */
+    private void respondToWaitlistInvitation(String newStatus) {
+        actionButton.setEnabled(false);
+        entrantRepository.updateStatus(eventId, deviceId, newStatus,
+                new EntrantRepository.FirestoreCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        if (!isAdded()) return;
+                        String msg = Entrant.STATUS_WAITLIST.equals(newStatus)
+                                ? "You've joined the waitlist!"
+                                : "Waitlist invitation declined.";
+                        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                        currentEntrant.setStatus(newStatus);
+                        updateButton();
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Failed to update status", Toast.LENGTH_SHORT).show();
+                            actionButton.setEnabled(true);
+                        }
+                    }
+                });
     }
 
     /**

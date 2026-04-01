@@ -15,7 +15,9 @@ public class Notification {
     /** Notification type: user has been given a replacement invitation. */
     public static final String TYPE_REPLACEMENT = "replacement";
     /** Notification type: general message from the organizer. */
-    public static final String TYPE_GENERAL     = "general";
+    public static final String TYPE_GENERAL        = "general";
+    /** Notification type: user has been invited to join a private event's waitlist. */
+    public static final String TYPE_WAITLIST_INVITE = "waitlist_invite";
 
     private String notificationId;
     private String eventId;
