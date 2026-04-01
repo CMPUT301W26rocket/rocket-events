@@ -7,6 +7,10 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -107,6 +111,16 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.badgeRegistration.setBackgroundTintList(ColorStateList.valueOf(0xFF616161));
         }
 
+        // Event start date
+        Date startDate = event.getEventStartDate();
+        if (startDate != null) {
+            String dateStr = new SimpleDateFormat("MMM.d", Locale.getDefault()).format(startDate);
+            holder.dateTextView.setText(dateStr);
+            holder.dateTextView.setVisibility(View.VISIBLE);
+        } else {
+            holder.dateTextView.setVisibility(View.GONE);
+        }
+
         // Waitlist status badge (only shown if event has a waitlist limit)
         if (event.isHasWaitlistLimit()) {
             holder.badgeWaitlist.setVisibility(View.VISIBLE);
@@ -140,6 +154,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView titleTextView;
         TextView subtitleTextView;
+        TextView dateTextView;
         ImageView posterImageView;
         TextView badgeRegistration;
         TextView badgeWaitlist;
@@ -153,6 +168,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             super(itemView);
             titleTextView     = itemView.findViewById(R.id.text_event_title);
             subtitleTextView  = itemView.findViewById(R.id.text_event_subtitle);
+            dateTextView      = itemView.findViewById(R.id.text_event_date);
             posterImageView   = itemView.findViewById(R.id.image_event_poster);
             badgeRegistration = itemView.findViewById(R.id.badge_registration);
             badgeWaitlist     = itemView.findViewById(R.id.badge_waitlist);
