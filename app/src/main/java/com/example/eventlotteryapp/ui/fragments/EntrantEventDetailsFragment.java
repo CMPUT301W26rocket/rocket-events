@@ -354,6 +354,19 @@ public class EntrantEventDetailsFragment extends Fragment {
      * Greyed-out states (enrolled, declined, cancelled) disable the button.
      */
     private void updateButton() {
+        if (currentEvent != null && deviceId.equals(currentEvent.getOrganizerId())) {
+            actionButton.setText("You're the Organizer");
+            setButtonDisabled();
+            return;
+        }
+
+        if (currentEntrant != null
+                && Entrant.STATUS_CO_ORGANIZER.equals(currentEntrant.getStatus())) {
+            actionButton.setText("You're a Co-organizer");
+            setButtonDisabled();
+            return;
+        }
+
         if (currentEntrant == null) {
             if (currentEvent != null && currentEvent.isRegistrationNotYetOpen()) {
                 actionButton.setText("Registration Not Open Yet");

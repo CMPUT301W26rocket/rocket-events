@@ -18,6 +18,8 @@ public class Notification {
     public static final String TYPE_GENERAL        = "general";
     /** Notification type: user has been invited to join a private event's waitlist. */
     public static final String TYPE_WAITLIST_INVITE = "waitlist_invite";
+    /** Notification type: user has been assigned as a co-organizer for an event. */
+    public static final String TYPE_CO_ORGANIZER    = "co_organizer";
 
     private String notificationId;
     private String eventId;

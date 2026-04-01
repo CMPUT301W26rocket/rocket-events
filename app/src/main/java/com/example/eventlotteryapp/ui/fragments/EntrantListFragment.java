@@ -406,7 +406,7 @@ public class EntrantListFragment extends Fragment {
                         public void onSuccess(Void unused) {
                             Notification n = new Notification(eventId, eventTitle,
                                     Notification.TYPE_REPLACEMENT,
-                                    "Great news! A spot has opened up and you've been given a replacement invitation for \""
+                                    "Great news! A spot has opened up and you've been given a replacement invitation for the event \""
                                             + eventTitle + "\". Open the event to accept or decline.");
                             notificationRepository.addNotification(chosen.getDeviceId(), n,
                                     new NotificationRepository.FirestoreCallback<String>() {
@@ -507,7 +507,7 @@ public class EntrantListFragment extends Fragment {
             // Send Win Notification to all invited entrants — US 01.04.01
             holder.btnSendWin.setOnClickListener(v ->
                     sendNotificationsToAll(tabData.get(TAB_INVITED), Notification.TYPE_WON,
-                            "Congratulations! You've been selected to enroll in \""
+                            "Congratulations! You've been selected to enroll in the event \""
                                     + eventTitle + "\". Open the event to accept or decline your invitation.",
                             holder.itemView.getContext()));
 
@@ -554,7 +554,7 @@ public class EntrantListFragment extends Fragment {
                     if (Entrant.STATUS_NOT_SELECTED.equals(e.getStatus())) notSelected.add(e);
                 }
                 sendNotificationsToAll(notSelected, Notification.TYPE_LOST,
-                        "Unfortunately, you were not selected for \""
+                        "Unfortunately, you were not selected for the event \""
                                 + eventTitle + "\". We hope to see you at a future event.",
                         holder.itemView.getContext());
             });
