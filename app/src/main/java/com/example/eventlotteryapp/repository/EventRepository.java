@@ -182,4 +182,19 @@ public class EventRepository {
                 .addOnSuccessListener(unused -> callback.onSuccess(null))
                 .addOnFailureListener(callback::onFailure);
     }
+
+    /**
+     * Updates only the {@code posterUrl} field of an event document.
+     *
+     * @param eventId   the ID of the event to update
+     * @param posterUrl the new Firebase Storage download URL for the poster
+     * @param callback  receives {@code null} on success
+     */
+    public void updatePosterUrl(String eventId, String posterUrl, FirestoreCallback<Void> callback) {
+        firebaseConnector.getEventsCollection()
+                .document(eventId)
+                .update("posterUrl", posterUrl)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
 }

@@ -41,10 +41,8 @@ import java.util.Map;
  * fragment arguments.
  *
  * User Stories Implemented:
- * US 02.01.04 As an organizer, I want to assign an entrant as a co-organizer for my event,
- *             which prevents them from joining the entrant pool for that event.
- * US 01.05.08 As an entrant, I want to receive a notification if I have been invited to be
- *             a co-organizer for an event.
+ * US 02.09.01 As an organizer, I want to assign an entrant as a co-organizer for my event, which prevents them from joining the entrant pool for that event.
+ * US 01.09.01 As an entrant, I want to receive a notification if I have been invited to be a co-organizer for an event.
  * @author Leyla
  */
 public class CoOrganizerFragment extends Fragment {

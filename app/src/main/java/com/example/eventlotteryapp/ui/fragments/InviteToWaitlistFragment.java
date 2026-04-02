@@ -37,10 +37,8 @@ import java.util.List;
  * Pass {@code eventId}, {@code eventTitle}, and {@code organizerDeviceId} as fragment arguments.
  *
  * User Stories Implemented:
- * US 02.01.03 As an organizer, I want to invite specific entrants to a private event's waiting
- *             list by searching via name, phone number and/or email.
- * US 01.05.06 As an entrant, I want to receive a notification that I've been invited to join
- *             the waiting list for a private event.
+ * US 02.01.03 As an organizer, I want to invite specific entrants to a private event's waiting list by searching via name, phone number and/or email.
+ * US 01.05.06 As an entrant, I want to receive a notification that I've been invited to join the waiting list for a private event.
  * @author Leyla
  */
 public class InviteToWaitlistFragment extends Fragment {

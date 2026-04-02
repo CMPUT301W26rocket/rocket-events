@@ -2,6 +2,8 @@ package com.example.eventlotteryapp.ui.main;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlotteryapp.R;
@@ -54,8 +56,10 @@ public class MainActivity extends AppCompatActivity {
                 View.SYSTEM_UI_FLAG_FULLSCREEN
         );
 
-        // Set up bottom navigation
+        // Prevent gesture bar insets from adding extra bottom padding to the nav bar
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav, (v, insets) ->
+                WindowInsetsCompat.CONSUMED);
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
 
