@@ -3,18 +3,17 @@ package com.example.eventlotteryapp.ui.admin;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.repository.EventRepository;
-import com.example.eventlotteryapp.ui.adapters.EventAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,16 +23,17 @@ import java.util.List;
  * Only events with a non-empty poster URL are shown.
  * User Stories Implemented:
  * US 03.06.01 As an administrator, I want to be able to browse images that are uploaded so I can remove them if necessary.
+ *
  * @author Mazen
  */
 public class AdminBrowseImagesActivity extends AppCompatActivity {
 
     private RecyclerView recyclerImages;
     private TextView textEmptyImages;
-    private Button btnBack;
+    private ImageButton buttonBack;
     private EventRepository eventRepository;
     private List<Event> imageEventList;
-    private EventAdapter eventAdapter;
+    private AdminImageAdapter imageAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,12 +42,12 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
 
         recyclerImages = findViewById(R.id.recyclerImages);
         textEmptyImages = findViewById(R.id.textEmptyImages);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         eventRepository = new EventRepository();
         imageEventList = new ArrayList<>();
 
-        eventAdapter = new EventAdapter(imageEventList, event -> {
+        imageAdapter = new AdminImageAdapter(imageEventList, event -> {
             Intent intent = new Intent(AdminBrowseImagesActivity.this, AdminImageDetailActivity.class);
             intent.putExtra("eventId", event.getEventId());
             intent.putExtra("title", event.getTitle());
@@ -55,12 +55,12 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        recyclerImages.setLayoutManager(new LinearLayoutManager(this));
-        recyclerImages.setAdapter(eventAdapter);
+        recyclerImages.setLayoutManager(new GridLayoutManager(this, 3));
+        recyclerImages.setAdapter(imageAdapter);
+
+        buttonBack.setOnClickListener(v -> finish());
 
         loadImages();
-
-        btnBack.setOnClickListener(v -> finish());
     }
 
     @Override
@@ -81,7 +81,7 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
                     }
                 }
 
-                eventAdapter.notifyDataSetChanged();
+                imageAdapter.notifyDataSetChanged();
 
                 if (imageEventList.isEmpty()) {
                     textEmptyImages.setVisibility(View.VISIBLE);

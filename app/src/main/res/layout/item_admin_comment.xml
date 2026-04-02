@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
+
+    <TextView
+        android:id="@+id/textCommentAuthor"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Author ID: test-user-1"
+        android:textColor="@color/color_text_dark"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textCommentTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Time: 2026-03-26 11:41"
+        android:textColor="@color/color_text_medium"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/textCommentBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="This is a test comment"
+        android:textColor="@color/color_text_dark"
+        android:textSize="15sp"
+        android:lineSpacingMultiplier="1.2" />
+
+    <Button
+        android:id="@+id/btnDeleteComment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#D32F2F"
+        android:text="Delete"
+        android:textAllCaps="false"
+        android:textColor="@android:color/white"
+        android:textSize="14sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="@color/color_border" />
+
+</LinearLayout>

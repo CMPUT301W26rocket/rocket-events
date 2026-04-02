@@ -3,6 +3,7 @@ package com.example.eventlotteryapp.ui.admin;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +18,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * a confirmation step before deletion.
  * User Stories Implemented:
  * US 03.02.01 As an administrator, I want to be able to remove profiles.
+ *
  * @author Mazen
  */
 public class AdminProfileDetailActivity extends AppCompatActivity {
@@ -26,16 +28,10 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     private TextView textEmail;
     private TextView textPhone;
     private Button btnDeleteProfile;
-    private Button btnBack;
+    private ImageButton buttonBack;
     private FirebaseFirestore db;
     private String deviceId;
 
-    /**
-     * Initializes the profile detail screen and loads profile data
-     * passed from the admin profile list.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,7 +42,7 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
         textEmail = findViewById(R.id.textEmail);
         textPhone = findViewById(R.id.textPhone);
         btnDeleteProfile = findViewById(R.id.btnDeleteProfile);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         db = FirebaseFirestore.getInstance();
 
@@ -55,18 +51,15 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
         String email = getIntent().getStringExtra("email");
         String phone = getIntent().getStringExtra("phone");
 
-        textDeviceId.setText(deviceId == null || deviceId.isEmpty() ? "No device ID" : deviceId);
-        textName.setText(name == null || name.isEmpty() ? "No name" : name);
-        textEmail.setText(email == null || email.isEmpty() ? "No email" : email);
-        textPhone.setText(phone == null || phone.isEmpty() ? "No phone" : phone);
+        textDeviceId.setText(displayText(deviceId, "No device ID"));
+        textName.setText(displayText(name, "No name"));
+        textEmail.setText(displayText(email, "No email"));
+        textPhone.setText(displayText(phone, "No phone"));
 
         btnDeleteProfile.setOnClickListener(v -> showDeleteConfirmation());
-        btnBack.setOnClickListener(v -> finish());
+        buttonBack.setOnClickListener(v -> finish());
     }
 
-    /**
-     * Shows a confirmation dialog before deleting the selected profile.
-     */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Profile")
@@ -76,10 +69,6 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Deletes the selected user profile from Firestore.
-     * Shows a success or failure toast depending on the result.
-     */
     private void deleteProfile() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing device ID", Toast.LENGTH_SHORT).show();
@@ -95,5 +84,9 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
                 .addOnFailureListener(e ->
                         Toast.makeText(this, "Delete failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
                 );
+    }
+
+    private String displayText(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
     }
 }

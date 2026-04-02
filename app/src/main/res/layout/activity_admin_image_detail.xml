@@ -1,63 +1,89 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background">
+    android:orientation="vertical"
+    android:background="#F8F8F8">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
 
-        <TextView
-            android:id="@+id/textHeader"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Image Details"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_primary"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="8dp" />
+            android:orientation="vertical"
+            android:padding="20dp">
 
-        <TextView
-            android:id="@+id/textTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Untitled Event"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark"
-            android:layout_marginBottom="16dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp">
 
-        <ImageView
-            android:id="@+id/imagePoster"
-            android:layout_width="match_parent"
-            android:layout_height="260dp"
-            android:scaleType="centerCrop"
-            android:background="@color/color_placeholder_bg"
-            android:contentDescription="Event poster" />
+                <ImageButton
+                    android:id="@+id/button_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_arrow_back" />
 
-        <Button
-            android:id="@+id/btnRemoveImage"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:text="Remove Image"
-            android:textSize="16sp"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#D32F2F"
-            android:layout_marginBottom="12dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Image Details"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B"
+                    android:layout_marginStart="12dp" />
+            </LinearLayout>
 
-        <Button
-            android:id="@+id/btnBack"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Back"
-            android:textSize="16sp"
-            android:textColor="@color/color_primary"
-            android:backgroundTint="@color/color_background" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/admin_card_background"
+                android:padding="18dp">
 
-    </LinearLayout>
-</ScrollView>
+                <TextView
+                    android:id="@+id/textTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Untitled Event"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B"
+                    android:layout_marginBottom="16dp" />
+
+                <ImageView
+                    android:id="@+id/imagePoster"
+                    android:layout_width="match_parent"
+                    android:layout_height="300dp"
+                    android:scaleType="centerCrop"
+                    android:background="@color/color_placeholder_bg"
+                    android:src="@drawable/ic_image_placeholder"
+                    android:contentDescription="Event poster" />
+
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnRemoveImage"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:text="Remove Image"
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#D32F2F" />
+
+</LinearLayout>

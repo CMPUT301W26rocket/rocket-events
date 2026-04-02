@@ -3,6 +3,7 @@ package com.example.eventlotteryapp.ui.admin;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -20,16 +21,17 @@ import com.example.eventlotteryapp.repository.ImageRepository;
  * Displays the poster associated with a selected event and allows
  * the administrator to permanently remove it from both Firebase Storage
  * and the event record in Firestore.
- *User Stories Implemented:
+ * User Stories Implemented:
  * US 03.03.01 As an administrator, I want to be able to remove images.
- * * @author Mazen
+ *
+ * @author Mazen
  */
 public class AdminImageDetailActivity extends AppCompatActivity {
 
     private ImageView imagePoster;
     private TextView textTitle;
     private Button btnRemoveImage;
-    private Button btnBack;
+    private ImageButton buttonBack;
 
     private EventRepository eventRepository;
     private ImageRepository imageRepository;
@@ -38,13 +40,6 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     private String posterUrl;
     private String title;
 
-    /**
-     * Initializes the image detail screen, loads the event poster using Glide,
-     * and sets up the remove and back button listeners.
-     * Event ID, poster URL, and title are received via Intent extras.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,7 +48,7 @@ public class AdminImageDetailActivity extends AppCompatActivity {
         imagePoster = findViewById(R.id.imagePoster);
         textTitle = findViewById(R.id.textTitle);
         btnRemoveImage = findViewById(R.id.btnRemoveImage);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         eventRepository = new EventRepository();
         imageRepository = new ImageRepository();
@@ -65,17 +60,19 @@ public class AdminImageDetailActivity extends AppCompatActivity {
         textTitle.setText(title == null || title.isEmpty() ? "Untitled Event" : title);
 
         if (posterUrl != null && !posterUrl.isEmpty()) {
-            Glide.with(this).load(posterUrl).into(imagePoster);
+            Glide.with(this)
+                    .load(posterUrl)
+                    .centerCrop()
+                    .placeholder(R.drawable.ic_image_placeholder)
+                    .into(imagePoster);
+        } else {
+            imagePoster.setImageResource(R.drawable.ic_image_placeholder);
         }
 
         btnRemoveImage.setOnClickListener(v -> showRemoveConfirmation());
-        btnBack.setOnClickListener(v -> finish());
+        buttonBack.setOnClickListener(v -> finish());
     }
 
-    /**
-     * Shows a confirmation dialog before removing the event poster.
-     * Proceeds with removal only if the administrator confirms.
-     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Image")
@@ -85,12 +82,6 @@ public class AdminImageDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Removes the event poster in two steps: first deletes the image file
-     * from Firebase Storage, then clears the poster URL on the event document
-     * in Firestore. Shows a success or failure toast depending on the result
-     * and finishes the activity on success.
-     */
     private void removeImage() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/color_background">
+    android:background="#F8F8F8">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -11,107 +10,253 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp">
+
+            <ImageButton
+                android:id="@+id/button_back_admin"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_arrow_back"
+                android:contentDescription="Back" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Admin View"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#2B2B2B"
+                android:layout_marginStart="12dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/card_view_events"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/admin_card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All Events"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage all events here"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B6B"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/baseline_arrow_forward_24"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/card_view_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/admin_card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All Profiles"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage user profiles"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B6B"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/baseline_arrow_forward_24"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/card_view_organizers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/admin_card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All Organizers"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage organizers"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B6B"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/baseline_arrow_forward_24"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/card_view_images"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/admin_card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All Images"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage images"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B6B"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/baseline_arrow_forward_24"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/card_view_logs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp"
+            android:background="@drawable/admin_card_background"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="32dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="View All Notification Logs"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Manage notification logs"
+                    android:textSize="13sp"
+                    android:textColor="#6B6B6B"
+                    android:layout_marginTop="4dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/baseline_arrow_forward_24"
+                android:contentDescription="Open" />
+        </LinearLayout>
+
         <TextView
+            android:id="@+id/text_logout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Admin Dashboard"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_primary"
-            android:layout_marginTop="40dp"
-            android:layout_marginBottom="8dp"/>
-
-        <!-- Welcome Text -->
-        <TextView
-            android:id="@+id/textAdminWelcome"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Welcome, Admin!"
-            android:textSize="15sp"
-            android:textColor="@color/color_text_medium"
-            android:layout_marginBottom="40dp"/>
-
-        <!-- Section: Browse -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Browse and Manage"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnBrowseEvents"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Browse Events"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_primary"
-            android:backgroundTint="@color/color_primary"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnBrowseProfiles"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Browse Profiles"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_primary"
-            android:backgroundTint="@color/color_primary"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnBrowseOrganizers"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Browse Organizers"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_primary"
-            android:backgroundTint="@color/color_primary"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnBrowseImages"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="Browse Event Posters"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_primary"
-            android:backgroundTint="@color/color_primary"
-            android:layout_marginBottom="24dp"/>
-
-        <!-- Section: Logs -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="System Monitoring"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark"
-            android:layout_marginBottom="12dp"/>
-
-        <Button
-            android:id="@+id/btnViewLogs"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="View Notification Logs"
-            android:textSize="16sp"
-            android:textColor="@color/color_on_primary"
-            android:backgroundTint="@color/color_primary"
-            android:layout_marginBottom="40dp"/>
-
-        <!-- Logout -->
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
             android:text="Logout"
-            android:textSize="16sp"
-            android:textColor="@color/color_primary"
-            android:backgroundTint="@color/color_background"
-            android:layout_marginBottom="24dp"/>
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="#8E24AA"
+            android:layout_gravity="center_horizontal"
+            android:paddingTop="8dp"
+            android:paddingBottom="24dp" />
 
     </LinearLayout>
 </ScrollView>

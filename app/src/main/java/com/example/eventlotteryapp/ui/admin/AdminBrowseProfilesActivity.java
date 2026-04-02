@@ -3,7 +3,7 @@ package com.example.eventlotteryapp.ui.admin;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,23 +24,18 @@ import java.util.List;
  * and open the profile detail screen.
  * User Stories Implemented:
  * US 03.05.01 As an administrator, I want to be able to browse profiles.
+ *
  * @author Mazen
  */
 public class AdminBrowseProfilesActivity extends AppCompatActivity {
 
     private TextView textEmptyProfiles;
     private RecyclerView recyclerProfiles;
-    private Button btnBack;
+    private ImageButton buttonBack;
     private FirebaseFirestore db;
     private List<User> userList;
     private ProfileAdapter profileAdapter;
 
-    /**
-     * Initializes the profile list screen, connects the profile adapter,
-     * and loads all user profiles for administrator review.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,7 +43,7 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
 
         textEmptyProfiles = findViewById(R.id.textEmptyProfiles);
         recyclerProfiles = findViewById(R.id.recyclerProfiles);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         db = FirebaseFirestore.getInstance();
         userList = new ArrayList<>();
@@ -65,25 +60,17 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
         recyclerProfiles.setLayoutManager(new LinearLayoutManager(this));
         recyclerProfiles.setAdapter(profileAdapter);
 
-        loadProfiles();
+        buttonBack.setOnClickListener(v -> finish());
 
-        btnBack.setOnClickListener(v -> finish());
+        loadProfiles();
     }
 
-    /**
-     * Reloads the profile list whenever the screen returns to the foreground.
-     */
     @Override
     protected void onResume() {
         super.onResume();
         loadProfiles();
     }
 
-    /**
-     * Loads all user profiles from Firestore and updates the list UI.
-     * Only the fields needed for the admin list are mapped directly
-     * to avoid deserialization issues from unrelated user data.
-     */
     private void loadProfiles() {
         db.collection("users")
                 .get()
