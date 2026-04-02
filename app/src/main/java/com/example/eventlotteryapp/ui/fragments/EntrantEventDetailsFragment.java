@@ -1,6 +1,9 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,9 +15,15 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlotteryapp.R;
@@ -89,6 +98,8 @@ public class EntrantEventDetailsFragment extends Fragment {
     private ListenerRegistration waitlistCountListener;
     private ListenerRegistration commentsListener;
     private String currentUserName;
+    private FusedLocationProviderClient fusedLocationClient;
+    private ActivityResultLauncher<String> locationPermissionLauncher;
 
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
@@ -148,6 +159,18 @@ public class EntrantEventDetailsFragment extends Fragment {
         if (entrantRepository == null)  entrantRepository  = new EntrantRepository();
         if (commentRepository == null)  commentRepository  = new CommentRepository();
         if (userRepository == null)     userRepository     = new UserRepository();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+        locationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (!isAdded()) return;
+                    if (isGranted) {
+                        captureLocationAndJoin();
+                    } else {
+                        proceedWithJoin(null, null);
+                    }
+                });
 
         loadEventDetails();
         loadCurrentUserName();
@@ -485,7 +508,7 @@ public class EntrantEventDetailsFragment extends Fragment {
      * Attempts to add the user to the event's waitlist.
      * If the event has a waitlist limit, first checks via {@link EntrantRepository#isWaitlistFull}
      * and shows a "Waitlist is full" message if the limit has been reached.
-     * Otherwise proceeds with {@link #proceedWithJoin()}.
+     * Otherwise proceeds to attempt joining with location capture if geolocation is required.
      */
     private void joinWaitlist() {
         actionButton.setEnabled(false);
@@ -501,7 +524,7 @@ public class EntrantEventDetailsFragment extends Fragment {
                                         "Waitlist is full for this event", Toast.LENGTH_SHORT).show();
                                 actionButton.setEnabled(true);
                             } else {
-                                proceedWithJoin();
+                                attemptJoinWithLocation();
                             }
                         }
 
@@ -515,16 +538,61 @@ public class EntrantEventDetailsFragment extends Fragment {
                         }
                     });
         } else {
-            proceedWithJoin();
+            attemptJoinWithLocation();
         }
     }
 
     /**
-     * Performs the actual Firestore write to add the user to the waitlist via
-     * {@link EntrantRepository#joinWaitlist}. Updates the button to "Leave Waitlist" on success.
+     * If the event requires geolocation, requests location permission (if not already granted)
+     * and captures the device's last known location before joining. If geolocation is not
+     * required, or if the user denies the permission, joins without coordinates.
      */
-    private void proceedWithJoin() {
-        entrantRepository.joinWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
+    private void attemptJoinWithLocation() {
+        if (currentEvent != null && currentEvent.isGeolocationRequired()) {
+            if (ContextCompat.checkSelfPermission(requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                captureLocationAndJoin();
+            } else {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+        } else {
+            proceedWithJoin(null, null);
+        }
+    }
+
+    /**
+     * Gets the device's last known location via {@link FusedLocationProviderClient} and
+     * calls {@link #proceedWithJoin} with the coordinates. Falls back to null coordinates
+     * if location is unavailable.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void captureLocationAndJoin() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (!isAdded()) return;
+                    if (location != null) {
+                        proceedWithJoin(location.getLatitude(), location.getLongitude());
+                    } else {
+                        proceedWithJoin(null, null);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    proceedWithJoin(null, null);
+                });
+    }
+
+    /**
+     * Performs the actual Firestore write to add the user to the waitlist via
+     * {@link EntrantRepository#joinWaitlist(String, String, Double, Double, EntrantRepository.FirestoreCallback)}.
+     * Records the user's location if provided. Updates the button to "Leave Waitlist" on success.
+     *
+     * @param latitude  the latitude where the user joined, or {@code null} if not captured
+     * @param longitude the longitude where the user joined, or {@code null} if not captured
+     */
+    private void proceedWithJoin(Double latitude, Double longitude) {
+        entrantRepository.joinWaitlist(eventId, deviceId, latitude, longitude,
+                new EntrantRepository.FirestoreCallback<Void>() {
             @Override
             public void onSuccess(Void unused) {
                 if (!isAdded()) return;

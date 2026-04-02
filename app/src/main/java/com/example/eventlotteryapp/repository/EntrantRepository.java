@@ -59,8 +59,27 @@ public class EntrantRepository {
      * @param callback receives {@code null} on success
      */
     public void joinWaitlist(String eventId, String deviceId, FirestoreCallback<Void> callback) {
+        joinWaitlist(eventId, deviceId, null, null, callback);
+    }
+
+    /**
+     * Adds a user to an event's waitlist, optionally recording their location.
+     * Creates the entrant doc at {@code events/{eventId}/entrants/{deviceId}}
+     * with status {@link Entrant#STATUS_WAITLIST}. Pass {@code null} for lat/lng
+     * if location was not captured.
+     *
+     * @param eventId  the ID of the event to join
+     * @param deviceId the device ID of the user joining
+     * @param latitude the latitude where the user joined, or {@code null} if not captured
+     * @param longitude the longitude where the user joined, or {@code null} if not captured
+     * @param callback receives {@code null} on success
+     */
+    public void joinWaitlist(String eventId, String deviceId, Double latitude, Double longitude,
+                             FirestoreCallback<Void> callback) {
         Timestamp now = Timestamp.now();
         Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_WAITLIST, now, now);
+        entrant.setLatitude(latitude);
+        entrant.setLongitude(longitude);
 
         db.collection("events")
                 .document(eventId)
