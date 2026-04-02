@@ -39,6 +39,13 @@ public class NotificationRepository {
     // TODO US 01.04.03: check users/{deviceId}.notificationsEnabled before writing — skip if false
     public void addNotification(String deviceId, Notification notification,
                                 FirestoreCallback<String> callback) {
+        if (notification.getRecipientDeviceId() == null || notification.getRecipientDeviceId().isEmpty()) {
+            notification.setRecipientDeviceId(deviceId);
+        }
+        if (notification.getCreatedAt() == null) {
+            notification.setCreatedAt(com.google.firebase.Timestamp.now());
+        }
+
         db.collection("users")
                 .document(deviceId)
                 .collection("notifications")
