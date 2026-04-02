@@ -109,7 +109,9 @@ public class CommentRepository {
                     callback.onSuccess(comments);
                 });
     }
-
+    public ListenerRegistration listenToComments(String eventId, FirestoreCallback<List<Comment>> callback) {
+        return listenForComments(eventId, callback);
+    }
     public void deleteComment(String eventId, String commentId, FirestoreCallback<Void> callback) {
         if (eventId == null || eventId.isEmpty()) {
             callback.onFailure(new IllegalArgumentException("Event ID is required"));
