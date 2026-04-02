@@ -3,7 +3,7 @@ package com.example.eventlotteryapp.ui.admin;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -18,13 +18,14 @@ import com.example.eventlotteryapp.repository.EventRepository;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * Admin screen for browsing all organizers currently represented by event ownership.
  * Organizers are derived from event organizer IDs rather than a separate organizer table.
+ *
  * @author Mazen
  */
 public class AdminBrowseOrganizersActivity extends AppCompatActivity {
@@ -32,17 +33,11 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     private EventRepository eventRepository;
     private RecyclerView recyclerOrganizers;
     private TextView textEmptyOrganizers;
-    private Button btnBack;
+    private ImageButton buttonBack;
     private FirebaseFirestore db;
     private List<User> organizerList;
     private ProfileAdapter profileAdapter;
 
-    /**
-     * Initializes the organizer list screen, connects the adapter,
-     * and loads organizers based on current event ownership.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +45,7 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
 
         recyclerOrganizers = findViewById(R.id.recyclerOrganizers);
         textEmptyOrganizers = findViewById(R.id.textEmptyOrganizers);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         eventRepository = new EventRepository();
         db = FirebaseFirestore.getInstance();
@@ -68,24 +63,17 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
         recyclerOrganizers.setLayoutManager(new LinearLayoutManager(this));
         recyclerOrganizers.setAdapter(profileAdapter);
 
-        loadOrganizers();
+        buttonBack.setOnClickListener(v -> finish());
 
-        btnBack.setOnClickListener(v -> finish());
+        loadOrganizers();
     }
 
-    /**
-     * Reloads the organizer list whenever the screen returns to the foreground.
-     */
     @Override
     protected void onResume() {
         super.onResume();
         loadOrganizers();
     }
 
-    /**
-     * Loads organizers by first gathering unique organizer IDs from events,
-     * then resolving those IDs to user documents for display in the admin UI.
-     */
     private void loadOrganizers() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

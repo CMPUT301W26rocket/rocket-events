@@ -16,31 +16,29 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/textProfileName"
+            android:id="@+id/text_admin_event_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Profile Name"
+            android:text="Event 1"
             android:textColor="#2B2B2B"
             android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/textProfileEmail"
+            android:id="@+id/text_admin_event_organizer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
-            android:text="Profile Email"
+            android:text="Organizer Name"
             android:textColor="#6B6B6B"
-            android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:textSize="12sp" />
 
         <TextView
-            android:id="@+id/textProfilePhone"
+            android:id="@+id/text_admin_event_description"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:text="Profile Phone"
+            android:text="Description..."
             android:textColor="#8A8A8A"
             android:textSize="12sp"
             android:maxLines="1"
@@ -48,11 +46,11 @@
     </LinearLayout>
 
     <ImageView
-        android:id="@+id/imageProfileArrow"
+        android:id="@+id/image_admin_event_arrow"
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:src="@drawable/baseline_arrow_forward_24"
-        android:contentDescription="Open profile"
+        android:contentDescription="Open event"
         app:tint="#5C4A6E" />
 
 </LinearLayout>

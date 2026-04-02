@@ -16,43 +16,23 @@ import java.util.List;
 /**
  * RecyclerView adapter for displaying user profiles in admin-managed lists.
  * Supports both general profile browsing and organizer browsing screens.
+ *
  * @author Mazen
  */
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 
-    /**
-     * Click listener interface for profile row selection.
-     */
     public interface OnProfileClickListener {
-        /**
-         * Handles a click on a displayed user profile.
-         *
-         * @param user selected user
-         */
         void onProfileClick(User user);
     }
 
     private final List<User> userList;
     private final OnProfileClickListener listener;
 
-    /**
-     * Creates a new profile adapter for the supplied user list.
-     *
-     * @param userList list of users to display
-     * @param listener click listener for profile selection
-     */
     public ProfileAdapter(List<User> userList, OnProfileClickListener listener) {
         this.userList = userList;
         this.listener = listener;
     }
 
-    /**
-     * Inflates a new profile row view.
-     *
-     * @param parent parent view group
-     * @param viewType RecyclerView view type
-     * @return new profile view holder
-     */
     @NonNull
     @Override
     public ProfileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -60,52 +40,39 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         return new ProfileViewHolder(view);
     }
 
-    /**
-     * Binds the user data for one profile row.
-     *
-     * @param holder row view holder
-     * @param position adapter position
-     */
     @Override
     public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
         User user = userList.get(position);
 
-        holder.textProfileName.setText(
-                user.getName() == null || user.getName().isEmpty() ? "No name" : user.getName()
-        );
-        holder.textProfileEmail.setText(
-                user.getEmail() == null || user.getEmail().isEmpty() ? "No email" : user.getEmail()
-        );
-        holder.textProfilePhone.setText(
-                user.getPhone() == null || user.getPhone().isEmpty() ? "No phone" : user.getPhone()
-        );
+        String name = user.getName() == null || user.getName().trim().isEmpty()
+                ? "No name"
+                : user.getName();
+
+        String email = user.getEmail() == null || user.getEmail().trim().isEmpty()
+                ? "No email"
+                : user.getEmail();
+
+        String phone = user.getPhone() == null || user.getPhone().trim().isEmpty()
+                ? "No phone"
+                : user.getPhone();
+
+        holder.textProfileName.setText(name);
+        holder.textProfileEmail.setText(email);
+        holder.textProfilePhone.setText(phone);
 
         holder.itemView.setOnClickListener(v -> listener.onProfileClick(user));
     }
 
-    /**
-     * Returns the total number of displayed profiles.
-     *
-     * @return profile count
-     */
     @Override
     public int getItemCount() {
         return userList.size();
     }
 
-    /**
-     * View holder for one profile row in the admin list.
-     */
     static class ProfileViewHolder extends RecyclerView.ViewHolder {
         TextView textProfileName;
         TextView textProfileEmail;
         TextView textProfilePhone;
 
-        /**
-         * Binds row text views for one profile item.
-         *
-         * @param itemView inflated row view
-         */
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
             textProfileName = itemView.findViewById(R.id.textProfileName);

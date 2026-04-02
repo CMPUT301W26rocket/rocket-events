@@ -3,6 +3,7 @@ package com.example.eventlotteryapp.ui.admin;
 import android.app.AlertDialog;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,6 +21,7 @@ import java.util.List;
  * owned by that organizer so they no longer appear in organizer-derived views.
  * User Stories Implemented:
  * US 03.07.01 As an administrator I want to remove organizers that violate app policy.
+ *
  * @author Mazen
  */
 public class AdminOrganizerDetailActivity extends AppCompatActivity {
@@ -29,16 +31,10 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     private TextView textEmail;
     private TextView textPhone;
     private Button btnRemoveOrganizer;
-    private Button btnBack;
+    private ImageButton buttonBack;
     private String deviceId;
     private EventRepository eventRepository;
 
-    /**
-     * Initializes the organizer detail screen and loads organizer data
-     * passed from the admin organizer list.
-     *
-     * @param savedInstanceState saved Android instance state
-     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -49,7 +45,7 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         textEmail = findViewById(R.id.textEmail);
         textPhone = findViewById(R.id.textPhone);
         btnRemoveOrganizer = findViewById(R.id.btnRemoveOrganizer);
-        btnBack = findViewById(R.id.btnBack);
+        buttonBack = findViewById(R.id.button_back);
 
         eventRepository = new EventRepository();
 
@@ -58,18 +54,15 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         String email = getIntent().getStringExtra("email");
         String phone = getIntent().getStringExtra("phone");
 
-        textDeviceId.setText(deviceId == null || deviceId.isEmpty() ? "No device ID" : deviceId);
-        textName.setText(name == null || name.isEmpty() ? "No name" : name);
-        textEmail.setText(email == null || email.isEmpty() ? "No email" : email);
-        textPhone.setText(phone == null || phone.isEmpty() ? "No phone" : phone);
+        textDeviceId.setText(displayText(deviceId, "No device ID"));
+        textName.setText(displayText(name, "No name"));
+        textEmail.setText(displayText(email, "No email"));
+        textPhone.setText(displayText(phone, "No phone"));
 
         btnRemoveOrganizer.setOnClickListener(v -> showRemoveConfirmation());
-        btnBack.setOnClickListener(v -> finish());
+        buttonBack.setOnClickListener(v -> finish());
     }
 
-    /**
-     * Shows a confirmation dialog before removing organizer status.
-     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Organizer")
@@ -79,10 +72,6 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Loads all events owned by the selected organizer and removes organizer
-     * status by deleting those events.
-     */
     private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing organizer ID", Toast.LENGTH_SHORT).show();
@@ -116,12 +105,6 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Deletes organizer-owned events one at a time until all have been removed.
-     *
-     * @param events organizer-owned event list
-     * @param index current event index being deleted
-     */
     private void deleteEventsSequentially(List<Event> events, int index) {
         if (index >= events.size()) {
             Toast.makeText(this, "Organizer removed", Toast.LENGTH_SHORT).show();
@@ -152,5 +135,9 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
                 ).show();
             }
         });
+    }
+
+    private String displayText(String value, String fallback) {
+        return value == null || value.trim().isEmpty() ? fallback : value;
     }
 }

@@ -3,7 +3,9 @@ package com.example.eventlotteryapp.ui.admin;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.widget.Button;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,17 +24,19 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * or back to profile setup.
  * User Stories Left:
  * US 03.08.01 As an administrator, I want to review logs of all notifications sent to entrants by organizers.
+ *
  * @author Leyla
  * @author Mazen
  */
 public class AdminActivity extends AppCompatActivity {
 
-    private Button btnBrowseEvents;
-    private Button btnBrowseProfiles;
-    private Button btnBrowseOrganizers;
-    private Button btnBrowseImages;
-    private Button btnViewLogs;
-    private Button btnLogout;
+    private View cardViewEvents;
+    private View cardViewProfiles;
+    private View cardViewOrganizers;
+    private View cardViewImages;
+    private View cardViewLogs;
+    private TextView textLogout;
+    private ImageButton buttonBackAdmin;
 
     private FirebaseFirestore db;
     private String deviceId;
@@ -42,41 +46,48 @@ public class AdminActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
 
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().hide();
+        }
+
         db = FirebaseFirestore.getInstance();
         deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        btnBrowseEvents    = findViewById(R.id.btnBrowseEvents);
-        btnBrowseProfiles  = findViewById(R.id.btnBrowseProfiles);
-        btnBrowseImages    = findViewById(R.id.btnBrowseImages);
-        btnViewLogs        = findViewById(R.id.btnViewLogs);
-        btnLogout          = findViewById(R.id.btnLogout);
-        btnBrowseOrganizers = findViewById(R.id.btnBrowseOrganizers);
+        buttonBackAdmin = findViewById(R.id.button_back_admin);
+        cardViewEvents = findViewById(R.id.card_view_events);
+        cardViewProfiles = findViewById(R.id.card_view_profiles);
+        cardViewOrganizers = findViewById(R.id.card_view_organizers);
+        cardViewImages = findViewById(R.id.card_view_images);
+        cardViewLogs = findViewById(R.id.card_view_logs);
+        textLogout = findViewById(R.id.text_logout);
 
-        btnBrowseEvents.setOnClickListener(v -> {
+        buttonBackAdmin.setOnClickListener(v -> finish());
+
+        cardViewEvents.setOnClickListener(v -> {
             Intent intent = new Intent(AdminActivity.this, AdminBrowseEventsActivity.class);
             startActivity(intent);
         });
 
-        btnBrowseProfiles.setOnClickListener(v -> {
+        cardViewProfiles.setOnClickListener(v -> {
             Intent intent = new Intent(AdminActivity.this, AdminBrowseProfilesActivity.class);
             startActivity(intent);
         });
 
-        btnBrowseImages.setOnClickListener(v -> {
+        cardViewOrganizers.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminActivity.this, AdminBrowseOrganizersActivity.class);
+            startActivity(intent);
+        });
+
+        cardViewImages.setOnClickListener(v -> {
             Intent intent = new Intent(AdminActivity.this, AdminBrowseImagesActivity.class);
             startActivity(intent);
         });
 
-        btnViewLogs.setOnClickListener(v -> {
-            Toast.makeText(this, "Notification Logs coming soon", Toast.LENGTH_SHORT).show();
-        });
+        cardViewLogs.setOnClickListener(v ->
+                Toast.makeText(this, "Notification Logs coming soon", Toast.LENGTH_SHORT).show()
+        );
 
-        btnLogout.setOnClickListener(v -> logoutAdmin());
-
-        btnBrowseOrganizers.setOnClickListener(v -> {
-            Intent intent = new Intent(AdminActivity.this, AdminBrowseOrganizersActivity.class);
-            startActivity(intent);
-        });
+        textLogout.setOnClickListener(v -> logoutAdmin());
     }
 
     /**

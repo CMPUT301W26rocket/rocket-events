@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/color_background">
+    android:background="#F8F8F8">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -14,48 +14,68 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:padding="20dp">
 
-            <ImageButton
-                android:id="@+id/button_back"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_margin="8dp"
-                android:background="@android:color/transparent"
-                android:contentDescription="Back"
-                android:src="@drawable/ic_arrow_back" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="20dp">
+
+                <ImageButton
+                    android:id="@+id/button_back"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:background="@android:color/transparent"
+                    android:contentDescription="Back"
+                    android:src="@drawable/ic_arrow_back" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Event Details"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:textColor="#2B2B2B"
+                    android:layout_marginStart="12dp" />
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:background="@drawable/admin_card_background"
+                android:padding="18dp"
+                android:layout_marginBottom="18dp">
 
                 <TextView
                     android:id="@+id/text_detail_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Event Title"
-                    android:textColor="@color/color_text_dark"
-                    android:textSize="24sp"
+                    android:textColor="#2B2B2B"
+                    android:textSize="22sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/text_detail_organizer_name"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="8dp"
                     android:text="Organizer Name"
-                    android:textColor="@color/color_text_medium"
+                    android:textColor="#5F5F5F"
                     android:textSize="14sp" />
 
                 <TextView
                     android:id="@+id/text_detail_organizer_id"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
+                    android:layout_marginTop="4dp"
                     android:text="Organizer ID: ..."
-                    android:textColor="@color/color_text_medium"
+                    android:textColor="#7A7A7A"
                     android:textSize="13sp" />
 
                 <View
@@ -63,47 +83,67 @@
                     android:layout_height="1dp"
                     android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@color/color_border" />
+                    android:background="#DDDDDD" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Description"
+                    android:textColor="#2B2B2B"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:id="@+id/text_detail_description"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
-                    android:lineSpacingMultiplier="1.4"
                     android:text="Description"
-                    android:textColor="@color/color_text_dark"
-                    android:textSize="15sp" />
+                    android:textColor="#5F5F5F"
+                    android:textSize="14sp"
+                    android:lineSpacingExtra="2dp" />
 
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="1dp"
+                    android:layout_marginTop="16dp"
                     android:layout_marginBottom="16dp"
-                    android:background="@color/color_border" />
+                    android:background="#DDDDDD" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Event ID"
+                    android:textColor="#2B2B2B"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="6dp" />
 
                 <TextView
                     android:id="@+id/text_detail_event_id"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="16dp"
                     android:text="Event ID: ..."
-                    android:textColor="@color/color_text_dark"
+                    android:textColor="#5F5F5F"
                     android:textSize="14sp" />
 
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginBottom="16dp"
-                    android:background="@color/color_border" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/admin_card_background"
+                android:padding="18dp">
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
                     android:text="Comments"
-                    android:textColor="@color/color_text_dark"
+                    android:textColor="#2B2B2B"
                     android:textSize="18sp"
-                    android:textStyle="bold" />
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp" />
 
                 <LinearLayout
                     android:id="@+id/comments_container"
@@ -115,28 +155,27 @@
                         android:id="@+id/text_no_comments"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
                         android:text="No comments yet."
-                        android:textColor="@color/color_text_medium"
+                        android:textColor="#6B6B6B"
                         android:textSize="14sp" />
                 </LinearLayout>
 
             </LinearLayout>
+
         </LinearLayout>
     </ScrollView>
 
     <Button
         android:id="@+id/btnDeleteEvent"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="56dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:backgroundTint="#D32F2F"
-        android:padding="14dp"
         android:text="Delete Event"
         android:textColor="@android:color/white"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:backgroundTint="#D32F2F" />
 
 </LinearLayout>
