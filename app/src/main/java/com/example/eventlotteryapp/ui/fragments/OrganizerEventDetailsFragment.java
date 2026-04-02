@@ -261,7 +261,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
             lotteryButton.setText("Registration Not Open Yet");
             lotteryButton.setEnabled(false);
         } else if (event.isRegistrationOpen()) {
-            lotteryButton.setText("Registration Open — Lottery Pending");
+            lotteryButton.setText("Registration Open (Lottery Pending)");
             lotteryButton.setEnabled(false);
         } else {
             lotteryButton.setText("Draw Lottery");
@@ -308,6 +308,7 @@ public class OrganizerEventDetailsFragment extends Fragment {
                 currentEvent != null && currentEvent.getRegistrationCloseDate() != null
                         ? currentEvent.getRegistrationCloseDate().getTime() : -1);
         args.putInt("lotteryCapacity", currentEvent != null ? currentEvent.getLotteryCapacity() : 0);
+        args.putBoolean("geolocationRequired", currentEvent != null && currentEvent.isGeolocationRequired());
         fragment.setArguments(args);
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()

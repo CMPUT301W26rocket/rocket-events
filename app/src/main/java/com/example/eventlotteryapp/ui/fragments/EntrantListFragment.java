@@ -80,6 +80,7 @@ public class EntrantListFragment extends Fragment {
     private String eventId;
     private String eventTitle;
     private boolean lotteryCompleted;
+    private boolean geolocationRequired;
     private long registrationCloseDate = -1;
     private int lotteryCapacity = 0;
     private Entrant selectedEntrant = null;
@@ -116,6 +117,7 @@ public class EntrantListFragment extends Fragment {
             eventId               = getArguments().getString("eventId");
             eventTitle            = getArguments().getString("eventTitle", "Event");
             lotteryCompleted      = getArguments().getBoolean("lotteryCompleted", false);
+            geolocationRequired   = getArguments().getBoolean("geolocationRequired", false);
             registrationCloseDate = getArguments().getLong("registrationCloseDate", -1);
             lotteryCapacity       = getArguments().getInt("lotteryCapacity", 0);
         }
@@ -440,6 +442,25 @@ public class EntrantListFragment extends Fragment {
         }
     }
 
+    /**
+     * Opens {@link EntrantMapFragment} to show a map of where waitlist entrants joined from.
+     * Only reachable when geolocation is required for the event.
+     */
+    private void openEntrantMap() {
+        EntrantMapFragment mapFragment = new EntrantMapFragment();
+        Bundle args = new Bundle();
+        args.putString("eventId", eventId);
+        args.putString("eventTitle", eventTitle);
+        mapFragment.setArguments(args);
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left,
+                        R.anim.slide_in_left, R.anim.slide_out_right)
+                .replace(R.id.fragment_container, mapFragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
     // --- ViewPager2 adapter ---
 
     private class EntrantPagerAdapter extends RecyclerView.Adapter<EntrantPagerAdapter.PageVH> {
@@ -547,6 +568,16 @@ public class EntrantListFragment extends Fragment {
                     showCustomNotificationDialog(new ArrayList<>(tabData.get(TAB_WAITLIST)),
                             Notification.TYPE_GENERAL, holder.itemView.getContext()));
 
+            // See Map — shows waitlist entrant join locations on a map
+            if (geolocationRequired) {
+                holder.btnSeeMap.setOnClickListener(v -> openEntrantMap());
+            } else {
+                holder.btnSeeMap.setOnClickListener(v ->
+                        Toast.makeText(holder.itemView.getContext(),
+                                "Geolocation is not required for this event.",
+                                Toast.LENGTH_SHORT).show());
+            }
+
             // Send Loss Notification to not-selected entrants only — US 01.04.02
             holder.btnSendNotificationWaitlist.setOnClickListener(v -> {
                 List<Entrant> notSelected = new ArrayList<>();
@@ -585,6 +616,7 @@ public class EntrantListFragment extends Fragment {
             final android.widget.Button btnSendNotificationCancelled;
             final android.widget.Button btnSendCustomNotificationWaitlist;
             final android.widget.Button btnSendNotificationWaitlist;
+            final android.widget.Button btnSeeMap;
 
             PageVH(@NonNull View itemView) {
                 super(itemView);
@@ -601,6 +633,7 @@ public class EntrantListFragment extends Fragment {
                 btnSendNotificationCancelled        = itemView.findViewById(R.id.button_send_notification_cancelled);
                 btnSendCustomNotificationWaitlist   = itemView.findViewById(R.id.button_send_custom_notification_waitlist);
                 btnSendNotificationWaitlist         = itemView.findViewById(R.id.button_send_notification_waitlist);
+                btnSeeMap                           = itemView.findViewById(R.id.button_see_map);
             }
         }
     }
