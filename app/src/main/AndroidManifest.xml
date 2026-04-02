@@ -58,7 +58,7 @@
         <activity android:name=".ui.admin.AdminEventDetailActivity" />
         <activity android:name=".ui.admin.AdminBrowseImagesActivity" />
         <activity android:name=".ui.admin.AdminImageDetailActivity" />
-
+        <activity android:name=".ui.admin.AdminNotificationLogsActivity" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyB1yzYgYAFYQxZMTHxo_Ex8yFyFWOMgrLM" />

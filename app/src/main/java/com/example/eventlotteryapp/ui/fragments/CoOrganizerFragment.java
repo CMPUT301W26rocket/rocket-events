@@ -50,7 +50,7 @@ public class CoOrganizerFragment extends Fragment {
     private String eventId;
     private String eventTitle;
     private String organizerDeviceId;
-
+    private String organizerName = "Unknown organizer";
     private EditText editSearch;
     private TextView textStatus;
     private RecyclerView recyclerResults;
@@ -109,6 +109,29 @@ public class CoOrganizerFragment extends Fragment {
 
         return view;
     }
+
+
+    private void loadOrganizerName() {
+        if (organizerDeviceId == null || organizerDeviceId.isEmpty()) {
+            return;
+        }
+
+        userRepository.getUser(organizerDeviceId, new UserRepository.FirestoreCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null && user.getName() != null && !user.getName().trim().isEmpty()) {
+                    organizerName = user.getName();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) { }
+        });
+    }
+
+
+
+
 
     /**
      * Fetches all existing entrant docs for this event and caches their statuses so
@@ -221,7 +244,7 @@ public class CoOrganizerFragment extends Fragment {
                     public void onSuccess(Void unused) {
                         if (!isAdded()) return;
                         existingStatuses.put(user.getDeviceId(), Entrant.STATUS_CO_ORGANIZER);
-                        sendCoOrganizerNotification(user.getDeviceId());
+                        sendCoOrganizerNotification(user);
                         Toast.makeText(getContext(),
                                 user.getName() + " assigned as co-organizer!", Toast.LENGTH_SHORT).show();
                         button.setEnabled(false);
@@ -245,22 +268,27 @@ public class CoOrganizerFragment extends Fragment {
      *
      * @param recipientDeviceId the device ID of the assigned co-organizer
      */
-    private void sendCoOrganizerNotification(String recipientDeviceId) {
+    private void sendCoOrganizerNotification(User user) {
         String title = eventTitle != null ? eventTitle : "an event";
+
         Notification notification = new Notification(
                 eventId,
                 title,
                 Notification.TYPE_CO_ORGANIZER,
-                "You've been assigned as a co-organizer for the event \"" + title + "\". "
-                        + "You can view the event in your event history."
+                "You've been assigned as a co-organizer for the event \"" + title + "\". " +
+                        "You can view the event in your event history.",
+                organizerDeviceId,
+                organizerName,
+                user.getDeviceId(),
+                user.getName()
         );
-        notificationRepository.addNotification(recipientDeviceId, notification,
+
+        notificationRepository.addNotification(user.getDeviceId(), notification,
                 new NotificationRepository.FirestoreCallback<String>() {
                     @Override public void onSuccess(String id) {}
                     @Override public void onFailure(Exception e) {}
                 });
     }
-
     // -----------------------------------------------------------------------------------------
     // Adapter
     // -----------------------------------------------------------------------------------------

@@ -16,7 +16,8 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.models.Event;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -69,14 +70,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author William
  */
 public class EntrantListFragment extends Fragment {
-
+    private final Map<String, String> resolvedNames = new ConcurrentHashMap<>();
     private static final int TAB_INVITED   = 0;
     private static final int TAB_ENROLLED  = 1;
     private static final int TAB_CANCELLED = 2;
     private static final int TAB_WAITLIST  = 3;
 
     private static final String[] TAB_TITLES = {"Invited", "Enrolled", "Cancelled", "Waitlist"};
-
+    private EventRepository eventRepository;
+    private String organizerDeviceId = "";
+    private String organizerName = "Unknown organizer";
     private String eventId;
     private String eventTitle;
     private boolean lotteryCompleted;
@@ -121,6 +124,9 @@ public class EntrantListFragment extends Fragment {
             registrationCloseDate = getArguments().getLong("registrationCloseDate", -1);
             lotteryCapacity       = getArguments().getInt("lotteryCapacity", 0);
         }
+        if (eventRepository == null) eventRepository = new EventRepository();
+
+
 
         // Initialise empty lists for each tab
         for (int i = 0; i < TAB_TITLES.length; i++) tabData.add(new ArrayList<>());
@@ -128,6 +134,7 @@ public class EntrantListFragment extends Fragment {
         if (entrantRepository == null) entrantRepository = new EntrantRepository();
         if (userRepository == null) userRepository = new UserRepository();
         if (notificationRepository == null) notificationRepository = new NotificationRepository();
+        loadOrganizerInfo();
 
         ViewPager2 viewPager = view.findViewById(R.id.view_pager);
         TabLayout tabLayout = view.findViewById(R.id.tab_layout);
@@ -142,6 +149,26 @@ public class EntrantListFragment extends Fragment {
 
         return view;
     }
+
+    private void loadOrganizerInfo() {
+        eventRepository.getEventById(eventId, new EventRepository.FirestoreCallback<Event>() {
+            @Override
+            public void onSuccess(Event event) {
+                if (event == null) return;
+
+                if (event.getOrganizerId() != null) {
+                    organizerDeviceId = event.getOrganizerId();
+                }
+                if (event.getOrganizerName() != null && !event.getOrganizerName().trim().isEmpty()) {
+                    organizerName = event.getOrganizerName();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) { }
+        });
+    }
+
 
     /**
      * Fetches all entrants for the event from Firestore, then resolves their display names.
@@ -212,6 +239,8 @@ public class EntrantListFragment extends Fragment {
      */
     private void groupIntoTabs(List<Entrant> entrants, Map<String, String> names,
                                 EntrantPagerAdapter pagerAdapter) {
+        resolvedNames.clear();
+        resolvedNames.putAll(names);
         for (List<Entrant> list : tabData) list.clear();
 
         for (Entrant e : entrants) {
@@ -247,7 +276,17 @@ public class EntrantListFragment extends Fragment {
             return;
         }
         for (Entrant e : targets) {
-            Notification n = new Notification(eventId, eventTitle, type, message);
+            String recipientName = resolvedNames.getOrDefault(e.getDeviceId(), e.getDeviceId());
+            Notification n = new Notification(
+                    eventId,
+                    eventTitle,
+                    type,
+                    message,
+                    organizerDeviceId,
+                    organizerName,
+                    e.getDeviceId(),
+                    recipientName
+            );
             notificationRepository.addNotification(e.getDeviceId(), n,
                     new NotificationRepository.FirestoreCallback<String>() {
                         @Override public void onSuccess(String id) {}
@@ -406,10 +445,18 @@ public class EntrantListFragment extends Fragment {
                     new EntrantRepository.FirestoreCallback<Void>() {
                         @Override
                         public void onSuccess(Void unused) {
-                            Notification n = new Notification(eventId, eventTitle,
+                            String recipientName = resolvedNames.getOrDefault(chosen.getDeviceId(), chosen.getDeviceId());
+                            Notification n = new Notification(
+                                    eventId,
+                                    eventTitle,
                                     Notification.TYPE_REPLACEMENT,
-                                    "Great news! A spot has opened up and you've been given a replacement invitation for the event \""
-                                            + eventTitle + "\". Open the event to accept or decline.");
+                                    "Great news! A spot has opened up and you've been given a replacement invitation for the event \"" +
+                                            eventTitle + "\". Open the event to accept or decline.",
+                                    organizerDeviceId,
+                                    organizerName,
+                                    chosen.getDeviceId(),
+                                    recipientName
+                            );
                             notificationRepository.addNotification(chosen.getDeviceId(), n,
                                     new NotificationRepository.FirestoreCallback<String>() {
                                         @Override public void onSuccess(String id) {}
