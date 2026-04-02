@@ -83,10 +83,10 @@ public class AdminActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        cardViewLogs.setOnClickListener(v ->
-                Toast.makeText(this, "Notification Logs coming soon", Toast.LENGTH_SHORT).show()
-        );
-
+        cardViewLogs.setOnClickListener(v -> {
+            Intent intent = new Intent(AdminActivity.this, AdminNotificationLogsActivity.class);
+            startActivity(intent);
+        });
         textLogout.setOnClickListener(v -> logoutAdmin());
     }
 

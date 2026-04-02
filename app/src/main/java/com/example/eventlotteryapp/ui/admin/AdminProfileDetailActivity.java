@@ -16,6 +16,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * Admin screen for viewing profile details and deleting a user profile.
  * Displays the selected user's basic information and provides
  * a confirmation step before deletion.
+ *
  * User Stories Implemented:
  * US 03.02.01 As an administrator, I want to be able to remove profiles.
  *
@@ -32,6 +33,12 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private String deviceId;
 
+    /**
+     * Initializes the profile detail screen, reads the selected user's
+     * information from the intent, and sets up button listeners.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,6 +67,9 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
         buttonBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the selected profile.
+     */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Profile")
@@ -69,6 +79,9 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the selected user profile from Firestore if a valid device ID exists.
+     */
     private void deleteProfile() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing device ID", Toast.LENGTH_SHORT).show();
@@ -86,6 +99,14 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
                 );
     }
 
+    /**
+     * Returns the supplied text unless it is null or blank, in which case
+     * the fallback text is returned instead.
+     *
+     * @param value value to check
+     * @param fallback fallback text to display
+     * @return safe display text
+     */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }

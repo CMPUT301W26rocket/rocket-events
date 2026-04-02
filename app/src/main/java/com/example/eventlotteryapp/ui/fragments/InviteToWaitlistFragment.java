@@ -51,7 +51,7 @@ public class InviteToWaitlistFragment extends Fragment {
     private TextView textStatus;
     private RecyclerView recyclerResults;
     private SearchResultsAdapter adapter;
-
+    private String organizerName = "Unknown organizer";
     private UserRepository userRepository;
     private EntrantRepository entrantRepository;
     private NotificationRepository notificationRepository;
@@ -105,6 +105,26 @@ public class InviteToWaitlistFragment extends Fragment {
 
         return view;
     }
+
+    private void loadOrganizerName() {
+        if (organizerDeviceId == null || organizerDeviceId.isEmpty()) {
+            return;
+        }
+
+        userRepository.getUser(organizerDeviceId, new UserRepository.FirestoreCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null && user.getName() != null && !user.getName().trim().isEmpty()) {
+                    organizerName = user.getName();
+                }
+            }
+
+            @Override
+            public void onFailure(Exception e) { }
+        });
+    }
+
+
 
     /**
      * Fetches all existing entrant docs for this event and caches their statuses in
@@ -235,7 +255,7 @@ public class InviteToWaitlistFragment extends Fragment {
                     public void onSuccess(Void unused) {
                         if (!isAdded()) return;
                         existingStatuses.put(user.getDeviceId(), Entrant.STATUS_WAITLIST_INVITED);
-                        sendInviteNotification(user.getDeviceId());
+                        sendInviteNotification(user);
                         Toast.makeText(getContext(),
                                 user.getName() + " invited!", Toast.LENGTH_SHORT).show();
                         button.setEnabled(false);
@@ -259,16 +279,22 @@ public class InviteToWaitlistFragment extends Fragment {
      *
      * @param recipientDeviceId the device ID of the invited user
      */
-    private void sendInviteNotification(String recipientDeviceId) {
+    private void sendInviteNotification(User user) {
         String title = eventTitle != null ? eventTitle : "an event";
+
         Notification notification = new Notification(
                 eventId,
                 title,
                 Notification.TYPE_WAITLIST_INVITE,
-                "You've been personally invited to join the waitlist for the private event \""
-                        + title + "\". Click to accept or decline your invitation."
+                "You've been personally invited to join the waitlist for the private event \"" +
+                        title + "\". Click to accept or decline your invitation.",
+                organizerDeviceId,
+                organizerName,
+                user.getDeviceId(),
+                user.getName()
         );
-        notificationRepository.addNotification(recipientDeviceId, notification,
+
+        notificationRepository.addNotification(user.getDeviceId(), notification,
                 new NotificationRepository.FirestoreCallback<String>() {
                     @Override public void onSuccess(String id) {}
                     @Override public void onFailure(Exception e) {}

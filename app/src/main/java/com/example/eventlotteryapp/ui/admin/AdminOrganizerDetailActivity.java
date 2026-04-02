@@ -19,6 +19,7 @@ import java.util.List;
  * Admin screen for viewing organizer information and removing organizer status.
  * In the current project structure, removing an organizer deletes all events
  * owned by that organizer so they no longer appear in organizer-derived views.
+ *
  * User Stories Implemented:
  * US 03.07.01 As an administrator I want to remove organizers that violate app policy.
  *
@@ -35,6 +36,12 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     private String deviceId;
     private EventRepository eventRepository;
 
+    /**
+     * Initializes the organizer detail screen, reads organizer information
+     * from the intent, and sets up button listeners.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +70,9 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         buttonBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before removing organizer status.
+     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Organizer")
@@ -72,6 +82,10 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Loads all events owned by the selected organizer and removes organizer
+     * status by deleting those events.
+     */
     private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing organizer ID", Toast.LENGTH_SHORT).show();
@@ -105,6 +119,12 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Deletes organizer-owned events one at a time until all have been removed.
+     *
+     * @param events organizer-owned event list
+     * @param index current event index being deleted
+     */
     private void deleteEventsSequentially(List<Event> events, int index) {
         if (index >= events.size()) {
             Toast.makeText(this, "Organizer removed", Toast.LENGTH_SHORT).show();
@@ -137,6 +157,14 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Returns the supplied text unless it is null or blank, in which case
+     * the fallback text is returned instead.
+     *
+     * @param value value to check
+     * @param fallback fallback text to display
+     * @return safe display text
+     */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }

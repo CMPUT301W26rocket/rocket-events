@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    android:background="@drawable/admin_card_background"
+    android:orientation="vertical"
+    android:padding="14dp">
+
+    <TextView
+        android:id="@+id/textNotificationTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Notification"
+        android:textColor="#2B2B2B"
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/textNotificationRecipient"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Recipient: ..."
+        android:textColor="#6B6B6B"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/textNotificationMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Message"
+        android:textColor="#4F4F4F"
+        android:textSize="13sp" />
+
+    <TextView
+        android:id="@+id/textNotificationMeta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:text="Type • Time"
+        android:textColor="#8A8A8A"
+        android:textSize="12sp" />
+</LinearLayout>

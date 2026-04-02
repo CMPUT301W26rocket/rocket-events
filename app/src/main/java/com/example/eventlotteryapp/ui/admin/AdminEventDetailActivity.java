@@ -22,6 +22,16 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Admin detail screen for viewing one event, reviewing its comments,
+ * deleting individual comments, and deleting the event itself.
+ *
+ * User Stories Implemented:
+ * US 03.01.01 As an administrator, I want to be able to remove events.
+ * US 03.10.01 As an administrator, I want to remove event comments that violate app policy.
+ *
+ * @author Mazen
+ */
 public class AdminEventDetailActivity extends AppCompatActivity {
 
     private TextView textDetailTitle;
@@ -41,6 +51,12 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
     private String eventId;
 
+    /**
+     * Initializes the admin event detail screen, reads event data from the intent,
+     * sets up button listeners, and loads the latest event details and comments.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +96,10 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         loadComments();
     }
 
+    /**
+     * Loads the latest event details from the repository and updates the displayed fields.
+     * Returns immediately if the event ID is missing.
+     */
     private void loadEventDetails() {
         if (eventId == null || eventId.isEmpty()) {
             return;
@@ -110,6 +130,11 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Loads all comments for the current event and displays them in the comments container.
+     * Shows a status message if the event ID is missing, there are no comments,
+     * or loading fails.
+     */
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) {
             textNoComments.setText("Missing event ID. Cannot load comments.");
@@ -157,6 +182,12 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Creates and returns a view for one comment entry in the admin comments list.
+     *
+     * @param comment comment to display
+     * @return inflated and populated comment view
+     */
     private View createCommentView(Comment comment) {
         View commentView = LayoutInflater.from(this).inflate(
                 R.layout.item_admin_comment,
@@ -169,7 +200,7 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         TextView textCommentBody = commentView.findViewById(R.id.textCommentBody);
         Button btnDeleteComment = commentView.findViewById(R.id.btnDeleteComment);
 
-        textCommentAuthor.setText("Author ID: " + displayText(comment.getAuthorId(), "(empty)"));
+        textCommentAuthor.setText("Author ID: " + displayCommentAuthor(comment));
         textCommentTime.setText("Time: " + formatTimestamp(comment));
         textCommentBody.setText(displayText(comment.getText(), "(empty)"));
 
@@ -178,6 +209,11 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         return commentView;
     }
 
+    /**
+     * Shows a confirmation dialog before deleting a selected comment.
+     *
+     * @param comment comment selected for deletion
+     */
     private void showDeleteCommentConfirmation(Comment comment) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Comment")
@@ -187,6 +223,12 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the selected comment from the current event if both the event ID
+     * and comment ID are available.
+     *
+     * @param comment comment to delete
+     */
     private void deleteComment(Comment comment) {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -221,6 +263,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the current event.
+     */
     private void showDeleteEventConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Event")
@@ -230,6 +275,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the current event if a valid event ID is available.
+     */
     private void deleteEvent() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -254,10 +302,37 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Returns the supplied text unless it is null or blank, in which case
+     * the fallback text is returned instead.
+     *
+     * @param value value to check
+     * @param fallback fallback text to display
+     * @return safe display text
+     */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }
+    private String displayCommentAuthor(Comment comment) {
+        if (comment == null) {
+            return "(unknown)";
+        }
 
+        String name = displayText(comment.getAuthorName(), "");
+        String id = displayText(comment.getAuthorId(), "(empty)");
+
+        if (!name.isEmpty()) {
+            return name + " (ID: " + id + ")";
+        }
+
+        return id;
+    }
+    /**
+     * Formats a comment timestamp for display in the admin event detail screen.
+     *
+     * @param comment comment containing the timestamp
+     * @return formatted timestamp string, or a fallback label if unavailable
+     */
     private String formatTimestamp(Comment comment) {
         if (comment == null || comment.getTimestamp() == null || comment.getTimestamp().toDate() == null) {
             return "Unknown time";

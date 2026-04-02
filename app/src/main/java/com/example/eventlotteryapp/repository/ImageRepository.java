@@ -16,6 +16,8 @@ import java.io.InputStream;
  * Images are scaled down to at most {@code MAX_DIMENSION} pixels on the longest side
  * and compressed to JPEG before upload.
  * Uploaded files are stored under {@code event_posters/{deviceId}_{timestamp}.jpg}.
+ *
+ * @author Mazen
  */
 public class ImageRepository {
 
@@ -32,15 +34,32 @@ public class ImageRepository {
     }
 
     /**
-     * Callback interface for image upload operations.
+     * Callback interface for image upload and delete operations.
      */
     public interface UploadCallback {
+
+        /**
+         * Called when the image operation succeeds.
+         *
+         * @param downloadUrl download URL of the uploaded image, or the deleted image URL
+         */
         void onSuccess(String downloadUrl);
+
+        /**
+         * Called when the image operation fails.
+         *
+         * @param e exception describing the failure
+         */
         void onFailure(Exception e);
     }
 
     /**
-     * Compresses the image from the given Uri, then uploads it to Firebase Storage.
+     * Compresses the image from the given URI and uploads it to Firebase Storage.
+     *
+     * @param context Android context used to access the image content
+     * @param deviceId device ID used to generate the file name
+     * @param imageUri URI of the selected image
+     * @param callback callback receiving the uploaded image URL or an error
      */
     public void uploadEventPoster(Context context, String deviceId, Uri imageUri,
                                   UploadCallback callback) {
@@ -86,6 +105,13 @@ public class ImageRepository {
         }
     }
 
+    /**
+     * Reads, scales, and compresses an image from the given URI into a JPEG byte array.
+     *
+     * @param context Android context used to access the image content
+     * @param uri URI of the image to process
+     * @return compressed image bytes, or {@code null} if processing fails
+     */
     private byte[] compressImage(Context context, Uri uri) {
         try {
             InputStream stream = context.getContentResolver().openInputStream(uri);
@@ -108,6 +134,13 @@ public class ImageRepository {
         }
     }
 
+    /**
+     * Scales a bitmap so its longest side does not exceed {@code MAX_DIMENSION}.
+     * Returns the original bitmap unchanged if scaling is not needed.
+     *
+     * @param bitmap bitmap to scale
+     * @return scaled bitmap, or the original bitmap if already within size limits
+     */
     private Bitmap scaleBitmap(Bitmap bitmap) {
         int width  = bitmap.getWidth();
         int height = bitmap.getHeight();

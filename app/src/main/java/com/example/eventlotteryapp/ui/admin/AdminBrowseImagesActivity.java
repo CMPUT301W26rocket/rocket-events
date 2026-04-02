@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Admin screen for browsing event posters currently stored in the system.
  * Only events with a non-empty poster URL are shown.
+ *
  * User Stories Implemented:
  * US 03.06.01 As an administrator, I want to be able to browse images that are uploaded so I can remove them if necessary.
  *
@@ -35,6 +36,12 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     private List<Event> imageEventList;
     private AdminImageAdapter imageAdapter;
 
+    /**
+     * Initializes the image browsing screen, sets up the grid-based RecyclerView,
+     * and loads all event poster images available in the system.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,12 +70,21 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
         loadImages();
     }
 
+    /**
+     * Reloads the image list when the activity returns to the foreground.
+     * This keeps the displayed posters current after navigating back from
+     * the image detail screen.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadImages();
     }
 
+    /**
+     * Loads all events from Firestore, filters them to only those with a
+     * non-empty poster URL, and updates the RecyclerView and empty-state view.
+     */
     private void loadImages() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

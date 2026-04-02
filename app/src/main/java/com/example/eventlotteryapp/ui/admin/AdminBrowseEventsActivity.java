@@ -21,6 +21,7 @@ import java.util.List;
 /**
  * Admin screen for browsing all events in the system.
  * Allows an administrator to review events and open the event detail screen.
+ *
  * User Stories Implemented:
  * US 03.04.01 As an administrator, I want to be able to browse events.
  *
@@ -36,6 +37,12 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     private List<Event> eventList;
     private AdminEventAdapter eventAdapter;
 
+    /**
+     * Initializes the event browsing screen, sets up the RecyclerView,
+     * and loads all events from the repository.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,12 +73,21 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         loadEvents();
     }
 
+    /**
+     * Reloads the event list when the activity returns to the foreground.
+     * This keeps the displayed data up to date after returning from the
+     * event detail screen.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadEvents();
     }
 
+    /**
+     * Loads all events from Firestore through the repository and updates
+     * the RecyclerView and empty-state visibility based on the result.
+     */
     private void loadEvents() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

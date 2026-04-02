@@ -26,6 +26,9 @@ import java.util.Set;
  * Admin screen for browsing all organizers currently represented by event ownership.
  * Organizers are derived from event organizer IDs rather than a separate organizer table.
  *
+ * User Stories Implemented:
+ * US 03.07.01 As an administrator, I want to remove organizers that violate app policy.
+ *
  * @author Mazen
  */
 public class AdminBrowseOrganizersActivity extends AppCompatActivity {
@@ -38,6 +41,12 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     private List<User> organizerList;
     private ProfileAdapter profileAdapter;
 
+    /**
+     * Initializes the organizer browsing screen, sets up the RecyclerView,
+     * and loads all organizers derived from existing event ownership.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -68,12 +77,22 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
         loadOrganizers();
     }
 
+    /**
+     * Reloads the organizer list when the activity returns to the foreground.
+     * This keeps the displayed organizer data current after returning from
+     * the organizer detail screen.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadOrganizers();
     }
 
+    /**
+     * Loads all events, extracts unique organizer device IDs, then fetches
+     * matching user records from Firestore to build the organizer list.
+     * Updates the RecyclerView and empty-state visibility based on the result.
+     */
     private void loadOrganizers() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override
