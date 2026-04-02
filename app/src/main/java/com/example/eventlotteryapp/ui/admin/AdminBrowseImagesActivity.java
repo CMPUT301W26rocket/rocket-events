@@ -35,6 +35,12 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
     private List<Event> imageEventList;
     private AdminImageAdapter imageAdapter;
 
+    /**
+     * Initializes the image browser screen, connects the image adapter,
+     * and loads all event posters for administrator review.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,12 +69,19 @@ public class AdminBrowseImagesActivity extends AppCompatActivity {
         loadImages();
     }
 
+    /**
+     * Reloads the image list whenever the screen returns to the foreground.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadImages();
     }
 
+    /**
+     * Loads all events from the repository and filters to those with a poster URL.
+     * Displays an empty-state message when no images are available.
+     */
     private void loadImages() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

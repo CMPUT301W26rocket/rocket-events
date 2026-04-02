@@ -22,6 +22,17 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Locale;
 
+/**
+ * Admin detail screen for a single event.
+ * Displays event metadata, lists all comments, and allows the administrator
+ * to delete individual comments or the entire event.
+ * User Stories Implemented:
+ * US 03.04.01 As an administrator, I want to be able to browse events.
+ * US 03.01.01 As an administrator, I want to be able to remove events.
+ * US 03.10.01 As an administrator, I want to remove event comments that violate app policy.
+ *
+ * @author Mazen
+ */
 public class AdminEventDetailActivity extends AppCompatActivity {
 
     private TextView textDetailTitle;
@@ -41,6 +52,12 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
     private String eventId;
 
+    /**
+     * Initializes the event detail screen, populates fields from intent extras,
+     * and loads fresh event details and comments from Firestore.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,6 +97,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         loadComments();
     }
 
+    /**
+     * Fetches the latest event data from Firestore and refreshes the detail fields.
+     */
     private void loadEventDetails() {
         if (eventId == null || eventId.isEmpty()) {
             return;
@@ -110,6 +130,10 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Fetches all comments for the event from Firestore and renders them in the comments container.
+     * Shows a placeholder message while loading and when no comments exist.
+     */
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) {
             textNoComments.setText("Missing event ID. Cannot load comments.");
@@ -157,6 +181,12 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Inflates a comment row view and binds the given comment's author, timestamp, and text.
+     *
+     * @param comment the comment to display
+     * @return the inflated and bound comment row view
+     */
     private View createCommentView(Comment comment) {
         View commentView = LayoutInflater.from(this).inflate(
                 R.layout.item_admin_comment,
@@ -178,6 +208,11 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         return commentView;
     }
 
+    /**
+     * Shows a confirmation dialog before deleting a comment.
+     *
+     * @param comment the comment to delete on confirmation
+     */
     private void showDeleteCommentConfirmation(Comment comment) {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Comment")
@@ -187,6 +222,11 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the given comment from Firestore and reloads the comments list on success.
+     *
+     * @param comment the comment to delete
+     */
     private void deleteComment(Comment comment) {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -221,6 +261,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 });
     }
 
+    /**
+     * Shows a confirmation dialog before deleting the event.
+     */
     private void showDeleteEventConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Delete Event")
@@ -230,6 +273,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the current event from Firestore and finishes the activity on success.
+     */
     private void deleteEvent() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();
@@ -254,10 +300,24 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Returns {@code value} if non-null and non-empty, otherwise returns {@code fallback}.
+     *
+     * @param value    the string to check
+     * @param fallback the fallback string to use if value is blank
+     * @return the display string
+     */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }
 
+    /**
+     * Formats a comment's timestamp as {@code yyyy-MM-dd HH:mm}.
+     * Returns {@code "Unknown time"} if the timestamp is null.
+     *
+     * @param comment the comment whose timestamp to format
+     * @return formatted timestamp string
+     */
     private String formatTimestamp(Comment comment) {
         if (comment == null || comment.getTimestamp() == null || comment.getTimestamp().toDate() == null) {
             return "Unknown time";

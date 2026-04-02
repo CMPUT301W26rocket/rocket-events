@@ -36,6 +36,12 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
     private List<Event> eventList;
     private AdminEventAdapter eventAdapter;
 
+    /**
+     * Initializes the event list screen, connects the shared event adapter,
+     * and loads all events for administrator review.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,12 +72,19 @@ public class AdminBrowseEventsActivity extends AppCompatActivity {
         loadEvents();
     }
 
+    /**
+     * Reloads the event list whenever the screen returns to the foreground.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadEvents();
     }
 
+    /**
+     * Loads all events from the repository and updates the administrator list UI.
+     * Displays an empty-state message when no events are available.
+     */
     private void loadEvents() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {
             @Override

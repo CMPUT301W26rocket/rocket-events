@@ -21,6 +21,7 @@ import java.util.List;
  */
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 
+    /** Callback interface for profile row tap events. */
     public interface OnProfileClickListener {
         void onProfileClick(User user);
     }
@@ -28,6 +29,12 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     private final List<User> userList;
     private final OnProfileClickListener listener;
 
+    /**
+     * Creates a new adapter.
+     *
+     * @param userList the list of users to display
+     * @param listener callback invoked when a profile row is tapped
+     */
     public ProfileAdapter(List<User> userList, OnProfileClickListener listener) {
         this.userList = userList;
         this.listener = listener;
@@ -40,6 +47,13 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         return new ProfileViewHolder(view);
     }
 
+    /**
+     * Binds user profile data to the given view holder. Falls back to placeholder
+     * strings when name, email, or phone are null or empty.
+     *
+     * @param holder   the view holder to bind data into
+     * @param position the position of the item in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
         User user = userList.get(position);
@@ -63,16 +77,29 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         holder.itemView.setOnClickListener(v -> listener.onProfileClick(user));
     }
 
+    /**
+     * Returns the total number of profiles in the list.
+     *
+     * @return the size of the user list
+     */
     @Override
     public int getItemCount() {
         return userList.size();
     }
 
+    /**
+     * ViewHolder for a single profile row in the admin profile list.
+     */
     static class ProfileViewHolder extends RecyclerView.ViewHolder {
         TextView textProfileName;
         TextView textProfileEmail;
         TextView textProfilePhone;
 
+        /**
+         * Binds the name, email, and phone TextViews from the profile item layout.
+         *
+         * @param itemView the inflated item view
+         */
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);
             textProfileName = itemView.findViewById(R.id.textProfileName);

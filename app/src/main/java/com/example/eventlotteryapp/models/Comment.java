@@ -3,9 +3,14 @@ package com.example.eventlotteryapp.models;
 import com.google.firebase.Timestamp;
 
 /**
- * Represents a comment stored for an event.
- * This merged version keeps fields needed by both the older admin comment flow
- * and the newer comment UI code.
+ *  Represents a comment left by a user on an event.
+ *  Comment documents are stored in Firestore under {@code events/{eventId}/comments/{commentId}}.
+ *  User Stories Implemented:
+ *  US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
+ *  US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
+ *  US 02.08.02 As an organizer, I want to comment on my events so that I can share updates, answer questions, or engage with entrants in the event discussion.
+ * @author Daniel
+ * @co-author Mazen
  */
 public class Comment {
 

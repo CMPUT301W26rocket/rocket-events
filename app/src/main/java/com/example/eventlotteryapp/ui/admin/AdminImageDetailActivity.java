@@ -40,6 +40,12 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     private String posterUrl;
     private String title;
 
+    /**
+     * Initializes the image detail screen, loads the poster from the intent extras,
+     * and sets up the remove button.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +79,9 @@ public class AdminImageDetailActivity extends AppCompatActivity {
         buttonBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog before removing the event poster.
+     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Image")
@@ -82,6 +91,10 @@ public class AdminImageDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Deletes the poster from Firebase Storage and clears the {@code posterUrl}
+     * field on the event document in Firestore. Finishes the activity on success.
+     */
     private void removeImage() {
         if (eventId == null || eventId.isEmpty()) {
             Toast.makeText(this, "Missing event ID", Toast.LENGTH_SHORT).show();

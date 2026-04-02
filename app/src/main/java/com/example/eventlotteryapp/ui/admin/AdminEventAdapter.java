@@ -14,8 +14,15 @@ import com.example.eventlotteryapp.models.Event;
 
 import java.util.List;
 
+/**
+ * RecyclerView adapter for displaying events in the admin event browser.
+ * Each row shows the event title, organizer name, and a short description.
+ *
+ * @author Mazen
+ */
 public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.AdminEventViewHolder> {
 
+    /** Callback interface for event row tap events. */
     public interface OnEventClickListener {
         void onEventClick(Event event);
     }
@@ -23,6 +30,12 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
     private final List<Event> events;
     private final OnEventClickListener listener;
 
+    /**
+     * Creates a new adapter.
+     *
+     * @param events   the list of events to display
+     * @param listener callback invoked when an event row is tapped
+     */
     public AdminEventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
@@ -36,6 +49,13 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
         return new AdminEventViewHolder(view);
     }
 
+    /**
+     * Binds event data to the given view holder. Falls back to placeholder strings
+     * when title, organizer, or description are null or empty.
+     *
+     * @param holder   the view holder to bind data into
+     * @param position the position of the item in the list
+     */
     @Override
     public void onBindViewHolder(@NonNull AdminEventViewHolder holder, int position) {
         Event event = events.get(position);
@@ -59,17 +79,30 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
         holder.itemView.setOnClickListener(v -> listener.onEventClick(event));
     }
 
+    /**
+     * Returns the total number of events in the list.
+     *
+     * @return the size of the events list
+     */
     @Override
     public int getItemCount() {
         return events.size();
     }
 
+    /**
+     * ViewHolder for a single event row in the admin event list.
+     */
     static class AdminEventViewHolder extends RecyclerView.ViewHolder {
         TextView textEventTitle;
         TextView textEventOrganizer;
         TextView textEventDescription;
         ImageView imageArrow;
 
+        /**
+         * Binds all views from the event row item layout.
+         *
+         * @param itemView the inflated item view
+         */
         public AdminEventViewHolder(@NonNull View itemView) {
             super(itemView);
             textEventTitle = itemView.findViewById(R.id.text_admin_event_title);

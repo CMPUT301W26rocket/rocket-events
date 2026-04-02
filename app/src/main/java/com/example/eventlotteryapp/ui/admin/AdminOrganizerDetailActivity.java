@@ -35,6 +35,11 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     private String deviceId;
     private EventRepository eventRepository;
 
+    /**
+     * Initializes the organizer detail screen and populates fields from intent extras.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,6 +68,9 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         buttonBack.setOnClickListener(v -> finish());
     }
 
+    /**
+     * Shows a confirmation dialog warning that all events owned by this organizer will be deleted.
+     */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
                 .setTitle("Remove Organizer")
@@ -72,6 +80,10 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
                 .show();
     }
 
+    /**
+     * Fetches all events owned by this organizer and deletes them sequentially.
+     * Finishes the activity once all events are removed.
+     */
     private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
             Toast.makeText(this, "Missing organizer ID", Toast.LENGTH_SHORT).show();
@@ -105,6 +117,13 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Recursively deletes events one at a time to avoid concurrent write issues.
+     * Called with the next index after each successful deletion.
+     *
+     * @param events the list of events to delete
+     * @param index  the current position in the list
+     */
     private void deleteEventsSequentially(List<Event> events, int index) {
         if (index >= events.size()) {
             Toast.makeText(this, "Organizer removed", Toast.LENGTH_SHORT).show();
@@ -137,6 +156,13 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Returns {@code value} if non-null and non-empty, otherwise returns {@code fallback}.
+     *
+     * @param value    the string to check
+     * @param fallback the fallback string to use if value is blank
+     * @return the display string
+     */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }

@@ -36,6 +36,12 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
     private List<User> userList;
     private ProfileAdapter profileAdapter;
 
+    /**
+     * Initializes the profile browser screen, connects the profile adapter,
+     * and loads all user profiles for administrator review.
+     *
+     * @param savedInstanceState saved Android instance state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,12 +71,19 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
         loadProfiles();
     }
 
+    /**
+     * Reloads the profile list whenever the screen returns to the foreground.
+     */
     @Override
     protected void onResume() {
         super.onResume();
         loadProfiles();
     }
 
+    /**
+     * Fetches all user documents from the {@code users} Firestore collection
+     * and populates the profile list. Displays an empty-state message when no profiles are found.
+     */
     private void loadProfiles() {
         db.collection("users")
                 .get()
