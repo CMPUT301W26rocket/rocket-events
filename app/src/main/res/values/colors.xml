@@ -17,4 +17,5 @@
     <!-- UI colors -->
     <color name="color_border">#CCCCCC</color>
     <color name="color_placeholder_bg">#EEEEEE</color>
+    <color name="color_selected_item">#F1E8F7</color>
 </resources>

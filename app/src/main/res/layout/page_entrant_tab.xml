@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/color_background">
+
+    <TextView
+        android:id="@+id/text_empty"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No entrants in this category."
+        android:textColor="@color/color_text_medium"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone"/>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_tab"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="8dp"
+        android:clipToPadding="false"/>
+
+    <!-- Invited tab buttons -->
+    <LinearLayout
+        android:id="@+id/layout_buttons_invited"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/button_send_win_notification"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Win Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_send_notification_invited"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_cancel_entrant"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel Entrant"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#D32F2F"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_draw_replacement"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Draw Replacement"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"/>
+
+    </LinearLayout>
+
+    <!-- Enrolled tab buttons -->
+    <LinearLayout
+        android:id="@+id/layout_buttons_enrolled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/button_export_csv"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Export CSV"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"/>
+
+    </LinearLayout>
+
+    <!-- Cancelled tab buttons -->
+    <LinearLayout
+        android:id="@+id/layout_buttons_cancelled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/button_send_notification_cancelled"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"/>
+
+    </LinearLayout>
+
+    <!-- Waitlist tab buttons -->
+    <LinearLayout
+        android:id="@+id/layout_buttons_waitlist"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/button_send_custom_notification_waitlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_send_notification_waitlist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Loss Notification"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"
+            android:layout_marginBottom="8dp"/>
+
+        <Button
+            android:id="@+id/button_see_map"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="See Map"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="@color/color_primary"/>
+
+    </LinearLayout>
+
+</LinearLayout>

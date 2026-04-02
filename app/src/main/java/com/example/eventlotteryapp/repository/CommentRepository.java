@@ -4,53 +4,72 @@ import com.example.eventlotteryapp.models.Comment;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles Firestore operations for comment subcollections stored at
- * {@code events/{eventId}/comments/{commentId}}.
+ * Handles Firestore operations for comment subcollections under
+ * events/{eventId}/comments/{commentId}.
+ * This merged version keeps support for both the newer comment UI
+ * and the admin comment-removal flow.
  */
 public class CommentRepository {
 
-    private final FirebaseConnector firebaseConnector;
     private final FirebaseFirestore db;
 
-    /**
-     * Creates a new CommentRepository with a default FirebaseConnector.
-     */
     public CommentRepository() {
-        firebaseConnector = new FirebaseConnector();
-        db = firebaseConnector.getDb();
+        db = new FirebaseConnector().getDb();
     }
 
-    /**
-     * Generic callback interface for asynchronous Firestore operations.
-     *
-     * @param <T> the type of result returned on success
-     */
     public interface FirestoreCallback<T> {
         void onSuccess(T result);
         void onFailure(Exception e);
     }
 
-    /**
-     * Fetches all comments for a given event ordered by newest first.
-     *
-     * @param eventId the event ID
-     * @param callback receives the list of comments on success
-     */
+    public void addComment(String eventId, Comment comment, FirestoreCallback<Void> callback) {
+        if (eventId == null || eventId.isEmpty()) {
+            callback.onFailure(new IllegalArgumentException("Event ID is required"));
+            return;
+        }
+
+        if (comment == null) {
+            callback.onFailure(new IllegalArgumentException("Comment is required"));
+            return;
+        }
+
+        if (comment.getTimestamp() == null) {
+            comment.setTimestamp(Timestamp.now());
+        }
+
+        db.collection("events")
+                .document(eventId)
+                .collection("comments")
+                .add(comment)
+                .addOnSuccessListener(docRef -> {
+                    String id = docRef.getId();
+                    comment.setCommentId(id);
+                    comment.setEventId(eventId);
+
+                    docRef.update("commentId", id)
+                            .addOnSuccessListener(unused -> callback.onSuccess(null))
+                            .addOnFailureListener(callback::onFailure);
+                })
+                .addOnFailureListener(callback::onFailure);
+    }
+
     public void getCommentsForEvent(String eventId, FirestoreCallback<List<Comment>> callback) {
         db.collection("events")
                 .document(eventId)
                 .collection("comments")
-                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .orderBy("timestamp", Query.Direction.ASCENDING)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addOnSuccessListener(query -> {
                     List<Comment> comments = new ArrayList<>();
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+
+                    for (DocumentSnapshot doc : query.getDocuments()) {
                         Comment comment = doc.toObject(Comment.class);
                         if (comment != null) {
                             comment.setCommentId(doc.getId());
@@ -58,44 +77,50 @@ public class CommentRepository {
                             comments.add(comment);
                         }
                     }
+
                     callback.onSuccess(comments);
                 })
                 .addOnFailureListener(callback::onFailure);
     }
 
-    /**
-     * Adds a new comment to an event.
-     *
-     * @param eventId the event ID
-     * @param authorId the device ID of the user posting the comment
-     * @param text the comment text
-     * @param callback receives the new comment ID on success
-     */
-    public void addComment(String eventId, String authorId, String text,
-                           FirestoreCallback<String> callback) {
-        Comment comment = new Comment(null, eventId, authorId, text, Timestamp.now());
-
-        db.collection("events")
+    public ListenerRegistration listenForComments(String eventId, FirestoreCallback<List<Comment>> callback) {
+        return db.collection("events")
                 .document(eventId)
                 .collection("comments")
-                .add(comment)
-                .addOnSuccessListener(documentReference -> {
-                    String commentId = documentReference.getId();
-                    documentReference.update("commentId", commentId)
-                            .addOnSuccessListener(unused -> callback.onSuccess(commentId))
-                            .addOnFailureListener(callback::onFailure);
-                })
-                .addOnFailureListener(callback::onFailure);
+                .orderBy("timestamp", Query.Direction.ASCENDING)
+                .addSnapshotListener((query, error) -> {
+                    if (error != null) {
+                        callback.onFailure(error);
+                        return;
+                    }
+
+                    List<Comment> comments = new ArrayList<>();
+                    if (query != null) {
+                        for (DocumentSnapshot doc : query.getDocuments()) {
+                            Comment comment = doc.toObject(Comment.class);
+                            if (comment != null) {
+                                comment.setCommentId(doc.getId());
+                                comment.setEventId(eventId);
+                                comments.add(comment);
+                            }
+                        }
+                    }
+
+                    callback.onSuccess(comments);
+                });
     }
 
-    /**
-     * Deletes one comment from an event.
-     *
-     * @param eventId the event ID
-     * @param commentId the comment document ID
-     * @param callback receives null on success
-     */
     public void deleteComment(String eventId, String commentId, FirestoreCallback<Void> callback) {
+        if (eventId == null || eventId.isEmpty()) {
+            callback.onFailure(new IllegalArgumentException("Event ID is required"));
+            return;
+        }
+
+        if (commentId == null || commentId.isEmpty()) {
+            callback.onFailure(new IllegalArgumentException("Comment ID is required"));
+            return;
+        }
+
         db.collection("events")
                 .document(eventId)
                 .collection("comments")

@@ -3,6 +3,7 @@ package com.example.eventlotteryapp.repository;
 import com.example.eventlotteryapp.models.Entrant;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 
@@ -58,15 +59,39 @@ public class EntrantRepository {
      * @param callback receives {@code null} on success
      */
     public void joinWaitlist(String eventId, String deviceId, FirestoreCallback<Void> callback) {
+        joinWaitlist(eventId, deviceId, null, null, callback);
+    }
+
+    /**
+     * Adds a user to an event's waitlist, optionally recording their location.
+     * Creates the entrant doc at {@code events/{eventId}/entrants/{deviceId}}
+     * with status {@link Entrant#STATUS_WAITLIST}. Pass {@code null} for lat/lng
+     * if location was not captured.
+     *
+     * @param eventId  the ID of the event to join
+     * @param deviceId the device ID of the user joining
+     * @param latitude the latitude where the user joined, or {@code null} if not captured
+     * @param longitude the longitude where the user joined, or {@code null} if not captured
+     * @param callback receives {@code null} on success
+     */
+    public void joinWaitlist(String eventId, String deviceId, Double latitude, Double longitude,
+                             FirestoreCallback<Void> callback) {
         Timestamp now = Timestamp.now();
         Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_WAITLIST, now, now);
+        entrant.setLatitude(latitude);
+        entrant.setLongitude(longitude);
 
         db.collection("events")
                 .document(eventId)
                 .collection("entrants")
                 .document(deviceId)
                 .set(entrant)
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnSuccessListener(unused -> {
+                    // Increment the denormalized waitlist count on the event document
+                    db.collection("events").document(eventId)
+                            .update("currentWaitlistCount", FieldValue.increment(1));
+                    callback.onSuccess(null);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
 
@@ -222,6 +247,50 @@ public class EntrantRepository {
     }
 
     /**
+     * Assigns a user as a co-organizer for an event by creating an entrant document with
+     * status {@link Entrant#STATUS_CO_ORGANIZER}. This prevents the user from joining
+     * the event's waitlist pool.
+     *
+     * @param eventId  the ID of the event
+     * @param deviceId the device ID of the user being assigned as co-organizer
+     * @param callback receives {@code null} on success
+     */
+    public void assignCoOrganizer(String eventId, String deviceId,
+                                  FirestoreCallback<Void> callback) {
+        Timestamp now = Timestamp.now();
+        Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_CO_ORGANIZER, now, now);
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(deviceId)
+                .set(entrant)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
+     * Invites a user to a private event's waitlist by creating an entrant document with
+     * status {@link Entrant#STATUS_WAITLIST_INVITED}. Does not increment the waitlist count
+     * since the user has not yet accepted.
+     *
+     * @param eventId  the ID of the private event
+     * @param deviceId the device ID of the user being invited
+     * @param callback receives {@code null} on success
+     */
+    public void inviteToPrivateWaitlist(String eventId, String deviceId,
+                                        FirestoreCallback<Void> callback) {
+        Timestamp now = Timestamp.now();
+        Entrant entrant = new Entrant(deviceId, eventId, Entrant.STATUS_WAITLIST_INVITED, now, now);
+        db.collection("events")
+                .document(eventId)
+                .collection("entrants")
+                .document(deviceId)
+                .set(entrant)
+                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnFailureListener(callback::onFailure);
+    }
+
+    /**
      * Removes a user from an event's waitlist by deleting their entrant document.
      * Used when the user chooses to leave the waitlist or remove themselves after not being selected.
      *
@@ -235,7 +304,12 @@ public class EntrantRepository {
                 .collection("entrants")
                 .document(deviceId)
                 .delete()
-                .addOnSuccessListener(unused -> callback.onSuccess(null))
+                .addOnSuccessListener(unused -> {
+                    // Decrement the denormalized waitlist count on the event document
+                    db.collection("events").document(eventId)
+                            .update("currentWaitlistCount", FieldValue.increment(-1));
+                    callback.onSuccess(null);
+                })
                 .addOnFailureListener(callback::onFailure);
     }
 

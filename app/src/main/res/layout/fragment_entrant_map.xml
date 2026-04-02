@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -25,29 +26,19 @@
             android:contentDescription="Back" />
 
         <TextView
+            android:id="@+id/text_map_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Entrant Lists"
+            android:text="Waitlist Join Locations"
+            android:textColor="@color/color_text_dark"
             android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@color/color_text_dark" />
+            android:textStyle="bold" />
 
     </LinearLayout>
 
-    <!-- Tabs -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tab_layout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/color_primary"
-        app:tabTextColor="#BBFFFFFF"
-        app:tabSelectedTextColor="#FFFFFF"
-        app:tabIndicatorColor="#FFFFFF"
-        app:tabMode="fixed"/>
-
-    <!-- Pager -->
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/view_pager"
+    <fragment
+        android:id="@+id/map_fragment"
+        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"/>

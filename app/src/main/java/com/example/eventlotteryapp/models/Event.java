@@ -26,6 +26,8 @@ public class Event {
     private boolean hasWaitlistLimit;
     private int waitlistLimit;
     private boolean lotteryCompleted;
+    private int currentWaitlistCount;
+    private boolean privateEvent;
 
     /** Required empty constructor for Firestore deserialization. */
     public Event() {}
@@ -106,5 +108,19 @@ public class Event {
 
     public void setLotteryCompleted(boolean lotteryCompleted) {
         this.lotteryCompleted = lotteryCompleted;
+    }
+
+    public int getCurrentWaitlistCount() { return currentWaitlistCount; }
+    public void setCurrentWaitlistCount(int currentWaitlistCount) { this.currentWaitlistCount = currentWaitlistCount; }
+
+    public boolean isPrivateEvent() { return privateEvent; }
+    public void setPrivateEvent(boolean privateEvent) { this.privateEvent = privateEvent; }
+
+    /**
+     * Returns whether the waitlist is full.
+     * Only meaningful if {@link #isHasWaitlistLimit()} is {@code true}.
+     */
+    public boolean isWaitlistFull() {
+        return hasWaitlistLimit && currentWaitlistCount >= waitlistLimit;
     }
 }
