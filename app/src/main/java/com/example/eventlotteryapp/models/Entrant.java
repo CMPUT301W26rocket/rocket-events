@@ -20,13 +20,23 @@ public class Entrant {
     /** Status constant indicating the user cancelled their enrollment. */
     public static final String STATUS_CANCELLED    = "cancelled";
     /** Status constant indicating the user was not selected in the lottery draw. */
-    public static final String STATUS_NOT_SELECTED = "not_selected";
+    public static final String STATUS_NOT_SELECTED  = "not_selected";
+    /** Status constant indicating the user has been invited to join a private event's waitlist. */
+    public static final String STATUS_WAITLIST_INVITED  = "waitlist_invited";
+    /** Status constant indicating the user declined an invitation to join a private event's waitlist. */
+    public static final String STATUS_DECLINED_WAITLIST = "declined_waitlist";
+    /** Status constant indicating the user has been assigned as a co-organizer for this event. */
+    public static final String STATUS_CO_ORGANIZER      = "co_organizer";
 
     private String deviceId;
     private String eventId;   // not stored in Firestore doc, populated after query
     private String status;
     private Timestamp joinedAt;
     private Timestamp statusUpdatedAt;
+    /** Latitude where the user joined the waitlist, or {@code null} if not captured. */
+    private Double latitude;
+    /** Longitude where the user joined the waitlist, or {@code null} if not captured. */
+    private Double longitude;
 
     /** Required empty constructor for Firestore deserialization. */
     public Entrant() {}
@@ -56,6 +66,8 @@ public class Entrant {
     public String getStatus() { return status; }
     public Timestamp getJoinedAt() { return joinedAt; }
     public Timestamp getStatusUpdatedAt() { return statusUpdatedAt; }
+    public Double getLatitude() { return latitude; }
+    public Double getLongitude() { return longitude; }
 
     // --- Setters ---
 
@@ -64,4 +76,6 @@ public class Entrant {
     public void setStatus(String status) { this.status = status; }
     public void setJoinedAt(Timestamp joinedAt) { this.joinedAt = joinedAt; }
     public void setStatusUpdatedAt(Timestamp statusUpdatedAt) { this.statusUpdatedAt = statusUpdatedAt; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

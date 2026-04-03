@@ -1,28 +1,45 @@
 package com.example.eventlotteryapp.ui.fragments;
 
+import android.Manifest;
 import android.app.AlertDialog;
+import android.content.pm.PackageManager;
+import android.location.Location;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 
 import com.bumptech.glide.Glide;
 import com.example.eventlotteryapp.R;
+import com.example.eventlotteryapp.models.Comment;
 import com.example.eventlotteryapp.models.Entrant;
 import com.example.eventlotteryapp.models.Event;
+import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.CommentRepository;
 import com.example.eventlotteryapp.repository.EntrantRepository;
 import com.example.eventlotteryapp.repository.EventRepository;
+import com.example.eventlotteryapp.repository.UserRepository;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.ListenerRegistration;
 
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -44,8 +61,12 @@ import java.util.Locale;
  * US 01.05.04 As an entrant, I want to know how many total entrants are on the waiting list for an event.
  * US 01.05.05 As an entrant, I want to be informed about the criteria or guidelines for the lottery selection process.
  * US 01.06.02 As an entrant I want to be able to sign up for an event from the event details.
+ * US 01.05.07 As an entrant, I want to accept or decline an invitation to join the waiting list for a private event.
+ * US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
+ * US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
  * @author Leyla
  * @author Santiago
+ * @co-author Daniel
  */
 public class EntrantEventDetailsFragment extends Fragment {
 
@@ -57,15 +78,28 @@ public class EntrantEventDetailsFragment extends Fragment {
     private Entrant currentEntrant;
     private Event currentEvent;
 
+    private static final SimpleDateFormat COMMENT_DATE_FORMAT =
+            new SimpleDateFormat("MMM dd, h:mm a", Locale.getDefault());
+
     private ImageView posterImageView;
     private TextView titleView, organizerView, descriptionView, locationView;
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
     private TextView geolocationView, waitlistView, waitlistCountView;
     private Button actionButton;
+    private LinearLayout commentsContainer;
+    private TextView noCommentsText;
+    private EditText commentInput;
+    private Button sendCommentButton;
 
     private EventRepository eventRepository;
     private EntrantRepository entrantRepository;
+    private CommentRepository commentRepository;
+    private UserRepository userRepository;
     private ListenerRegistration waitlistCountListener;
+    private ListenerRegistration commentsListener;
+    private String currentUserName;
+    private FusedLocationProviderClient fusedLocationClient;
+    private ActivityResultLauncher<String> locationPermissionLauncher;
 
     /** Required empty public constructor. */
     public EntrantEventDetailsFragment() {}
@@ -108,6 +142,10 @@ public class EntrantEventDetailsFragment extends Fragment {
         waitlistView    = view.findViewById(R.id.text_detail_waitlist);
         actionButton    = view.findViewById(R.id.action_button);
         waitlistCountView = view.findViewById(R.id.text_detail_waitlist_count);
+        commentsContainer = view.findViewById(R.id.comments_container);
+        noCommentsText    = view.findViewById(R.id.text_no_comments);
+        commentInput      = view.findViewById(R.id.edit_comment_input);
+        sendCommentButton = view.findViewById(R.id.button_send_comment);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -117,11 +155,28 @@ public class EntrantEventDetailsFragment extends Fragment {
             deviceId = getArguments().getString("deviceId");
         }
 
-        if (eventRepository == null)   eventRepository   = new EventRepository();
-        if (entrantRepository == null) entrantRepository = new EntrantRepository();
+        if (eventRepository == null)    eventRepository    = new EventRepository();
+        if (entrantRepository == null)  entrantRepository  = new EntrantRepository();
+        if (commentRepository == null)  commentRepository  = new CommentRepository();
+        if (userRepository == null)     userRepository     = new UserRepository();
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext());
+        locationPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.RequestPermission(),
+                isGranted -> {
+                    if (!isAdded()) return;
+                    if (isGranted) {
+                        captureLocationAndJoin();
+                    } else {
+                        proceedWithJoin(null, null);
+                    }
+                });
 
         loadEventDetails();
+        loadCurrentUserName();
+        attachCommentsListener();
         actionButton.setOnClickListener(v -> handleButtonClick());
+        sendCommentButton.setOnClickListener(v -> handleSendComment());
 
         return view;
     }
@@ -236,11 +291,104 @@ public class EntrantEventDetailsFragment extends Fragment {
                 });
     }
 
+    private void loadCurrentUserName() {
+        userRepository.getUser(deviceId, new UserRepository.FirestoreCallback<User>() {
+            @Override
+            public void onSuccess(User user) {
+                if (user != null) currentUserName = user.getName();
+            }
+            @Override
+            public void onFailure(Exception e) { }
+        });
+    }
+
+    private void attachCommentsListener() {
+        commentsListener = commentRepository.listenToComments(eventId,
+                new CommentRepository.FirestoreCallback<List<Comment>>() {
+                    @Override
+                    public void onSuccess(List<Comment> comments) {
+                        if (!isAdded()) return;
+                        renderComments(comments);
+                    }
+                    @Override
+                    public void onFailure(Exception e) {  }
+                });
+    }
+
+    private void renderComments(List<Comment> comments) {
+        commentsContainer.removeAllViews();
+        if (comments.isEmpty()) {
+            commentsContainer.addView(noCommentsText);
+            return;
+        }
+        for (Comment comment : comments) {
+            View item = LayoutInflater.from(getContext())
+                    .inflate(R.layout.item_comment, commentsContainer, false);
+            ((TextView) item.findViewById(R.id.comment_author)).setText(comment.getAuthorName());
+            TextView commentText = item.findViewById(R.id.comment_text);
+            TextView showMore = item.findViewById(R.id.comment_show_more);
+            commentText.setText(comment.getText());
+            String time = comment.getTimestamp() != null
+                    ? COMMENT_DATE_FORMAT.format(comment.getTimestamp().toDate())
+                    : "";
+            ((TextView) item.findViewById(R.id.comment_timestamp)).setText(time);
+            commentsContainer.addView(item);
+            commentText.getViewTreeObserver().addOnGlobalLayoutListener(new android.view.ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    commentText.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                    android.text.Layout layout = commentText.getLayout();
+                    if (layout != null && layout.getLineCount() >= 4
+                            && layout.getEllipsisCount(layout.getLineCount() - 1) > 0) {
+                        showMore.setVisibility(View.VISIBLE);
+                        showMore.setOnClickListener(v -> {
+                            if (commentText.getMaxLines() == 4) {
+                                commentText.setMaxLines(Integer.MAX_VALUE);
+                                showMore.setText("Show less");
+                            } else {
+                                commentText.setMaxLines(4);
+                                showMore.setText("Show more");
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    }
+
+    private void handleSendComment() {
+        String text = commentInput.getText().toString().trim();
+        if (text.isEmpty()) return;
+
+        String authorName = currentUserName != null ? currentUserName : "Unknown";
+        Comment comment = new Comment(deviceId, authorName, text, Timestamp.now());
+
+        sendCommentButton.setEnabled(false);
+        commentRepository.addComment(eventId, comment, new CommentRepository.FirestoreCallback<Void>() {
+            @Override
+            public void onSuccess(Void unused) {
+                if (!isAdded()) return;
+                commentInput.setText("");
+                sendCommentButton.setEnabled(true);
+            }
+            @Override
+            public void onFailure(Exception e) {
+                if (isAdded()) {
+                    Toast.makeText(getContext(), "Failed to post comment", Toast.LENGTH_SHORT).show();
+                    sendCommentButton.setEnabled(true);
+                }
+            }
+        });
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         if (waitlistCountListener != null) {
             waitlistCountListener.remove();
+        }
+        if (commentsListener != null) {
+            commentsListener.remove();
         }
     }
 
@@ -251,6 +399,19 @@ public class EntrantEventDetailsFragment extends Fragment {
      * Greyed-out states (enrolled, declined, cancelled) disable the button.
      */
     private void updateButton() {
+        if (currentEvent != null && deviceId.equals(currentEvent.getOrganizerId())) {
+            actionButton.setText("You're the Organizer");
+            setButtonDisabled();
+            return;
+        }
+
+        if (currentEntrant != null
+                && Entrant.STATUS_CO_ORGANIZER.equals(currentEntrant.getStatus())) {
+            actionButton.setText("You're a Co-organizer");
+            setButtonDisabled();
+            return;
+        }
+
         if (currentEntrant == null) {
             if (currentEvent != null && currentEvent.isRegistrationNotYetOpen()) {
                 actionButton.setText("Registration Not Open Yet");
@@ -292,6 +453,14 @@ public class EntrantEventDetailsFragment extends Fragment {
                 actionButton.setText("Cancelled");
                 setButtonDisabled();
                 break;
+            case Entrant.STATUS_WAITLIST_INVITED:
+                actionButton.setText("Invited to Waitlist");
+                setButtonEnabled();
+                break;
+            case Entrant.STATUS_DECLINED_WAITLIST:
+                actionButton.setText("Waitlist Invite Declined");
+                setButtonEnabled();
+                break;
         }
     }
 
@@ -325,6 +494,12 @@ public class EntrantEventDetailsFragment extends Fragment {
                 case Entrant.STATUS_INVITED:
                     showInvitationDialog();
                     break;
+                case Entrant.STATUS_WAITLIST_INVITED:
+                    showWaitlistInvitationDialog();
+                    break;
+                case Entrant.STATUS_DECLINED_WAITLIST:
+                    showRejoinWaitlistDialog();
+                    break;
             }
         }
     }
@@ -333,7 +508,7 @@ public class EntrantEventDetailsFragment extends Fragment {
      * Attempts to add the user to the event's waitlist.
      * If the event has a waitlist limit, first checks via {@link EntrantRepository#isWaitlistFull}
      * and shows a "Waitlist is full" message if the limit has been reached.
-     * Otherwise proceeds with {@link #proceedWithJoin()}.
+     * Otherwise proceeds to attempt joining with location capture if geolocation is required.
      */
     private void joinWaitlist() {
         actionButton.setEnabled(false);
@@ -349,7 +524,7 @@ public class EntrantEventDetailsFragment extends Fragment {
                                         "Waitlist is full for this event", Toast.LENGTH_SHORT).show();
                                 actionButton.setEnabled(true);
                             } else {
-                                proceedWithJoin();
+                                attemptJoinWithLocation();
                             }
                         }
 
@@ -363,16 +538,61 @@ public class EntrantEventDetailsFragment extends Fragment {
                         }
                     });
         } else {
-            proceedWithJoin();
+            attemptJoinWithLocation();
         }
     }
 
     /**
-     * Performs the actual Firestore write to add the user to the waitlist via
-     * {@link EntrantRepository#joinWaitlist}. Updates the button to "Leave Waitlist" on success.
+     * If the event requires geolocation, requests location permission (if not already granted)
+     * and captures the device's last known location before joining. If geolocation is not
+     * required, or if the user denies the permission, joins without coordinates.
      */
-    private void proceedWithJoin() {
-        entrantRepository.joinWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
+    private void attemptJoinWithLocation() {
+        if (currentEvent != null && currentEvent.isGeolocationRequired()) {
+            if (ContextCompat.checkSelfPermission(requireContext(),
+                    Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                captureLocationAndJoin();
+            } else {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
+            }
+        } else {
+            proceedWithJoin(null, null);
+        }
+    }
+
+    /**
+     * Gets the device's last known location via {@link FusedLocationProviderClient} and
+     * calls {@link #proceedWithJoin} with the coordinates. Falls back to null coordinates
+     * if location is unavailable.
+     */
+    @SuppressWarnings("MissingPermission")
+    private void captureLocationAndJoin() {
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(location -> {
+                    if (!isAdded()) return;
+                    if (location != null) {
+                        proceedWithJoin(location.getLatitude(), location.getLongitude());
+                    } else {
+                        proceedWithJoin(null, null);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    if (!isAdded()) return;
+                    proceedWithJoin(null, null);
+                });
+    }
+
+    /**
+     * Performs the actual Firestore write to add the user to the waitlist via
+     * {@link EntrantRepository#joinWaitlist(String, String, Double, Double, EntrantRepository.FirestoreCallback)}.
+     * Records the user's location if provided. Updates the button to "Leave Waitlist" on success.
+     *
+     * @param latitude  the latitude where the user joined, or {@code null} if not captured
+     * @param longitude the longitude where the user joined, or {@code null} if not captured
+     */
+    private void proceedWithJoin(Double latitude, Double longitude) {
+        entrantRepository.joinWaitlist(eventId, deviceId, latitude, longitude,
+                new EntrantRepository.FirestoreCallback<Void>() {
             @Override
             public void onSuccess(Void unused) {
                 if (!isAdded()) return;
@@ -393,28 +613,51 @@ public class EntrantEventDetailsFragment extends Fragment {
     }
 
     /**
-     * Removes the user from the event's waitlist via {@link EntrantRepository#leaveWaitlist}.
-     * Updates the button to "Join Waitlist" on success.
+     * Removes the user from the event's waitlist.
+     * For private events, the entrant doc is kept with status {@link Entrant#STATUS_DECLINED_WAITLIST}
+     * so the user can reconsider later via their event history. For public events, the doc is deleted.
      */
     private void leaveWaitlist() {
         actionButton.setEnabled(false);
-        entrantRepository.leaveWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
-            @Override
-            public void onSuccess(Void unused) {
-                if (!isAdded()) return;
-                Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
-                currentEntrant = null;
-                updateButton();
-            }
 
-            @Override
-            public void onFailure(Exception e) {
-                if (isAdded()) {
-                    Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
-                    actionButton.setEnabled(true);
+        if (currentEvent != null && currentEvent.isPrivateEvent()) {
+            entrantRepository.updateStatus(eventId, deviceId, Entrant.STATUS_DECLINED_WAITLIST,
+                    new EntrantRepository.FirestoreCallback<Void>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            if (!isAdded()) return;
+                            Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+                            currentEntrant.setStatus(Entrant.STATUS_DECLINED_WAITLIST);
+                            updateButton();
+                        }
+
+                        @Override
+                        public void onFailure(Exception e) {
+                            if (isAdded()) {
+                                Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
+                                actionButton.setEnabled(true);
+                            }
+                        }
+                    });
+        } else {
+            entrantRepository.leaveWaitlist(eventId, deviceId, new EntrantRepository.FirestoreCallback<Void>() {
+                @Override
+                public void onSuccess(Void unused) {
+                    if (!isAdded()) return;
+                    Toast.makeText(getContext(), "Left waitlist", Toast.LENGTH_SHORT).show();
+                    currentEntrant = null;
+                    updateButton();
                 }
-            }
-        });
+
+                @Override
+                public void onFailure(Exception e) {
+                    if (isAdded()) {
+                        Toast.makeText(getContext(), "Failed to leave waitlist", Toast.LENGTH_SHORT).show();
+                        actionButton.setEnabled(true);
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -431,6 +674,71 @@ public class EntrantEventDetailsFragment extends Fragment {
                 .setNegativeButton("Decline", (dialog, which) -> respondToInvitation(Entrant.STATUS_DECLINED))
                 .setCancelable(false)
                 .show();
+    }
+
+    /**
+     * Shows a dialog for the user to accept or decline a private event waitlist invitation.
+     * Accepting updates the status to {@link Entrant#STATUS_WAITLIST} (regular waitlist member);
+     * declining updates it to {@link Entrant#STATUS_DECLINED_WAITLIST}.
+     */
+    private void showWaitlistInvitationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Waitlist Invitation")
+                .setMessage("You've been invited to join the waitlist for this event. "
+                        + "Would you like to accept or decline?")
+                .setPositiveButton("Accept", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_WAITLIST))
+                .setNegativeButton("Decline", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_DECLINED_WAITLIST))
+                .setCancelable(false)
+                .show();
+    }
+
+    /**
+     * Shows a dialog asking if the user wants to reconsider and join the waitlist
+     * after having previously declined a private event waitlist invitation.
+     */
+    private void showRejoinWaitlistDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Reconsider?")
+                .setMessage("You previously declined this waitlist invitation. "
+                        + "Would you like to join the waitlist?")
+                .setPositiveButton("Join Waitlist", (dialog, which) ->
+                        respondToWaitlistInvitation(Entrant.STATUS_WAITLIST))
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Updates the user's entrant status in response to a private event waitlist invitation.
+     * Called when accepting ({@link Entrant#STATUS_WAITLIST}) or declining
+     * ({@link Entrant#STATUS_DECLINED_WAITLIST}) the waitlist invitation.
+     *
+     * @param newStatus the status to set
+     */
+    private void respondToWaitlistInvitation(String newStatus) {
+        actionButton.setEnabled(false);
+        entrantRepository.updateStatus(eventId, deviceId, newStatus,
+                new EntrantRepository.FirestoreCallback<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        if (!isAdded()) return;
+                        String msg = Entrant.STATUS_WAITLIST.equals(newStatus)
+                                ? "You've joined the waitlist!"
+                                : "Waitlist invitation declined.";
+                        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+                        currentEntrant.setStatus(newStatus);
+                        updateButton();
+                    }
+
+                    @Override
+                    public void onFailure(Exception e) {
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "Failed to update status", Toast.LENGTH_SHORT).show();
+                            actionButton.setEnabled(true);
+                        }
+                    }
+                });
     }
 
     /**

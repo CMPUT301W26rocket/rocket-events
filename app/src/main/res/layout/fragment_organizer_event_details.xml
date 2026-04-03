@@ -36,6 +36,18 @@
                 android:background="@drawable/poster_placeholder_bg"
                 android:src="@drawable/ic_image_placeholder" />
 
+            <Button
+                android:id="@+id/button_update_poster"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="12dp"
+                android:layout_marginTop="8dp"
+                android:text="Update Poster"
+                android:textSize="13sp"
+                android:backgroundTint="@color/color_primary"
+                android:textColor="#FFFFFF" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -175,6 +187,35 @@
                     android:textColor="@color/color_text_dark"
                     android:layout_marginBottom="12dp" />
 
+                <!-- Comment input row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="12dp">
+
+                    <EditText
+                        android:id="@+id/edit_comment_input"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:hint="Add a comment..."
+                        android:textSize="14sp"
+                        android:maxLines="3"
+                        android:inputType="textMultiLine|textCapSentences"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp" />
+
+                    <Button
+                        android:id="@+id/button_send_comment"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Post"
+                        android:textSize="14sp"
+                        android:layout_marginStart="8dp" />
+
+                </LinearLayout>
+
                 <LinearLayout
                     android:id="@+id/comments_container"
                     android:layout_width="match_parent"
@@ -199,12 +240,37 @@
     <!-- Fixed action button at bottom -->
 
     <Button
-        android:id="@+id/entrants_button"
+        android:id="@+id/co_organizer_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginTop="16dp"
+        android:layout_marginBottom="6dp"
+        android:padding="14dp"
+        android:text="Assign Co-Organizer"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/invite_waitlist_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="6dp"
+        android:padding="14dp"
+        android:text="Invite to Waitlist"
+        android:textSize="16sp"
+        android:visibility="gone" />
+
+    <Button
+        android:id="@+id/entrants_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="0dp"
         android:layout_marginBottom="6dp"
         android:padding="14dp"
         android:text="See Entrant Lists"

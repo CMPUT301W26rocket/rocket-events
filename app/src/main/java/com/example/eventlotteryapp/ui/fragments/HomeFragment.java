@@ -137,6 +137,7 @@ public class HomeFragment extends Fragment {
 
         setupSearch();
         setupFilterChips();
+        chipAvailable.setSelected(true);
         loadAllEvents();
 
         return view;
@@ -302,7 +303,10 @@ public class HomeFragment extends Fragment {
                     return;
                 }
 
-                allEvents = result;
+                allEvents = new ArrayList<>();
+                for (Event event : result) {
+                    if (!event.isPrivateEvent()) allEvents.add(event);
+                }
                 applyFilters();
             }
 

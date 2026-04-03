@@ -2,12 +2,15 @@ package com.example.eventlotteryapp.ui.main;
 
 import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 
 import com.example.eventlotteryapp.R;
 import com.example.eventlotteryapp.ui.fragments.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.example.eventlotteryapp.ui.fragments.MyEventsFragment;
+import com.example.eventlotteryapp.ui.fragments.NotificationsFragment;
 import com.example.eventlotteryapp.ui.fragments.ProfileFragment;
 import android.view.View;
 
@@ -53,8 +56,10 @@ public class MainActivity extends AppCompatActivity {
                 View.SYSTEM_UI_FLAG_FULLSCREEN
         );
 
-        // Set up bottom navigation
+        // Prevent gesture bar insets from adding extra bottom padding to the nav bar
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
+        ViewCompat.setOnApplyWindowInsetsListener(bottomNav, (v, insets) ->
+                WindowInsetsCompat.CONSUMED);
         bottomNav.setOnItemSelectedListener(item -> {
             Fragment selectedFragment = null;
 
@@ -74,7 +79,11 @@ public class MainActivity extends AppCompatActivity {
                 selectedFragment = myEventsFragment;
 
             } else if (itemId == R.id.nav_notifications) {
-                // selectedFragment = new NotificationsFragment();
+                NotificationsFragment notificationsFragment = new NotificationsFragment();
+                Bundle notifBundle = new Bundle();
+                notifBundle.putString("deviceId", deviceId);
+                notificationsFragment.setArguments(notifBundle);
+                selectedFragment = notificationsFragment;
             } else if (itemId == R.id.nav_profile) {
                 ProfileFragment profileFragment = new ProfileFragment();
                 Bundle bundle = new Bundle();
