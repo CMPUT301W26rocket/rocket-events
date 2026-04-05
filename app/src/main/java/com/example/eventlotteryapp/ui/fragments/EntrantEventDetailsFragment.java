@@ -86,6 +86,7 @@ public class EntrantEventDetailsFragment extends Fragment {
     private TextView feeView, capacityView, eventDateView, regOpenView, regCloseView;
     private TextView geolocationView, waitlistView, waitlistCountView;
     private Button actionButton;
+    private Button ticketButton;
     private LinearLayout commentsContainer;
     private TextView noCommentsText;
     private EditText commentInput;
@@ -146,6 +147,7 @@ public class EntrantEventDetailsFragment extends Fragment {
         noCommentsText    = view.findViewById(R.id.text_no_comments);
         commentInput      = view.findViewById(R.id.edit_comment_input);
         sendCommentButton = view.findViewById(R.id.button_send_comment);
+        ticketButton = view.findViewById(R.id.confirmation);
 
         view.findViewById(R.id.button_back).setOnClickListener(v ->
                 requireActivity().getSupportFragmentManager().popBackStack());
@@ -177,6 +179,7 @@ public class EntrantEventDetailsFragment extends Fragment {
         attachCommentsListener();
         actionButton.setOnClickListener(v -> handleButtonClick());
         sendCommentButton.setOnClickListener(v -> handleSendComment());
+        ticketButton.setOnClickListener(v -> handleTicketDownload());
 
         return view;
     }
@@ -405,8 +408,7 @@ public class EntrantEventDetailsFragment extends Fragment {
             return;
         }
 
-        if (currentEntrant != null
-                && Entrant.STATUS_CO_ORGANIZER.equals(currentEntrant.getStatus())) {
+        if (currentEntrant != null && Entrant.STATUS_CO_ORGANIZER.equals(currentEntrant.getStatus())) {
             actionButton.setText("You're a Co-organizer");
             setButtonDisabled();
             return;
@@ -427,7 +429,7 @@ public class EntrantEventDetailsFragment extends Fragment {
             setButtonEnabled();
             return;
         }
-
+        ticketButton.setVisibility(View.GONE);
         switch (currentEntrant.getStatus()) {
             case Entrant.STATUS_WAITLIST:
                 actionButton.setText("Leave Waitlist");
@@ -436,6 +438,7 @@ public class EntrantEventDetailsFragment extends Fragment {
             case Entrant.STATUS_INVITED:
                 actionButton.setText("Invited");
                 setButtonEnabled();
+                ticketButton.setVisibility(View.VISIBLE);
                 break;
             case Entrant.STATUS_NOT_SELECTED:
                 actionButton.setText("Leave Waitlist");
@@ -503,7 +506,97 @@ public class EntrantEventDetailsFragment extends Fragment {
             }
         }
     }
+    private void handleTicketDownload(){
+        generateTicketPdf();
+        }
+    private void generateTicketPdf() {
+        try {
+            android.graphics.pdf.PdfDocument document = new android.graphics.pdf.PdfDocument();
 
+            android.graphics.Paint paint = new android.graphics.Paint();
+            android.graphics.Paint titlePaint = new android.graphics.Paint();
+
+            titlePaint.setTextSize(30);
+            titlePaint.setFakeBoldText(true);
+            titlePaint.setTextAlign(android.graphics.Paint.Align.CENTER);
+
+            paint.setTextSize(20);
+
+            android.graphics.pdf.PdfDocument.PageInfo pageInfo =
+                    new android.graphics.pdf.PdfDocument.PageInfo.Builder(600, 800, 1).create();
+
+            android.graphics.pdf.PdfDocument.Page page = document.startPage(pageInfo);
+            android.graphics.Canvas canvas = page.getCanvas();
+
+            int pageWidth = pageInfo.getPageWidth();
+            int y = 100;
+
+            canvas.drawText("CONFIRMATION TICKET", pageWidth / 2f, y, titlePaint);
+            y += 80;
+
+            canvas.drawText("You have been invited!", 50, y, paint);
+            y += 40;
+
+            canvas.drawText("Entrant Name: " + currentUserName, 50, y, paint);
+            y += 40;
+
+            canvas.drawText("Event Name: " + currentEvent.getTitle(), 50, y, paint);
+            y += 40;
+
+            canvas.drawText("Organizer: " + currentEvent.getOrganizerName(), 50, y, paint);
+            y += 40;
+
+            canvas.drawText("Date: " +
+                    (currentEvent.getEventStartDate() != null
+                            ? DATE_FORMAT.format(currentEvent.getEventStartDate())
+                            : "TBD"), 50, y, paint);
+            y += 40;
+            canvas.drawText("Location: " + currentEvent.getLocation(), 50, y, paint);
+
+
+            document.finishPage(page);
+
+            savePdfToDownloads(document);
+
+        } catch (Exception e) {
+            Toast.makeText(getContext(),
+                    "Failed to generate ticket",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+    private void savePdfToDownloads(android.graphics.pdf.PdfDocument document) {
+        try {
+            String fileName = "confirmation_ticket.pdf";
+
+            android.content.ContentValues values = new android.content.ContentValues();
+            values.put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName);
+            values.put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+            values.put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH,
+                    android.os.Environment.DIRECTORY_DOWNLOADS);
+
+            android.content.ContentResolver resolver = requireContext().getContentResolver();
+
+            android.net.Uri uri = resolver.insert(
+                    android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
+
+            if (uri != null) {
+                java.io.OutputStream outputStream = resolver.openOutputStream(uri);
+                document.writeTo(outputStream);
+                outputStream.close();
+
+                Toast.makeText(getContext(),
+                        "Ticket downloaded!",
+                        Toast.LENGTH_LONG).show();
+            }
+
+            document.close();
+
+        } catch (Exception e) {
+            Toast.makeText(getContext(),
+                    "Failed to save ticket",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
     /**
      * Attempts to add the user to the event's waitlist.
      * If the event has a waitlist limit, first checks via {@link EntrantRepository#isWaitlistFull}

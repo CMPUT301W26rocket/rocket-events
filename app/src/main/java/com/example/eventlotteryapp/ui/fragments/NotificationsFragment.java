@@ -19,6 +19,7 @@ import com.example.eventlotteryapp.repository.NotificationRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -83,6 +84,12 @@ public class NotificationsFragment extends Fragment {
                         if (!isAdded()) return;
                         notifications.clear();
                         if (result != null) notifications.addAll(result);
+                        notifications.sort((a, b) -> {
+    if (a.getCreatedAt() == null && b.getCreatedAt() == null) return 0;
+    if (a.getCreatedAt() == null) return 1;
+    if (b.getCreatedAt() == null) return -1;
+    return b.getCreatedAt().compareTo(a.getCreatedAt());
+});
                         adapter.notifyDataSetChanged();
                         emptyText.setVisibility(notifications.isEmpty() ? View.VISIBLE : View.GONE);
                     }
@@ -114,6 +121,9 @@ public class NotificationsFragment extends Fragment {
             holder.timeView.setText(n.getCreatedAt() != null
                     ? DATE_FORMAT.format(n.getCreatedAt().toDate())
                     : "");
+            holder.cardView.setBackgroundResource(n.isRead()
+                    ? R.drawable.notification_card_read
+                    : R.drawable.notification_card_unread);
             holder.unreadDot.setVisibility(n.isRead() ? View.INVISIBLE : View.VISIBLE);
 
             holder.itemView.setOnClickListener(v -> {
@@ -123,7 +133,8 @@ public class NotificationsFragment extends Fragment {
                             new NotificationRepository.FirestoreCallback<Void>() {
                                 @Override public void onSuccess(Void unused) {
                                     n.setRead(true);
-                                    notifyItemChanged(holder.getAdapterPosition());
+                                    notifications.sort(Comparator.comparingInt(x -> (x.isRead() ? 1 : 0)));
+                                    notifyDataSetChanged();
                                 }
                                 @Override public void onFailure(Exception e) {}
                             });
@@ -152,13 +163,14 @@ public class NotificationsFragment extends Fragment {
 
         class VH extends RecyclerView.ViewHolder {
             final TextView titleView, messageView, timeView;
-            final View unreadDot;
+            final View cardView, unreadDot;
 
             VH(@NonNull View itemView) {
                 super(itemView);
                 titleView   = itemView.findViewById(R.id.text_notification_title);
                 messageView = itemView.findViewById(R.id.text_notification_message);
                 timeView    = itemView.findViewById(R.id.text_notification_time);
+                cardView    = itemView.findViewById(R.id.notification_card);
                 unreadDot   = itemView.findViewById(R.id.view_unread_dot);
             }
         }
