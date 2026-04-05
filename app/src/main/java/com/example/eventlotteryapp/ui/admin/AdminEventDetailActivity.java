@@ -37,7 +37,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
     private TextView textDetailTitle;
     private TextView textDetailOrganizerName;
-    private TextView textDetailOrganizerId;
     private TextView textDetailDescription;
     private TextView textDetailEventId;
     private TextView textNoComments;
@@ -65,7 +64,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
         textDetailTitle = findViewById(R.id.text_detail_title);
         textDetailOrganizerName = findViewById(R.id.text_detail_organizer_name);
-        textDetailOrganizerId = findViewById(R.id.text_detail_organizer_id);
         textDetailDescription = findViewById(R.id.text_detail_description);
         textDetailEventId = findViewById(R.id.text_detail_event_id);
         textNoComments = findViewById(R.id.text_no_comments);
@@ -85,8 +83,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         String organizerName = getIntent().getStringExtra("organizerName");
 
         textDetailTitle.setText(displayText(title, "Untitled Event"));
-        textDetailOrganizerName.setText(displayText(organizerName, "Unknown organizer"));
-        textDetailOrganizerId.setText("Organizer ID: " + displayText(organizerId, "(empty)"));
+        textDetailOrganizerName.setText("Organizer: " + displayText(organizerName, "Unknown")
+                + " (ID: " + displayText(organizerId, "(empty)") + ")");
         textDetailDescription.setText(displayText(description, "No description"));
         textDetailEventId.setText(displayText(eventId, "(empty)"));
 
@@ -113,8 +111,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 }
 
                 textDetailTitle.setText(displayText(event.getTitle(), "Untitled Event"));
-                textDetailOrganizerName.setText(displayText(event.getOrganizerName(), "Unknown organizer"));
-                textDetailOrganizerId.setText("Organizer ID: " + displayText(event.getOrganizerId(), "(empty)"));
+                textDetailOrganizerName.setText("Organizer: " + displayText(event.getOrganizerName(), "Unknown")
+                        + " (ID: " + displayText(event.getOrganizerId(), "(empty)") + ")");
                 textDetailDescription.setText(displayText(event.getDescription(), "No description"));
                 textDetailEventId.setText(displayText(eventId, "(empty)"));
             }
@@ -199,7 +197,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         TextView textCommentBody = commentView.findViewById(R.id.textCommentBody);
         Button btnDeleteComment = commentView.findViewById(R.id.btnDeleteComment);
 
-        textCommentAuthor.setText("Author ID: " + displayText(comment.getAuthorId(), "(empty)"));
+        String authorName = displayText(comment.getAuthorName(), "Unknown");
+        String authorId = displayText(comment.getAuthorId(), "(empty)");
+        textCommentAuthor.setText(authorName + " (ID: " + authorId + ")");
         textCommentTime.setText("Time: " + formatTimestamp(comment));
         textCommentBody.setText(displayText(comment.getText(), "(empty)"));
 

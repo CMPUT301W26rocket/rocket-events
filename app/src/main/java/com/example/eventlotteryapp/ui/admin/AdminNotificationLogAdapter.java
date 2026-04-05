@@ -79,13 +79,12 @@ public class AdminNotificationLogAdapter extends RecyclerView.Adapter<AdminNotif
                         : item.getEventTitle()
         );
 
-        holder.textNotificationRecipient.setText(
-                "Recipient: " + (
-                        item.getRecipientDeviceId() == null || item.getRecipientDeviceId().trim().isEmpty()
-                                ? "(unknown)"
-                                : item.getRecipientDeviceId()
-                )
-        );
+        String recipientId = item.getRecipientDeviceId() == null || item.getRecipientDeviceId().trim().isEmpty()
+                ? "(unknown)" : item.getRecipientDeviceId();
+        String recipientDisplay = item.getRecipientName() != null && !item.getRecipientName().trim().isEmpty()
+                ? item.getRecipientName() + " (ID: " + recipientId + ")"
+                : recipientId;
+        holder.textNotificationRecipient.setText("Recipient: " + recipientDisplay);
 
         holder.textNotificationMessage.setText(
                 item.getMessage() == null || item.getMessage().trim().isEmpty()
