@@ -11,6 +11,7 @@ import static org.junit.Assert.*;
 
 /**
  * Unit tests for the {@link Event} model class.
+ * @author Leyla
  */
 public class EventTest {
 
@@ -153,6 +154,45 @@ public class EventTest {
         event.setRegistrationOpenDate(null);
         event.setRegistrationCloseDate(null);
         assertFalse(event.isRegistrationOpen());
+    }
+
+    // --- isLotteryCompleted() tests ---
+
+    @Test
+    public void isLotteryCompleted_defaultsFalse() {
+        // A freshly created event has not had its lottery run yet
+        Event freshEvent = new Event();
+        assertFalse(freshEvent.isLotteryCompleted());
+    }
+
+    @Test
+    public void setLotteryCompleted_preventsSecondDraw() {
+        // Once the lottery is marked complete, the flag reflects that
+        event.setLotteryCompleted(true);
+        assertTrue(event.isLotteryCompleted());
+    }
+
+    // --- isPrivateEvent() tests ---
+
+    @Test
+    public void isPrivateEvent_defaultsFalse() {
+        // Events are public by default — organizer must explicitly make it private
+        Event freshEvent = new Event();
+        assertFalse(freshEvent.isPrivateEvent());
+    }
+
+    @Test
+    public void setPrivateEvent_restrictsJoinToInvitedOnly() {
+        // When set to private, only invited users can join the waitlist
+        event.setPrivateEvent(true);
+        assertTrue(event.isPrivateEvent());
+    }
+
+    @Test
+    public void setPrivateEvent_canBeSetBackToPublic() {
+        event.setPrivateEvent(true);
+        event.setPrivateEvent(false);
+        assertFalse(event.isPrivateEvent());
     }
 
     // --- isRegistrationNotYetOpen() tests ---
