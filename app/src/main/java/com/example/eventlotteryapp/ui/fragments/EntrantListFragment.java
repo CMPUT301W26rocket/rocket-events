@@ -322,7 +322,7 @@ public class EntrantListFragment extends Fragment {
      * @param names    map of deviceId → display name; may be null
      * @return the full CSV string including header
      */
-    static String buildEnrolledCsv(List<Entrant> enrolled, Map<String, String> names) {
+    public static String buildEnrolledCsv(List<Entrant> enrolled, Map<String, String> names) {
         StringBuilder csv = new StringBuilder("Name,Device ID\n");
         for (Entrant e : enrolled) {
             String name = names != null
