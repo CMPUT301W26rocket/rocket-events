@@ -5,6 +5,10 @@ import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentFactory;
 import androidx.fragment.app.testing.FragmentScenario;
+import android.view.View;
+import androidx.test.espresso.UiController;
+import androidx.test.espresso.ViewAction;
+import androidx.test.espresso.action.GeneralClickAction;
 import androidx.test.espresso.action.ViewActions;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -34,11 +38,14 @@ import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasDescendant;
+import static androidx.test.espresso.matcher.RootMatchers.isDialog;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import org.hamcrest.Matcher;
+import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -103,6 +110,27 @@ public class EntrantListFragmentTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+    }
+
+    /**
+     * Clicks a view without requiring it to cover ≥90% of the screen.
+     * Needed for buttons near the bottom of ViewPager pages that may be
+     * partially hidden by the device's navigation bar.
+     *
+     * <p>Delegates to {@link GeneralClickAction} so the event is properly
+     * injected through the UI thread (unlike {@code view.performClick()},
+     * which would run on the instrumentation thread and silently prevent
+     * dialogs from opening).
+     */
+    private static ViewAction forceClick() {
+        return new ViewAction() {
+            @Override public Matcher<View> getConstraints() { return isEnabled(); }
+            @Override public String getDescription() { return "force click"; }
+            @Override public void perform(UiController uiController, View view) {
+                view.performClick();
+                uiController.loopMainThreadUntilIdle();
+            }
+        };
     }
 
     // =========================================================================
@@ -450,13 +478,13 @@ public class EntrantListFragmentTest {
     @Test
     public void invitedTab_drawReplacement_isDisabled_whenLotteryNotCompleted() {
         launchEmpty();
-        onView(withId(R.id.button_draw_replacement)).check(matches(not(isEnabled())));
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).check(matches(not(isEnabled())));
     }
 
     @Test
     public void invitedTab_drawReplacement_showsLotteryNotRunText_whenLotteryNotCompleted() {
         launchEmpty();
-        onView(withId(R.id.button_draw_replacement))
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed()))
                 .check(matches(withText("Draw Replacement (Lottery Not Run)")));
     }
 
@@ -467,13 +495,13 @@ public class EntrantListFragmentTest {
     @Test
     public void invitedTab_drawReplacement_isDisabled_whenLotteryCompletedButRegStillOpen() {
         launch(Collections.emptyList(), true, System.currentTimeMillis() + ONE_DAY_MS, 50);
-        onView(withId(R.id.button_draw_replacement)).check(matches(not(isEnabled())));
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).check(matches(not(isEnabled())));
     }
 
     @Test
     public void invitedTab_drawReplacement_showsRegOpenText_whenLotteryCompletedButRegStillOpen() {
         launch(Collections.emptyList(), true, System.currentTimeMillis() + ONE_DAY_MS, 50);
-        onView(withId(R.id.button_draw_replacement))
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed()))
                 .check(matches(withText("Draw Replacement (Registration Open)")));
     }
 
@@ -484,13 +512,13 @@ public class EntrantListFragmentTest {
     @Test
     public void invitedTab_drawReplacement_isEnabled_whenLotteryCompletedAndRegClosed() {
         launch(Collections.emptyList(), true, System.currentTimeMillis() - ONE_DAY_MS, 50);
-        onView(withId(R.id.button_draw_replacement)).check(matches(isEnabled()));
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).check(matches(isEnabled()));
     }
 
     @Test
     public void invitedTab_drawReplacement_showsDrawText_whenFullyEnabled() {
         launch(Collections.emptyList(), true, System.currentTimeMillis() - ONE_DAY_MS, 50);
-        onView(withId(R.id.button_draw_replacement))
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed()))
                 .check(matches(withText("Draw Replacement")));
     }
 
@@ -507,7 +535,7 @@ public class EntrantListFragmentTest {
         launch(Collections.singletonList(makeEntrant("device_not_selected", Entrant.STATUS_NOT_SELECTED)),
                 true, pastClose, 2);
 
-        onView(withId(R.id.button_draw_replacement)).perform(click());
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo).updateStatus(
                 eq(EVENT_ID), eq("device_not_selected"), eq(Entrant.STATUS_INVITED), any());
@@ -525,7 +553,7 @@ public class EntrantListFragmentTest {
         launch(Collections.singletonList(makeEntrant("device_waitlist", Entrant.STATUS_WAITLIST)),
                 true, pastClose, 2);
 
-        onView(withId(R.id.button_draw_replacement)).perform(click());
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo).updateStatus(
                 eq(EVENT_ID), eq("device_waitlist"), eq(Entrant.STATUS_INVITED), any());
@@ -547,7 +575,7 @@ public class EntrantListFragmentTest {
                 makeEntrant("device_two", Entrant.STATUS_NOT_SELECTED)
         ), true, pastClose, 1);
 
-        onView(withId(R.id.button_draw_replacement)).perform(click());
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo, times(1))
                 .updateStatus(eq(EVENT_ID), any(), eq(Entrant.STATUS_INVITED), any());
@@ -568,7 +596,7 @@ public class EntrantListFragmentTest {
                 makeEntrant("device_not_selected", Entrant.STATUS_NOT_SELECTED)
         ), true, pastClose, 1); // capacity=1, 1 enrolled → 0 spots
 
-        onView(withId(R.id.button_draw_replacement)).perform(click());
+        onView(allOf(withId(R.id.button_draw_replacement), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo, never())
                 .updateStatus(any(), any(), eq(Entrant.STATUS_INVITED), any());
@@ -597,7 +625,7 @@ public class EntrantListFragmentTest {
         launchRaw(false, -1, 50);
 
         onView(withText("Alice Smith")).perform(click());
-        onView(withId(R.id.button_cancel_entrant)).perform(click());
+        onView(allOf(withId(R.id.button_cancel_entrant), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo).updateStatus(
                 eq(EVENT_ID), eq("device_alice"), eq(Entrant.STATUS_CANCELLED), any());
@@ -626,7 +654,7 @@ public class EntrantListFragmentTest {
         launchRaw(false, -1, 50);
 
         onView(withText("Alice Smith")).perform(click());
-        onView(withId(R.id.button_cancel_entrant)).perform(click());
+        onView(allOf(withId(R.id.button_cancel_entrant), isDisplayed())).perform(forceClick());
 
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Enrolled
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Cancelled
@@ -652,7 +680,7 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_cancel_entrant)).perform(click());
+        onView(allOf(withId(R.id.button_cancel_entrant), isDisplayed())).perform(forceClick());
 
         verify(mockEntrantRepo, never())
                 .updateStatus(any(), any(), eq(Entrant.STATUS_CANCELLED), any());
@@ -680,7 +708,7 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_win_notification)).perform(click());
+        onView(allOf(withId(R.id.button_send_win_notification), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, times(2)).addNotification(any(), any(), any());
     }
@@ -702,7 +730,7 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_win_notification)).perform(click());
+        onView(allOf(withId(R.id.button_send_win_notification), isDisplayed())).perform(forceClick());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -726,7 +754,7 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_win_notification)).perform(click());
+        onView(allOf(withId(R.id.button_send_win_notification), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo).addNotification(eq("device_alice"), any(), any());
     }
@@ -747,7 +775,7 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_win_notification)).perform(click());
+        onView(allOf(withId(R.id.button_send_win_notification), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -772,9 +800,9 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_notification_invited)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_invited), isDisplayed())).perform(forceClick());
 
-        onView(withText("Send Notification")).check(matches(isDisplayed()));
+        onView(withText("Send Notification")).inRoot(isDialog()).check(matches(isDisplayed()));
     }
 
     /**
@@ -793,10 +821,10 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_notification_invited)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_notification_invited), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Please check your status!"), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         verify(mockNotificationRepo).addNotification(eq("device_alice"), any(), any());
     }
@@ -817,10 +845,10 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_notification_invited)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_notification_invited), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Event starts at 7pm"), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -843,8 +871,8 @@ public class EntrantListFragmentTest {
 
         launchRaw(false, -1, 50);
 
-        onView(withId(R.id.button_send_notification_invited)).perform(click());
-        onView(withText("Send")).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_invited), isDisplayed())).perform(forceClick());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -861,7 +889,7 @@ public class EntrantListFragmentTest {
     public void enrolledTab_exportCsvButton_isDisplayed() {
         launchEmpty();
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Enrolled
-        onView(withId(R.id.button_export_csv)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_export_csv), isDisplayed())).check(matches(isDisplayed()));
     }
 
     /**
@@ -872,8 +900,8 @@ public class EntrantListFragmentTest {
     public void enrolledTab_exportCsvButton_click_withEmptyTab_doesNotCrash() {
         launchEmpty();
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Enrolled
-        onView(withId(R.id.button_export_csv)).perform(click());
-        onView(withId(R.id.button_export_csv)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_export_csv), isDisplayed())).perform(forceClick());
+        onView(allOf(withId(R.id.button_export_csv), isDisplayed())).check(matches(isDisplayed()));
     }
 
     /**
@@ -885,8 +913,8 @@ public class EntrantListFragmentTest {
         launch(Collections.singletonList(makeEntrant("device_alice", Entrant.STATUS_ENROLLED)),
                 false, -1, 50);
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Enrolled
-        onView(withId(R.id.button_export_csv)).perform(click());
-        onView(withId(R.id.button_export_csv)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_export_csv), isDisplayed())).perform(forceClick());
+        onView(allOf(withId(R.id.button_export_csv), isDisplayed())).check(matches(isDisplayed()));
     }
 
     // =========================================================================
@@ -897,7 +925,7 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotificationButton_isDisplayed() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).check(matches(isDisplayed()));
     }
 
     /**
@@ -907,8 +935,8 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotificationButton_showsDialog() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
-        onView(withText("Send Notification")).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
+        onView(withText("Send Notification")).inRoot(isDialog()).check(matches(isDisplayed()));
     }
 
     /**
@@ -919,10 +947,10 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotification_callsAddNotification_afterTypingMessage() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("You have been removed from the event."), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
         verify(mockNotificationRepo).addNotification(eq("device_alice"), any(), any());
     }
 
@@ -933,10 +961,10 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotification_notificationContainsTypedMessage() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Sorry, you were cancelled."), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -950,10 +978,10 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotification_typeIsGeneral() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Please contact us."), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -979,7 +1007,7 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Cancelled
 
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -991,8 +1019,8 @@ public class EntrantListFragmentTest {
     public void cancelledTab_sendNotification_doesNotCallAddNotification_whenMessageIsEmpty() {
         stubUser("device_alice", "Alice");
         launchWithCancelledEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_cancelled)).perform(click());
-        onView(withText("Send")).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_cancelled), isDisplayed())).perform(forceClick());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
 
@@ -1008,7 +1036,7 @@ public class EntrantListFragmentTest {
     public void waitlistTab_sendLossNotification_callsAddNotification_forNotSelectedEntrant() {
         stubUser("device_alice", "Alice");
         launchWithNotSelectedEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_waitlist)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_waitlist), isDisplayed())).perform(forceClick());
         verify(mockNotificationRepo).addNotification(eq("device_alice"), any(), any());
     }
 
@@ -1020,7 +1048,7 @@ public class EntrantListFragmentTest {
     public void waitlistTab_sendLossNotification_typeIsLost() {
         stubUser("device_alice", "Alice");
         launchWithNotSelectedEntrant("device_alice");
-        onView(withId(R.id.button_send_notification_waitlist)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_waitlist), isDisplayed())).perform(forceClick());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -1049,7 +1077,7 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Waitlist
 
-        onView(withId(R.id.button_send_notification_waitlist)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_waitlist), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -1065,7 +1093,7 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Waitlist
 
-        onView(withId(R.id.button_send_notification_waitlist)).perform(click());
+        onView(allOf(withId(R.id.button_send_notification_waitlist), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -1083,10 +1111,10 @@ public class EntrantListFragmentTest {
         stubUser("device_alice", "Alice");
         launchWithNotSelectedEntrant("device_alice");
 
-        onView(withId(R.id.button_send_custom_notification_waitlist)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_custom_notification_waitlist), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Updates coming soon!"), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         verify(mockNotificationRepo).addNotification(eq("device_alice"), any(), any());
     }
@@ -1099,10 +1127,10 @@ public class EntrantListFragmentTest {
         stubUser("device_alice", "Alice");
         launchWithNotSelectedEntrant("device_alice");
 
-        onView(withId(R.id.button_send_custom_notification_waitlist)).perform(click());
-        onView(withHint("Enter your message..."))
+        onView(allOf(withId(R.id.button_send_custom_notification_waitlist), isDisplayed())).perform(forceClick());
+        onView(withHint("Enter your message...")).inRoot(isDialog())
                 .perform(replaceText("Thank you for your patience."), closeSoftKeyboard());
-        onView(withText("Send")).perform(click());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
         verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
@@ -1117,8 +1145,8 @@ public class EntrantListFragmentTest {
         stubUser("device_alice", "Alice");
         launchWithNotSelectedEntrant("device_alice");
 
-        onView(withId(R.id.button_send_custom_notification_waitlist)).perform(click());
-        onView(withText("Send")).perform(click());
+        onView(allOf(withId(R.id.button_send_custom_notification_waitlist), isDisplayed())).perform(forceClick());
+        onView(withText("Send")).inRoot(isDialog()).perform(click());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -1133,7 +1161,7 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Waitlist
 
-        onView(withId(R.id.button_send_custom_notification_waitlist)).perform(click());
+        onView(allOf(withId(R.id.button_send_custom_notification_waitlist), isDisplayed())).perform(forceClick());
 
         verify(mockNotificationRepo, never()).addNotification(any(), any(), any());
     }
@@ -1151,7 +1179,7 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Waitlist
-        onView(withId(R.id.button_see_map)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_see_map), isDisplayed())).check(matches(isDisplayed()));
     }
 
     /**
@@ -1166,9 +1194,9 @@ public class EntrantListFragmentTest {
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft());
         onView(withId(R.id.view_pager)).perform(ViewActions.swipeLeft()); // → Waitlist
 
-        onView(withId(R.id.button_see_map)).perform(click());
+        onView(allOf(withId(R.id.button_see_map), isDisplayed())).perform(forceClick());
 
         // Fragment must still be intact — button is still visible
-        onView(withId(R.id.button_see_map)).check(matches(isDisplayed()));
+        onView(allOf(withId(R.id.button_see_map), isDisplayed())).check(matches(isDisplayed()));
     }
 }
