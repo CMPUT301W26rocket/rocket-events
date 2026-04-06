@@ -30,6 +30,16 @@ import java.util.List;
  * Only shown for events that have geolocation required. Entrants who joined without location data
  * (permission denied) are silently omitted from the map.
  *
+ * <p><b>Note on testability:</b> This fragment is not covered by instrumented UI tests for two reasons:
+ * <ol>
+ *   <li>{@code SupportMapFragment} is declared as a {@code <fragment>} XML tag, which causes
+ *       {@code FragmentScenario.launchInContainer} to enter infinite recursion in the fragment
+ *       lifecycle callback dispatcher, resulting in a {@code StackOverflowError}.</li>
+ *   <li>{@link com.google.android.gms.maps.GoogleMap} is a final SDK class that cannot be mocked
+ *       with Mockito, and {@link #onMapReady} fires asynchronously based on Google Play Services
+ *       initialisation, making the marker and camera logic unreachable from tests.</li>
+ * </ol>
+ *
  * User Stories Implemented:
  * US 02.02.02 As an organizer I want to see on a map where my entrants joined the waiting list from.
  *

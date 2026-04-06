@@ -1,5 +1,7 @@
 package com.example.eventlotteryapp;
 
+import android.app.Activity;
+import android.app.Instrumentation;
 import android.os.Bundle;
 
 import androidx.fragment.app.Fragment;
@@ -8,7 +10,9 @@ import androidx.fragment.app.testing.FragmentScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.eventlotteryapp.models.User;
+import com.example.eventlotteryapp.repository.FirebaseConnector;
 import com.example.eventlotteryapp.repository.UserRepository;
+import com.example.eventlotteryapp.ui.admin.AdminActivity;
 import com.example.eventlotteryapp.ui.fragments.ProfileFragment;
 
 import org.junit.Before;
@@ -22,6 +26,8 @@ import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.action.ViewActions.scrollTo;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
+import static androidx.test.espresso.intent.Intents.intended;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.hasErrorText;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
@@ -29,6 +35,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
@@ -55,10 +62,17 @@ public class ProfileFragmentTest {
     private static final String DEVICE_ID = "device123";
 
     @Mock UserRepository mockUserRepo;
+    @Mock FirebaseConnector mockFirebaseConnector;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+        // Default: device is not an admin
+        doAnswer(invocation -> {
+            FirebaseConnector.IsAdminCallback cb = invocation.getArgument(1);
+            cb.onResult(false);
+            return null;
+        }).when(mockFirebaseConnector).isAdminDevice(any(), any());
     }
 
     // -----------------------------------------------------------------------
@@ -98,6 +112,7 @@ public class ProfileFragmentTest {
             public Fragment instantiate(ClassLoader classLoader, String className) {
                 ProfileFragment fragment = new ProfileFragment();
                 fragment.setUserRepository(mockUserRepo);
+                fragment.setFirebaseConnector(mockFirebaseConnector);
                 return fragment;
             }
         };
@@ -124,6 +139,40 @@ public class ProfileFragmentTest {
             public Fragment instantiate(ClassLoader classLoader, String className) {
                 ProfileFragment fragment = new ProfileFragment();
                 fragment.setUserRepository(mockUserRepo);
+                fragment.setFirebaseConnector(mockFirebaseConnector);
+                return fragment;
+            }
+        };
+
+        FragmentScenario.launchInContainer(
+                ProfileFragment.class, args, R.style.Theme_EventLotteryApp, factory);
+    }
+
+    /**
+     * Launches ProfileFragment with the device treated as admin-eligible.
+     */
+    private void launchWithAdminEligible(User user) {
+        doAnswer(invocation -> {
+            FirebaseConnector.IsAdminCallback cb = invocation.getArgument(1);
+            cb.onResult(true);
+            return null;
+        }).when(mockFirebaseConnector).isAdminDevice(any(), any());
+
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<User> userCb = invocation.getArgument(1);
+            userCb.onSuccess(user);
+            return null;
+        }).when(mockUserRepo).getUser(any(), any());
+
+        Bundle args = new Bundle();
+        args.putString("deviceId", DEVICE_ID);
+
+        FragmentFactory factory = new FragmentFactory() {
+            @Override
+            public Fragment instantiate(ClassLoader classLoader, String className) {
+                ProfileFragment fragment = new ProfileFragment();
+                fragment.setUserRepository(mockUserRepo);
+                fragment.setFirebaseConnector(mockFirebaseConnector);
                 return fragment;
             }
         };
@@ -231,7 +280,7 @@ public class ProfileFragmentTest {
         onView(withId(R.id.buttonSaveProfile)).perform(scrollTo(), click());
 
         onView(withId(R.id.editTextName)).check(matches(hasErrorText("Name is required")));
-        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), any());
+        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
     }
 
     /**
@@ -247,7 +296,7 @@ public class ProfileFragmentTest {
         onView(withId(R.id.buttonSaveProfile)).perform(scrollTo(), click());
 
         onView(withId(R.id.editTextEmail)).check(matches(hasErrorText("Email is required")));
-        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), any());
+        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
     }
 
     /**
@@ -263,7 +312,7 @@ public class ProfileFragmentTest {
         onView(withId(R.id.buttonSaveProfile)).perform(scrollTo(), click());
 
         onView(withId(R.id.editTextEmail)).check(matches(hasErrorText("Please enter a valid email")));
-        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), any());
+        verify(mockUserRepo, never()).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
     }
 
     // -----------------------------------------------------------------------
@@ -277,10 +326,10 @@ public class ProfileFragmentTest {
     @Test
     public void saveButton_isReEnabled_afterSuccessfulSave() {
         doAnswer(invocation -> {
-            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(4);
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
             cb.onSuccess(null);
             return null;
-        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), any());
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
 
         launchWithUser(null);
 
@@ -300,10 +349,10 @@ public class ProfileFragmentTest {
     @Test
     public void saveButton_isReEnabled_afterFailedSave() {
         doAnswer(invocation -> {
-            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(4);
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
             cb.onFailure(new Exception("Network error"));
             return null;
-        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), any());
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
 
         launchWithUser(null);
 
@@ -423,5 +472,97 @@ public class ProfileFragmentTest {
         launchWithUser(null);
 
         verify(mockUserRepo).getUser(eq(DEVICE_ID), any());
+    }
+
+    // -----------------------------------------------------------------------
+    // Admin panel button tests
+    // -----------------------------------------------------------------------
+
+    /**
+     * The admin panel button must be hidden (GONE) when the device is not in the
+     * adminDevices collection.
+     */
+    @Test
+    public void adminPanelButton_isHidden_byDefault() {
+        launchWithUser(null);
+
+        onView(withId(R.id.buttonAdminPanel))
+                .check(matches(not(isDisplayed())));
+    }
+
+    /**
+     * The admin panel button must become visible when {@link FirebaseConnector#isAdminDevice}
+     * returns true for this device.
+     */
+    @Test
+    public void adminPanelButton_isVisible_whenDeviceIsAdminEligible() {
+        launchWithAdminEligible(null);
+
+        onView(withId(R.id.buttonAdminPanel))
+                .perform(scrollTo())
+                .check(matches(isDisplayed()));
+    }
+
+    /**
+     * Clicking the admin panel button must launch {@link AdminActivity}.
+     */
+    @Test
+    public void adminPanelButton_click_navigatesToAdminActivity() {
+        launchWithAdminEligible(null);
+
+        androidx.test.espresso.intent.Intents.init();
+        try {
+            androidx.test.espresso.intent.Intents.intending(
+                    hasComponent(AdminActivity.class.getName()))
+                    .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_OK, null));
+
+            onView(withId(R.id.buttonAdminPanel)).perform(scrollTo(), click());
+
+            intended(hasComponent(AdminActivity.class.getName()));
+        } finally {
+            androidx.test.espresso.intent.Intents.release();
+        }
+    }
+
+    // -----------------------------------------------------------------------
+    // Notifications dialog — cancel path
+    // -----------------------------------------------------------------------
+
+    /**
+     * Pressing Cancel on the notifications dialog must NOT call
+     * {@link UserRepository#setNotificationsEnabled}.
+     */
+    @Test
+    public void notificationsDialog_cancel_doesNotCallRepository() {
+        launchWithUser(makeUser("Leyla Ahmed", "leyla@email.com", "", true));
+
+        onView(withId(R.id.buttonOptOutNotifications)).perform(scrollTo(), click());
+        onView(withText("Cancel")).perform(click());
+
+        verify(mockUserRepo, never()).setNotificationsEnabled(any(), any(Boolean.class), any());
+    }
+
+    // -----------------------------------------------------------------------
+    // Delete profile — confirm path
+    // -----------------------------------------------------------------------
+
+    /**
+     * Confirming the delete dialog must call {@link UserRepository#deleteUser}
+     * with the correct device ID.
+     */
+    @Test
+    public void deleteProfile_confirm_callsDeleteUser() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(1);
+            cb.onSuccess(null);
+            return null;
+        }).when(mockUserRepo).deleteUser(any(), any());
+
+        launchWithUser(null);
+
+        onView(withId(R.id.buttonDeleteProfile)).perform(scrollTo(), click());
+        onView(withText("Delete")).perform(click());
+
+        verify(mockUserRepo).deleteUser(eq(DEVICE_ID), any());
     }
 }

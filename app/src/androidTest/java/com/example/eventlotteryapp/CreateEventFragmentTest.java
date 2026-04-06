@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.mockito.Mockito.verify;
 
 import java.util.Date;
@@ -30,6 +31,7 @@ import static androidx.test.espresso.action.ViewActions.click;
 import static androidx.test.espresso.action.ViewActions.closeSoftKeyboard;
 import static androidx.test.espresso.action.ViewActions.replaceText;
 import static androidx.test.espresso.action.ViewActions.scrollTo;
+import static androidx.test.espresso.assertion.ViewAssertions.doesNotExist;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.hasErrorText;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
@@ -97,6 +99,28 @@ public class CreateEventFragmentTest {
                     fragment.setSelectedRegistrationCloseDate(regCloseDate);
                 }
 
+                return fragment;
+            }
+        };
+
+        FragmentScenario.launchInContainer(CreateEventFragment.class, args, R.style.Theme_EventLotteryApp, factory);
+    }
+
+    /**
+     * Launches CreateEventFragment with specific individual dates (any may be null to leave unset).
+     * No mocks are injected — use this only for validation tests that run before any repo call.
+     */
+    private void launchWithDates(Date start, Date open, Date close) {
+        Bundle args = new Bundle();
+        args.putString("deviceId", "device123");
+
+        FragmentFactory factory = new FragmentFactory() {
+            @Override
+            public Fragment instantiate(ClassLoader classLoader, String className) {
+                CreateEventFragment fragment = new CreateEventFragment();
+                if (start != null) fragment.setSelectedEventStartDate(start);
+                if (open  != null) fragment.setSelectedRegistrationOpenDate(open);
+                if (close != null) fragment.setSelectedRegistrationCloseDate(close);
                 return fragment;
             }
         };
@@ -226,6 +250,59 @@ public class CreateEventFragmentTest {
         // No date was set via DatePicker, so selectedEventStartDate is still null
         onView(withId(R.id.edit_event_start_date))
                 .check(matches(hasErrorText("Event start date is required")));
+    }
+
+    @Test
+    public void submit_withNoRegistrationOpenDate_showsDateError() {
+        // Only event start date is set; reg open date is left null
+        launchWithDates(eventStartDate, null, null);
+
+        onView(withId(R.id.edit_event_title))
+                .perform(scrollTo(), replaceText("Test Event"), closeSoftKeyboard());
+        onView(withId(R.id.edit_event_location))
+                .perform(scrollTo(), replaceText("Edmonton"), closeSoftKeyboard());
+        onView(withId(R.id.edit_lottery_capacity))
+                .perform(scrollTo(), replaceText("50"), closeSoftKeyboard());
+        onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
+
+        onView(withId(R.id.edit_registration_open_date))
+                .check(matches(hasErrorText("Registration open date is required")));
+    }
+
+    @Test
+    public void submit_withNoRegistrationCloseDate_showsDateError() {
+        // Event start and reg open are set; reg close is left null
+        launchWithDates(eventStartDate, regOpenDate, null);
+
+        onView(withId(R.id.edit_event_title))
+                .perform(scrollTo(), replaceText("Test Event"), closeSoftKeyboard());
+        onView(withId(R.id.edit_event_location))
+                .perform(scrollTo(), replaceText("Edmonton"), closeSoftKeyboard());
+        onView(withId(R.id.edit_lottery_capacity))
+                .perform(scrollTo(), replaceText("50"), closeSoftKeyboard());
+        onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
+
+        onView(withId(R.id.edit_registration_close_date))
+                .check(matches(hasErrorText("Registration close date is required")));
+    }
+
+    @Test
+    public void submit_withCloseBeforeOpen_showsDateError() {
+        // Close date is set earlier than open date — validation must reject this
+        Date openDate  = new Date(System.currentTimeMillis() + 2 * 86400000L); // 2 days from now
+        Date closeDate = new Date(System.currentTimeMillis() + 86400000L);      // 1 day from now (before open)
+        launchWithDates(eventStartDate, openDate, closeDate);
+
+        onView(withId(R.id.edit_event_title))
+                .perform(scrollTo(), replaceText("Test Event"), closeSoftKeyboard());
+        onView(withId(R.id.edit_event_location))
+                .perform(scrollTo(), replaceText("Edmonton"), closeSoftKeyboard());
+        onView(withId(R.id.edit_lottery_capacity))
+                .perform(scrollTo(), replaceText("50"), closeSoftKeyboard());
+        onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
+
+        onView(withId(R.id.edit_registration_close_date))
+                .check(matches(hasErrorText("Close date must be after open date")));
     }
 
     @Test
@@ -390,5 +467,68 @@ public class CreateEventFragmentTest {
         // Check organizer info was correctly pulled from the mocked user
         assertEquals("Jane Smith", saved.getOrganizerName());
         assertEquals("device123", saved.getOrganizerId());
+
+        // Check dates were passed through correctly
+        assertEquals(eventStartDate, saved.getEventStartDate());
+        assertEquals(regOpenDate, saved.getRegistrationOpenDate());
+        assertEquals(regCloseDate, saved.getRegistrationCloseDate());
+
+        // Checkboxes were left unchecked — defaults must be false
+        assertFalse(saved.isGeolocationRequired());
+        assertFalse(saved.isHasWaitlistLimit());
+        assertFalse(saved.isPrivateEvent());
+    }
+
+    @Test
+    public void submit_whenGetUserFails_reEnablesButton() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<User> cb = invocation.getArgument(1);
+            cb.onFailure(new Exception("Firestore error"));
+            return null;
+        }).when(mockUserRepo).getUser(any(), any());
+
+        launch(true, true);
+
+        onView(withId(R.id.edit_event_title))
+                .perform(scrollTo(), replaceText("Test Event"), closeSoftKeyboard());
+        onView(withId(R.id.edit_event_location))
+                .perform(scrollTo(), replaceText("Edmonton"), closeSoftKeyboard());
+        onView(withId(R.id.edit_lottery_capacity))
+                .perform(scrollTo(), replaceText("50"), closeSoftKeyboard());
+        onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
+
+        // Button must be re-enabled after getUser failure
+        onView(withId(R.id.button_create_event)).check(matches(isEnabled()));
+    }
+
+    @Test
+    public void submit_privateEvent_doesNotShowQrDialog() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<User> cb = invocation.getArgument(1);
+            cb.onSuccess(new User("device123", "Jane Smith", "jane@email.com", "780-555-0000"));
+            return null;
+        }).when(mockUserRepo).getUser(any(), any());
+
+        doAnswer(invocation -> {
+            EventRepository.FirestoreCallback<String> cb = invocation.getArgument(1);
+            cb.onSuccess("newEventId123");
+            return null;
+        }).when(mockEventRepo).addEvent(any(), any());
+
+        launch(true, true);
+
+        onView(withId(R.id.edit_event_title))
+                .perform(scrollTo(), replaceText("Private Event"), closeSoftKeyboard());
+        onView(withId(R.id.edit_event_location))
+                .perform(scrollTo(), replaceText("Edmonton"), closeSoftKeyboard());
+        onView(withId(R.id.edit_lottery_capacity))
+                .perform(scrollTo(), replaceText("50"), closeSoftKeyboard());
+        onView(withId(R.id.checkbox_private_event)).perform(scrollTo(), click());
+        onView(withId(R.id.button_create_event)).perform(scrollTo(), click());
+
+        // Private events skip the QR dialog entirely — button_done must not exist
+        onView(withId(R.id.button_done)).check(doesNotExist());
+        // Form should be cleared after a private event save
+        onView(withId(R.id.edit_event_title)).check(matches(withText("")));
     }
 }

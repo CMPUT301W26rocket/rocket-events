@@ -7,6 +7,7 @@ import com.example.eventlotteryapp.ui.admin.AdminBrowseEventsActivity;
 import com.example.eventlotteryapp.ui.admin.AdminBrowseImagesActivity;
 import com.example.eventlotteryapp.ui.admin.AdminBrowseOrganizersActivity;
 import com.example.eventlotteryapp.ui.admin.AdminBrowseProfilesActivity;
+import com.example.eventlotteryapp.ui.admin.AdminNotificationLogsActivity;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,35 +16,30 @@ import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.assertion.ViewAssertions.matches;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
+import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.anything;
 
 /**
- * UI tests for admin browse screens.
+ * UI tests for all admin browse screens.
  *
- * Verifies that key layout elements are present on launch for each
- * admin browse activity. Firebase may be initialized but no network
- * calls need to succeed for these structural checks.
+ * <p>Verifies that each screen's back button, title, and RecyclerView are
+ * present on launch. Firebase may initialise but network results are not
+ * required for these structural checks — the RecyclerView existence check
+ * uses {@code anything()} so it passes regardless of whether data loaded.
+ *
+ * <p>Screens covered:
+ * <ul>
+ *   <li>{@link AdminBrowseEventsActivity}</li>
+ *   <li>{@link AdminBrowseProfilesActivity}</li>
+ *   <li>{@link AdminBrowseOrganizersActivity}</li>
+ *   <li>{@link AdminBrowseImagesActivity}</li>
+ *   <li>{@link AdminNotificationLogsActivity}</li>
+ * </ul>
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class AdminBrowseActivitiesTest {
-
-    // ── AdminBrowseProfilesActivity ──────────────────────────────────────────
-
-    @Test
-    public void browseProfiles_backButton_isDisplayed() {
-        try (ActivityScenario<AdminBrowseProfilesActivity> s =
-                     ActivityScenario.launch(AdminBrowseProfilesActivity.class)) {
-            onView(withId(R.id.btnBack)).check(matches(isDisplayed()));
-        }
-    }
-
-    @Test
-    public void browseProfiles_recyclerView_existsInLayout() {
-        try (ActivityScenario<AdminBrowseProfilesActivity> s =
-                     ActivityScenario.launch(AdminBrowseProfilesActivity.class)) {
-            onView(withId(R.id.recyclerProfiles)).check(matches(anything()));
-        }
-    }
 
     // ── AdminBrowseEventsActivity ────────────────────────────────────────────
 
@@ -51,7 +47,15 @@ public class AdminBrowseActivitiesTest {
     public void browseEvents_backButton_isDisplayed() {
         try (ActivityScenario<AdminBrowseEventsActivity> s =
                      ActivityScenario.launch(AdminBrowseEventsActivity.class)) {
-            onView(withId(R.id.btnBack)).check(matches(isDisplayed()));
+            onView(withId(R.id.button_back)).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseEvents_title_isDisplayed() {
+        try (ActivityScenario<AdminBrowseEventsActivity> s =
+                     ActivityScenario.launch(AdminBrowseEventsActivity.class)) {
+            onView(withText("All Events")).check(matches(isDisplayed()));
         }
     }
 
@@ -63,13 +67,73 @@ public class AdminBrowseActivitiesTest {
         }
     }
 
+    // ── AdminBrowseProfilesActivity ──────────────────────────────────────────
+
+    @Test
+    public void browseProfiles_backButton_isDisplayed() {
+        try (ActivityScenario<AdminBrowseProfilesActivity> s =
+                     ActivityScenario.launch(AdminBrowseProfilesActivity.class)) {
+            onView(withId(R.id.button_back)).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseProfiles_title_isDisplayed() {
+        try (ActivityScenario<AdminBrowseProfilesActivity> s =
+                     ActivityScenario.launch(AdminBrowseProfilesActivity.class)) {
+            onView(withText("All Profiles")).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseProfiles_recyclerView_existsInLayout() {
+        try (ActivityScenario<AdminBrowseProfilesActivity> s =
+                     ActivityScenario.launch(AdminBrowseProfilesActivity.class)) {
+            onView(withId(R.id.recyclerProfiles)).check(matches(anything()));
+        }
+    }
+
+    // ── AdminBrowseOrganizersActivity ────────────────────────────────────────
+
+    @Test
+    public void browseOrganizers_backButton_isDisplayed() {
+        try (ActivityScenario<AdminBrowseOrganizersActivity> s =
+                     ActivityScenario.launch(AdminBrowseOrganizersActivity.class)) {
+            onView(withId(R.id.button_back)).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseOrganizers_title_isDisplayed() {
+        try (ActivityScenario<AdminBrowseOrganizersActivity> s =
+                     ActivityScenario.launch(AdminBrowseOrganizersActivity.class)) {
+            onView(withText("All Organizers")).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseOrganizers_recyclerView_existsInLayout() {
+        try (ActivityScenario<AdminBrowseOrganizersActivity> s =
+                     ActivityScenario.launch(AdminBrowseOrganizersActivity.class)) {
+            onView(withId(R.id.recyclerOrganizers)).check(matches(anything()));
+        }
+    }
+
     // ── AdminBrowseImagesActivity ────────────────────────────────────────────
 
     @Test
     public void browseImages_backButton_isDisplayed() {
         try (ActivityScenario<AdminBrowseImagesActivity> s =
                      ActivityScenario.launch(AdminBrowseImagesActivity.class)) {
-            onView(withId(R.id.btnBack)).check(matches(isDisplayed()));
+            onView(withId(R.id.button_back)).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseImages_title_isDisplayed() {
+        try (ActivityScenario<AdminBrowseImagesActivity> s =
+                     ActivityScenario.launch(AdminBrowseImagesActivity.class)) {
+            onView(withText("All Images")).check(matches(isDisplayed()));
         }
     }
 
@@ -81,21 +145,29 @@ public class AdminBrowseActivitiesTest {
         }
     }
 
-    // ── AdminBrowseOrganizersActivity ────────────────────────────────────────
+    // ── AdminNotificationLogsActivity ────────────────────────────────────────
 
     @Test
-    public void browseOrganizers_backButton_isDisplayed() {
-        try (ActivityScenario<AdminBrowseOrganizersActivity> s =
-                     ActivityScenario.launch(AdminBrowseOrganizersActivity.class)) {
-            onView(withId(R.id.btnBack)).check(matches(isDisplayed()));
+    public void browseNotificationLogs_backButton_isDisplayed() {
+        try (ActivityScenario<AdminNotificationLogsActivity> s =
+                     ActivityScenario.launch(AdminNotificationLogsActivity.class)) {
+            onView(withId(R.id.button_back)).check(matches(isDisplayed()));
         }
     }
 
     @Test
-    public void browseOrganizers_recyclerView_existsInLayout() {
-        try (ActivityScenario<AdminBrowseOrganizersActivity> s =
-                     ActivityScenario.launch(AdminBrowseOrganizersActivity.class)) {
-            onView(withId(R.id.recyclerOrganizers)).check(matches(anything()));
+    public void browseNotificationLogs_title_isDisplayed() {
+        try (ActivityScenario<AdminNotificationLogsActivity> s =
+                     ActivityScenario.launch(AdminNotificationLogsActivity.class)) {
+            onView(withText("All Notification Logs")).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void browseNotificationLogs_recyclerView_existsInLayout() {
+        try (ActivityScenario<AdminNotificationLogsActivity> s =
+                     ActivityScenario.launch(AdminNotificationLogsActivity.class)) {
+            onView(withId(R.id.recyclerNotificationLogs)).check(matches(anything()));
         }
     }
 }

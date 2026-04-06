@@ -37,6 +37,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doAnswer;
 
 /**
@@ -168,10 +169,10 @@ public class ProfileSetupActivityTest {
     @Test
     public void saveProfile_success_navigatesToMainActivity() {
         doAnswer(invocation -> {
-            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(4);
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
             cb.onSuccess(null);
             return null;
-        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), any());
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
 
         ActivityScenario<ProfileSetupActivity> scenario = launchActivity();
         // Replace the real repo with our mock before clicking Save
