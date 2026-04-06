@@ -365,6 +365,52 @@ public class ProfileFragmentTest {
                 .check(matches(withText("Save Changes")));
     }
 
+    /**
+     * The save button must be disabled and show "Saving..." while the request is in-flight,
+     * preventing double-submission.
+     */
+    @Test
+    public void saveButton_isDisabled_andShowsSaving_whilePosting() {
+        // saveUserProfile never calls back — simulates in-flight
+        launchWithUser(null);
+
+        onView(withId(R.id.editTextName)).perform(scrollTo(), replaceText("Leyla Ahmed"));
+        onView(withId(R.id.editTextEmail)).perform(scrollTo(), replaceText("leyla@email.com"));
+        onView(withId(R.id.buttonSaveProfile)).perform(scrollTo(), click());
+
+        onView(withId(R.id.buttonSaveProfile))
+                .check(matches(not(isEnabled())))
+                .check(matches(withText("Saving...")));
+    }
+
+    /**
+     * {@link UserRepository#saveUserProfile} must be called with exactly the values
+     * typed into the fields and the current deviceId.
+     */
+    @Test
+    public void saveProfile_callsRepository_withCorrectArguments() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
+            cb.onSuccess(null);
+            return null;
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
+
+        launchWithUser(null);
+
+        onView(withId(R.id.editTextName)).perform(scrollTo(), replaceText("Leyla Ahmed"));
+        onView(withId(R.id.editTextEmail)).perform(scrollTo(), replaceText("leyla@email.com"));
+        onView(withId(R.id.editTextPhone)).perform(scrollTo(), replaceText("780-555-0123"));
+        onView(withId(R.id.buttonSaveProfile)).perform(scrollTo(), click());
+
+        verify(mockUserRepo).saveUserProfile(
+                eq(DEVICE_ID),
+                eq("Leyla Ahmed"),
+                eq("leyla@email.com"),
+                eq("780-555-0123"),
+                anyBoolean(),
+                any());
+    }
+
     // -----------------------------------------------------------------------
     // Notifications dialog tests
     // -----------------------------------------------------------------------
@@ -543,6 +589,33 @@ public class ProfileFragmentTest {
     }
 
     // -----------------------------------------------------------------------
+    // Notifications dialog — failure path
+    // -----------------------------------------------------------------------
+
+    /**
+     * When {@link UserRepository#setNotificationsEnabled} fires onFailure, the button
+     * label must NOT change — the state only updates on confirmed success.
+     */
+    @Test
+    public void notificationsDialog_onFailure_buttonLabelUnchanged() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(2);
+            cb.onFailure(new Exception("Firestore error"));
+            return null;
+        }).when(mockUserRepo).setNotificationsEnabled(any(), any(Boolean.class), any());
+
+        // Start with notifications enabled
+        launchWithUser(makeUser("Leyla Ahmed", "leyla@email.com", "", true));
+
+        onView(withId(R.id.buttonOptOutNotifications)).perform(scrollTo(), click());
+        onView(withText("Opt Out")).perform(click());
+
+        // Label must still say "Opt Out of Notifications" — the toggle did not succeed
+        onView(withId(R.id.buttonOptOutNotifications))
+                .check(matches(withText("Opt Out of Notifications")));
+    }
+
+    // -----------------------------------------------------------------------
     // Delete profile — confirm path
     // -----------------------------------------------------------------------
 
@@ -564,5 +637,30 @@ public class ProfileFragmentTest {
         onView(withText("Delete")).perform(click());
 
         verify(mockUserRepo).deleteUser(eq(DEVICE_ID), any());
+    }
+
+    // -----------------------------------------------------------------------
+    // Delete profile — failure path
+    // -----------------------------------------------------------------------
+
+    /**
+     * When {@link UserRepository#deleteUser} fires onFailure, the fragment must
+     * remain visible (not crash or navigate away).
+     */
+    @Test
+    public void deleteProfile_onFailure_fragmentRemainsVisible() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(1);
+            cb.onFailure(new Exception("Firestore error"));
+            return null;
+        }).when(mockUserRepo).deleteUser(any(), any());
+
+        launchWithUser(null);
+
+        onView(withId(R.id.buttonDeleteProfile)).perform(scrollTo(), click());
+        onView(withText("Delete")).perform(click());
+
+        // Fragment must still be intact
+        onView(withId(R.id.buttonDeleteProfile)).check(matches(isDisplayed()));
     }
 }

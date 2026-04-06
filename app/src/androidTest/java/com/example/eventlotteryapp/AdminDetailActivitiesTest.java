@@ -6,14 +6,22 @@ import androidx.test.core.app.ActivityScenario;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import com.example.eventlotteryapp.models.Comment;
+import com.example.eventlotteryapp.repository.CommentRepository;
 import com.example.eventlotteryapp.ui.admin.AdminEventDetailActivity;
 import com.example.eventlotteryapp.ui.admin.AdminImageDetailActivity;
 import com.example.eventlotteryapp.ui.admin.AdminNotificationLogsActivity;
 import com.example.eventlotteryapp.ui.admin.AdminOrganizerDetailActivity;
 import com.example.eventlotteryapp.ui.admin.AdminProfileDetailActivity;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.Collections;
 
 import static androidx.test.espresso.Espresso.onView;
 import static androidx.test.espresso.action.ViewActions.click;
@@ -24,6 +32,10 @@ import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
 import static org.hamcrest.Matchers.anything;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
 
 /**
  * UI and behaviour tests for admin detail screens.
@@ -43,6 +55,18 @@ import static org.hamcrest.Matchers.containsString;
  */
 @RunWith(AndroidJUnit4.class)
 public class AdminDetailActivitiesTest {
+
+    @Mock CommentRepository mockCommentRepo;
+
+    @Before
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+    }
+
+    @After
+    public void tearDown() {
+        AdminEventDetailActivity.commentRepositoryForTest = null;
+    }
 
     // =========================================================================
     // AdminProfileDetailActivity
@@ -112,6 +136,15 @@ public class AdminDetailActivitiesTest {
                      ActivityScenario.launch(profileIntent("dev1", "Alice", "a@b.com", "555"))) {
             onView(withId(R.id.btnDeleteProfile)).perform(click());
             onView(withText("Delete Profile")).inRoot(isDialog()).check(matches(isDisplayed()));
+        }
+    }
+
+    @Test
+    public void profileDetail_deleteDialog_hasDeleteConfirmButton() {
+        try (ActivityScenario<AdminProfileDetailActivity> s =
+                     ActivityScenario.launch(profileIntent("dev1", "Alice", "a@b.com", "555"))) {
+            onView(withId(R.id.btnDeleteProfile)).perform(click());
+            onView(withText("Delete")).inRoot(isDialog()).check(matches(isDisplayed()));
         }
     }
 
@@ -395,6 +428,107 @@ public class AdminDetailActivitiesTest {
             onView(withId(R.id.btnRemoveOrganizer)).perform(click());
             onView(withText("Cancel")).inRoot(isDialog()).perform(click());
             onView(withId(R.id.btnRemoveOrganizer)).check(matches(isDisplayed()));
+        }
+    }
+
+    // ── AdminEventDetailActivity — comment deletion ──────────────────────────
+
+    /** Builds a simple comment for injection via {@code commentRepositoryForTest}. */
+    private Comment makeAdminComment(String id, String authorName, String text) {
+        Comment c = new Comment();
+        c.setCommentId(id);
+        c.setAuthorName(authorName);
+        c.setAuthorId("author_device");
+        c.setText(text);
+        return c; // timestamp left null → displays "Unknown time"
+    }
+
+    /** Stubs the mock repo and sets the static hook before launching. */
+    private void stubComment(String id, String authorName, String text) {
+        doAnswer(inv -> {
+            CommentRepository.FirestoreCallback<java.util.List<Comment>> cb = inv.getArgument(1);
+            cb.onSuccess(Collections.singletonList(makeAdminComment(id, authorName, text)));
+            return null;
+        }).when(mockCommentRepo).getCommentsForEvent(any(), any());
+        AdminEventDetailActivity.commentRepositoryForTest = mockCommentRepo;
+    }
+
+    /**
+     * When comments load, the comment body text must be visible in the comments container.
+     */
+    @Test
+    public void eventDetail_comment_isRendered_withAuthorAndText() {
+        stubComment("c1", "Alice", "Great event!");
+        try (ActivityScenario<AdminEventDetailActivity> s =
+                     ActivityScenario.launch(eventIntent(
+                             "evt1", "Spring Fair", "A fun fair", "org1", "Org Corp"))) {
+            onView(withId(R.id.textCommentBody)).check(matches(withText("Great event!")));
+        }
+    }
+
+    /**
+     * Each rendered comment must have a "Delete" button visible for the admin.
+     */
+    @Test
+    public void eventDetail_commentDeleteButton_isDisplayed() {
+        stubComment("c1", "Alice", "Great event!");
+        try (ActivityScenario<AdminEventDetailActivity> s =
+                     ActivityScenario.launch(eventIntent(
+                             "evt1", "Spring Fair", "A fun fair", "org1", "Org Corp"))) {
+            onView(withId(R.id.btnDeleteComment)).check(matches(isDisplayed()));
+        }
+    }
+
+    /**
+     * Clicking a comment's "Delete" button must show a "Delete Comment" confirmation dialog.
+     */
+    @Test
+    public void eventDetail_commentDeleteButton_showsConfirmationDialog() {
+        stubComment("c1", "Alice", "Great event!");
+        try (ActivityScenario<AdminEventDetailActivity> s =
+                     ActivityScenario.launch(eventIntent(
+                             "evt1", "Spring Fair", "A fun fair", "org1", "Org Corp"))) {
+            onView(withId(R.id.btnDeleteComment)).perform(click());
+            onView(withText("Delete Comment")).inRoot(isDialog()).check(matches(isDisplayed()));
+        }
+    }
+
+    /**
+     * Cancelling the delete comment dialog must leave the activity alive and the
+     * comment still visible.
+     */
+    @Test
+    public void eventDetail_commentDeleteDialog_cancelKeepsActivity() {
+        stubComment("c1", "Alice", "Great event!");
+        try (ActivityScenario<AdminEventDetailActivity> s =
+                     ActivityScenario.launch(eventIntent(
+                             "evt1", "Spring Fair", "A fun fair", "org1", "Org Corp"))) {
+            onView(withId(R.id.btnDeleteComment)).perform(click());
+            onView(withText("Cancel")).inRoot(isDialog()).perform(click());
+            onView(withId(R.id.btnDeleteComment)).check(matches(isDisplayed()));
+        }
+    }
+
+    /**
+     * Confirming the delete must call {@link CommentRepository#deleteComment} with
+     * the correct event ID and comment ID.
+     */
+    @Test
+    public void eventDetail_commentDeleteDialog_confirmCallsRepo() {
+        stubComment("c1", "Alice", "Great event!");
+        doAnswer(inv -> {
+            CommentRepository.FirestoreCallback<Void> cb = inv.getArgument(2);
+            cb.onSuccess(null);
+            return null;
+        }).when(mockCommentRepo).deleteComment(any(), any(), any());
+
+        try (ActivityScenario<AdminEventDetailActivity> s =
+                     ActivityScenario.launch(eventIntent(
+                             "evt1", "Spring Fair", "A fun fair", "org1", "Org Corp"))) {
+            onView(withId(R.id.btnDeleteComment)).perform(click());
+            onView(withText("Delete")).inRoot(isDialog()).perform(click());
+
+            verify(mockCommentRepo).deleteComment(eq("evt1"), eq("c1"), any());
         }
     }
 

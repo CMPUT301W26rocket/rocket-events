@@ -262,7 +262,7 @@ public class EventHistoryFragmentTest {
     }
 
     /**
-     * "invited" status must be displayed as "Invited — Awaiting Response".
+     * "invited" status must be displayed as "Invited to Enroll".
      */
     @Test
     public void status_invited_isFormattedCorrectly() {
@@ -271,7 +271,7 @@ public class EventHistoryFragmentTest {
                 Arrays.asList(makeEvent("e1", "Summer Camp"))
         );
 
-        onView(withText("Invited — Awaiting Response")).check(matches(isDisplayed()));
+        onView(withText("Invited to Enroll")).check(matches(isDisplayed()));
     }
 
     /**
@@ -298,6 +298,74 @@ public class EventHistoryFragmentTest {
         );
 
         onView(withText("Declined")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * "cancelled" status must be displayed as "Cancelled".
+     */
+    @Test
+    public void status_cancelled_isFormattedCorrectly() {
+        launchWithData(
+                Arrays.asList(makeEntrant("e1", Entrant.STATUS_CANCELLED)),
+                Arrays.asList(makeEvent("e1", "Summer Camp"))
+        );
+
+        onView(withText("Cancelled")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * "waitlist_invited" status must be displayed as "Invited to Join Waitlist".
+     * This status is used when an organizer invites a non-waitlisted user to the waitlist
+     * for a private event.
+     */
+    @Test
+    public void status_waitlistInvited_isFormattedCorrectly() {
+        launchWithData(
+                Arrays.asList(makeEntrant("e1", Entrant.STATUS_WAITLIST_INVITED)),
+                Arrays.asList(makeEvent("e1", "Summer Camp"))
+        );
+
+        onView(withText("Invited to Join Waitlist")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * "declined_waitlist" status must be displayed as "Waitlist Invite Declined".
+     * This status is set when a user declines a private-event waitlist invitation.
+     */
+    @Test
+    public void status_declinedWaitlist_isFormattedCorrectly() {
+        launchWithData(
+                Arrays.asList(makeEntrant("e1", Entrant.STATUS_DECLINED_WAITLIST)),
+                Arrays.asList(makeEvent("e1", "Summer Camp"))
+        );
+
+        onView(withText("Waitlist Invite Declined")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * "co_organizer" status must be displayed as "Co-organizer".
+     */
+    @Test
+    public void status_coOrganizer_isFormattedCorrectly() {
+        launchWithData(
+                Arrays.asList(makeEntrant("e1", Entrant.STATUS_CO_ORGANIZER)),
+                Arrays.asList(makeEvent("e1", "Summer Camp"))
+        );
+
+        onView(withText("Co-organizer")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * A null status must be displayed as "Unknown" rather than crashing.
+     */
+    @Test
+    public void status_null_isFormattedAsUnknown() {
+        launchWithData(
+                Arrays.asList(makeEntrant("e1", null)),
+                Arrays.asList(makeEvent("e1", "Summer Camp"))
+        );
+
+        onView(withText("Unknown")).check(matches(isDisplayed()));
     }
 
     // -----------------------------------------------------------------------

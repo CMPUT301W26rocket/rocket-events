@@ -142,16 +142,26 @@ public class MainActivityTest {
     }
 
     /**
-     * Clicking the Notifications tab must not crash the app.
-     * The tab is not yet implemented so it returns false and no fragment is swapped,
-     * meaning the previously loaded fragment remains visible.
+     * Clicking the Notifications tab must show NotificationsFragment.
+     * Verified by checking that the notifications RecyclerView is visible.
+     * Firebase calls will fail silently in the test environment, but the
+     * fragment layout (including the RecyclerView) is always present.
      */
     @Test
-    public void clickingNotificationsTab_doesNotCrash() {
+    public void clickingNotificationsTab_showsNotificationsFragment() {
         onView(withId(R.id.nav_notifications)).perform(click());
 
-        // No fragment swap happens — Home fragment still visible
-        onView(withId(R.id.bottom_navigation)).check(matches(isDisplayed()));
+        onView(withId(R.id.recycler_notifications)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * Clicking the Notifications tab must show the "Notifications" header text.
+     */
+    @Test
+    public void clickingNotificationsTab_showsCorrectHeader() {
+        onView(withId(R.id.nav_notifications)).perform(click());
+
+        onView(withText("Notifications")).check(matches(isDisplayed()));
     }
 
     /**

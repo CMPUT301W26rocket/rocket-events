@@ -19,6 +19,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import static androidx.test.espresso.Espresso.onView;
@@ -28,6 +29,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.hasChildCount;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
@@ -39,16 +41,21 @@ import static org.mockito.Mockito.verify;
  * <p>Tests cover:
  * <ul>
  *   <li>Display: header and RecyclerView are visible on launch</li>
- *   <li>Data: event titles appear when the repository returns events</li>
+ *   <li>Data: event titles and organizer name appear when the repository returns events</li>
+ *   <li>Private events: organizer's private events ARE shown (no filter, unlike HomeFragment)</li>
  *   <li>Empty state: RecyclerView shows no items when the list is empty</li>
- *   <li>Correctness: repository is called with the deviceId passed via arguments</li>
  *   <li>Failure: RecyclerView remains empty when the repository reports an error</li>
+ *   <li>Correctness: repository is called with the deviceId passed via arguments</li>
+ *   <li>Registration badges: "Open", "Coming Soon", "Closed" rendered correctly</li>
+ *   <li>Waitlist badges: "Spots Available", "Waitlist Full", hidden when no limit</li>
+ *   <li>Date: start date shown when set, hidden when absent</li>
  * </ul>
  */
 @RunWith(AndroidJUnit4.class)
 public class MyEventsFragmentTest {
 
     private static final String DEVICE_ID = "device123";
+    private static final long   DAY_MS    = 86_400_000L;
 
     @Mock EventRepository mockEventRepo;
 
@@ -57,15 +64,29 @@ public class MyEventsFragmentTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    /**
-     * Builds a fake Event with just enough data to display in the list.
-     */
+    /** Base event — no registration dates, so badge renders as "Closed". */
     private Event makeEvent(String id, String title) {
         Event e = new Event();
         e.setEventId(id);
         e.setTitle(title);
         e.setOrganizerName("Test Organizer");
         e.setDescription("A test event");
+        return e;
+    }
+
+    /** Open-registration event: openDate yesterday, closeDate tomorrow → badge "Open". */
+    private Event makeOpenEvent(String id, String title) {
+        Event e = makeEvent(id, title);
+        e.setRegistrationOpenDate(new Date(System.currentTimeMillis() - DAY_MS));
+        e.setRegistrationCloseDate(new Date(System.currentTimeMillis() + DAY_MS));
+        return e;
+    }
+
+    /** Upcoming event: openDate tomorrow → badge "Coming Soon". */
+    private Event makeUpcomingEvent(String id, String title) {
+        Event e = makeEvent(id, title);
+        e.setRegistrationOpenDate(new Date(System.currentTimeMillis() + DAY_MS));
+        e.setRegistrationCloseDate(new Date(System.currentTimeMillis() + 2 * DAY_MS));
         return e;
     }
 
@@ -221,5 +242,149 @@ public class MyEventsFragmentTest {
         launchWithFailure();
 
         onView(withId(R.id.recycler_my_events)).check(matches(hasChildCount(0)));
+    }
+
+    // -----------------------------------------------------------------------
+    // Private event test
+    // -----------------------------------------------------------------------
+
+    /**
+     * A private event created by the organizer must appear in My Events.
+     * Unlike HomeFragment, MyEventsFragment applies no privacy filter —
+     * organizers should always see all their own events.
+     */
+    @Test
+    public void privateEvent_isShownInMyEvents() {
+        Event privateEvent = makeEvent("e1", "Secret Gala");
+        privateEvent.setPrivateEvent(true);
+
+        launchWithEvents(Arrays.asList(privateEvent));
+
+        onView(withText("Secret Gala")).check(matches(isDisplayed()));
+    }
+
+    // -----------------------------------------------------------------------
+    // Organizer name test
+    // -----------------------------------------------------------------------
+
+    /**
+     * The organizer name must appear as the subtitle beneath the event title.
+     */
+    @Test
+    public void organizerName_isDisplayedAsSubtitle() {
+        Event e = makeEvent("e1", "Summer Camp");
+        e.setOrganizerName("Jane Doe");
+
+        launchWithEvents(Arrays.asList(e));
+
+        onView(withText("Jane Doe")).check(matches(isDisplayed()));
+    }
+
+    // -----------------------------------------------------------------------
+    // Registration badge tests
+    // -----------------------------------------------------------------------
+
+    /**
+     * An event with no registration dates must show the "Closed" badge.
+     */
+    @Test
+    public void badge_registration_showsClosed_forEventWithNoDates() {
+        launchWithEvents(Arrays.asList(makeEvent("e1", "Summer Camp")));
+
+        onView(withText("Closed")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * An open-registration event must show the "Open" badge.
+     */
+    @Test
+    public void badge_registration_showsOpen_forOpenEvent() {
+        launchWithEvents(Arrays.asList(makeOpenEvent("e1", "Summer Camp")));
+
+        onView(withText("Open")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * An upcoming event (registration not yet open) must show the "Coming Soon" badge.
+     */
+    @Test
+    public void badge_registration_showsComingSoon_forUpcomingEvent() {
+        launchWithEvents(Arrays.asList(makeUpcomingEvent("e1", "Future Fest")));
+
+        onView(withText("Coming Soon")).check(matches(isDisplayed()));
+    }
+
+    // -----------------------------------------------------------------------
+    // Waitlist badge tests
+    // -----------------------------------------------------------------------
+
+    /**
+     * When an event has a waitlist limit and spots remain, the "Spots Available" badge is shown.
+     */
+    @Test
+    public void badge_waitlist_showsSpotsAvailable() {
+        Event e = makeEvent("e1", "Summer Camp");
+        e.setHasWaitlistLimit(true);
+        e.setWaitlistLimit(10);
+        e.setCurrentWaitlistCount(5);
+
+        launchWithEvents(Arrays.asList(e));
+
+        onView(withText("Spots Available")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * When an event's waitlist is at capacity, the "Waitlist Full" badge is shown.
+     */
+    @Test
+    public void badge_waitlist_showsWaitlistFull() {
+        Event e = makeEvent("e1", "Packed Event");
+        e.setHasWaitlistLimit(true);
+        e.setWaitlistLimit(10);
+        e.setCurrentWaitlistCount(10);
+
+        launchWithEvents(Arrays.asList(e));
+
+        onView(withText("Waitlist Full")).check(matches(isDisplayed()));
+    }
+
+    /**
+     * When an event has no waitlist limit, the waitlist badge must not be visible.
+     */
+    @Test
+    public void badge_waitlist_isGone_whenNoWaitlistLimit() {
+        Event e = makeEvent("e1", "Summer Camp");
+        e.setHasWaitlistLimit(false);
+
+        launchWithEvents(Arrays.asList(e));
+
+        onView(withId(R.id.badge_waitlist)).check(matches(not(isDisplayed())));
+    }
+
+    // -----------------------------------------------------------------------
+    // Date display tests
+    // -----------------------------------------------------------------------
+
+    /**
+     * When an event has an {@code eventStartDate}, the date TextView must be visible.
+     */
+    @Test
+    public void date_isDisplayed_whenEventHasStartDate() {
+        Event e = makeEvent("e1", "Summer Camp");
+        e.setEventStartDate(new Date());
+
+        launchWithEvents(Arrays.asList(e));
+
+        onView(withId(R.id.text_event_date)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * When an event has no {@code eventStartDate}, the date TextView must not be visible.
+     */
+    @Test
+    public void date_isGone_whenEventHasNoStartDate() {
+        launchWithEvents(Arrays.asList(makeEvent("e1", "Summer Camp")));
+
+        onView(withId(R.id.text_event_date)).check(matches(not(isDisplayed())));
     }
 }

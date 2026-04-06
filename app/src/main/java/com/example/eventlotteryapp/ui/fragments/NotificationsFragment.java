@@ -48,6 +48,14 @@ public class NotificationsFragment extends Fragment {
 
     public NotificationsFragment() {}
 
+    /**
+     * Injects a mock {@link NotificationRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setNotificationRepository(NotificationRepository repo) {
+        this.notificationRepository = repo;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,

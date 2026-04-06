@@ -13,9 +13,11 @@ import androidx.test.espresso.action.ViewActions;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.eventlotteryapp.models.Entrant;
+import com.example.eventlotteryapp.models.Event;
 import com.example.eventlotteryapp.models.Notification;
 import com.example.eventlotteryapp.models.User;
 import com.example.eventlotteryapp.repository.EntrantRepository;
+import com.example.eventlotteryapp.repository.EventRepository;
 import com.example.eventlotteryapp.repository.NotificationRepository;
 import com.example.eventlotteryapp.repository.UserRepository;
 import com.example.eventlotteryapp.ui.fragments.EntrantListFragment;
@@ -103,6 +105,7 @@ public class EntrantListFragmentTest {
     // Mocks
     // =========================================================================
 
+    @Mock EventRepository        mockEventRepo;
     @Mock EntrantRepository      mockEntrantRepo;
     @Mock UserRepository         mockUserRepo;
     @Mock NotificationRepository mockNotificationRepo;
@@ -110,6 +113,17 @@ public class EntrantListFragmentTest {
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
+
+        // Default: loadOrganizerInfo returns an event with organizer info.
+        // Tests can override this stub before calling launch().
+        doAnswer(inv -> {
+            EventRepository.FirestoreCallback<Event> cb = inv.getArgument(1);
+            Event e = new Event();
+            e.setOrganizerId("organizer_device");
+            e.setOrganizerName("Test Organizer");
+            cb.onSuccess(e);
+            return null;
+        }).when(mockEventRepo).getEventById(any(), any());
     }
 
     /**
@@ -179,6 +193,7 @@ public class EntrantListFragmentTest {
             @Override
             public Fragment instantiate(ClassLoader classLoader, String className) {
                 EntrantListFragment f = new EntrantListFragment();
+                f.setEventRepository(mockEventRepo);
                 f.setEntrantRepository(mockEntrantRepo);
                 f.setUserRepository(mockUserRepo);
                 f.setNotificationRepository(mockNotificationRepo);
@@ -215,6 +230,7 @@ public class EntrantListFragmentTest {
             @Override
             public Fragment instantiate(ClassLoader classLoader, String className) {
                 EntrantListFragment f = new EntrantListFragment();
+                f.setEventRepository(mockEventRepo);
                 f.setEntrantRepository(mockEntrantRepo);
                 f.setUserRepository(mockUserRepo);
                 f.setNotificationRepository(mockNotificationRepo);
@@ -1198,5 +1214,59 @@ public class EntrantListFragmentTest {
 
         // Fragment must still be intact — button is still visible
         onView(allOf(withId(R.id.button_see_map), isDisplayed())).check(matches(isDisplayed()));
+    }
+
+    // =========================================================================
+    // 14. ORGANIZER INFO — notification fields are populated from the event doc
+    // =========================================================================
+
+    /**
+     * The organizer name resolved from the event doc must appear in the notification
+     * sent to an invited entrant, so recipients know who the message is from.
+     */
+    @Test
+    public void winNotification_organizerName_matchesEventDoc() {
+        doAnswer(inv -> {
+            EventRepository.FirestoreCallback<Event> cb = inv.getArgument(1);
+            Event e = new Event();
+            e.setOrganizerId("org_device");
+            e.setOrganizerName("Jane Organizer");
+            cb.onSuccess(e);
+            return null;
+        }).when(mockEventRepo).getEventById(any(), any());
+
+        stubUser("device_alice", "Alice");
+
+        doAnswer(inv -> {
+            EntrantRepository.FirestoreCallback<List<Entrant>> cb = inv.getArgument(1);
+            cb.onSuccess(Collections.singletonList(
+                    makeEntrant("device_alice", Entrant.STATUS_INVITED)));
+            return null;
+        }).when(mockEntrantRepo).getAllEntrantsForEvent(eq(EVENT_ID), any());
+
+        launchRaw(false, -1, 50);
+
+        onView(allOf(withId(R.id.button_send_win_notification), isDisplayed())).perform(forceClick());
+
+        ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+        verify(mockNotificationRepo).addNotification(eq("device_alice"), captor.capture(), any());
+        assertEquals("Jane Organizer", captor.getValue().getSenderOrganizerName());
+    }
+
+    /**
+     * When the event doc cannot be loaded, the fragment must still show the tab layout
+     * and not crash — organizer info falls back to defaults.
+     */
+    @Test
+    public void eventLoadFailure_tabLayout_stillDisplayed() {
+        doAnswer(inv -> {
+            EventRepository.FirestoreCallback<Event> cb = inv.getArgument(1);
+            cb.onFailure(new Exception("Firestore unavailable"));
+            return null;
+        }).when(mockEventRepo).getEventById(any(), any());
+
+        launchEmpty();
+
+        onView(withId(R.id.tab_layout)).check(matches(isDisplayed()));
     }
 }

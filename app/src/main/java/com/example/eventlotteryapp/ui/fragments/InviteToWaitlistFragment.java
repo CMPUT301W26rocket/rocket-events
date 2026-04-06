@@ -62,6 +62,24 @@ public class InviteToWaitlistFragment extends Fragment {
     /** Required empty public constructor. */
     public InviteToWaitlistFragment() {}
 
+    /**
+     * Injects a mock {@link UserRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
+
+    /**
+     * Injects a mock {@link EntrantRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
+
+    /**
+     * Injects a mock {@link NotificationRepository} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     */
+    public void setNotificationRepository(NotificationRepository repo) { this.notificationRepository = repo; }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -76,9 +94,9 @@ public class InviteToWaitlistFragment extends Fragment {
             organizerDeviceId = getArguments().getString("organizerDeviceId");
         }
 
-        userRepository        = new UserRepository();
-        entrantRepository     = new EntrantRepository();
-        notificationRepository = new NotificationRepository();
+        if (userRepository == null)         userRepository         = new UserRepository();
+        if (entrantRepository == null)      entrantRepository      = new EntrantRepository();
+        if (notificationRepository == null) notificationRepository = new NotificationRepository();
 
         editSearch    = view.findViewById(R.id.edit_search);
         textStatus    = view.findViewById(R.id.text_status);

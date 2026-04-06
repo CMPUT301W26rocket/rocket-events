@@ -105,6 +105,9 @@ public class EntrantListFragment extends Fragment {
     /** Injects a mock {@link NotificationRepository} for testing. */
     public void setNotificationRepository(NotificationRepository repo) { this.notificationRepository = repo; }
 
+    /** Injects a mock {@link EventRepository} for testing. */
+    public void setEventRepository(EventRepository repo) { this.eventRepository = repo; }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,

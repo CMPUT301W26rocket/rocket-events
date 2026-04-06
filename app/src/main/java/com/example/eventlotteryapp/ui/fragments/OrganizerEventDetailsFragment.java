@@ -98,6 +98,12 @@ public class OrganizerEventDetailsFragment extends Fragment {
 
     /** Injects a mock {@link EntrantRepository} for testing. */
     public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
+
+    /** Injects a mock {@link CommentRepository} for testing. */
+    public void setCommentRepository(CommentRepository repo) { this.commentRepository = repo; }
+
+    /** Injects a mock {@link UserRepository} for testing. */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
     /**
      * Inflates the organizer event details layout and initializes all UI components.
      * Retrieves the event ID from fragment arguments and begins loading the

@@ -49,6 +49,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     private EventRepository eventRepository;
     private CommentRepository commentRepository;
 
+    /** Set by tests to replace the real CommentRepository. Cleared in {@code @After}. */
+    public static CommentRepository commentRepositoryForTest = null;
+
     private String eventId;
 
     /**
@@ -74,7 +77,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
 
         eventRepository = new EventRepository();
-        commentRepository = new CommentRepository();
+        commentRepository = (commentRepositoryForTest != null)
+                ? commentRepositoryForTest : new CommentRepository();
 
         eventId = getIntent().getStringExtra("eventId");
         String title = getIntent().getStringExtra("title");
