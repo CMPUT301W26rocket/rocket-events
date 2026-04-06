@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
  * <p>{@link QRCodeUtils#saveQrToGallery} is tested at the bottom of this file.
  * It performs a real MediaStore write (no special permission needed on API 29+)
  * and cleans up the inserted file in the same test.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class QRCodeUtilsTest {

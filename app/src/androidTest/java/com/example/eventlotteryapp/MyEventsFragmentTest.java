@@ -50,6 +50,8 @@ import static org.mockito.Mockito.verify;
  *   <li>Waitlist badges: "Spots Available", "Waitlist Full", hidden when no limit</li>
  *   <li>Date: start date shown when set, hidden when absent</li>
  * </ul>
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class MyEventsFragmentTest {

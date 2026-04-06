@@ -71,6 +71,7 @@ import static org.mockito.Mockito.verify;
  *       empty post blocked, send button state, input cleared after success</li>
  *   <li>Failure: layout remains visible when event load fails</li>
  * </ul>
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class OrganizerEventDetailsFragmentTest {

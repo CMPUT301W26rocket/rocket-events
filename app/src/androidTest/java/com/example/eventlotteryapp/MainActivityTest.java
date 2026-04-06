@@ -161,7 +161,7 @@ public class MainActivityTest {
     public void clickingNotificationsTab_showsCorrectHeader() {
         onView(withId(R.id.nav_notifications)).perform(click());
 
-        onView(withText("Notifications")).check(matches(isDisplayed()));
+        onView(withId(R.id.text_notifications_header)).check(matches(isDisplayed()));
     }
 
     /**

@@ -19,6 +19,7 @@ import static org.junit.Assert.*;
  * <p>The CSV export is used by organizers to download a list of enrolled entrants.
  * These tests verify that the output is correctly formatted so the file opens
  * properly in spreadsheet tools like Excel or Google Sheets.
+ * @author Leyla
  */
 public class EnrolledCsvExportTest {
 

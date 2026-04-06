@@ -53,6 +53,7 @@ import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
  * which cannot be mocked since {@code db} is used directly in the activity rather than
  * through a repository. Full intent testing for this flow will be covered in Part 4
  * using the Firebase Emulator Suite.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class ProfileSetupActivityTest {

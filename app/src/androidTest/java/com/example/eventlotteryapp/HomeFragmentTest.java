@@ -61,6 +61,8 @@ import static org.mockito.Mockito.doAnswer;
  *   <li>{@link #makeUpcomingEvent} — not yet open (open date in future)</li>
  *   <li>{@link #makeClosedEvent} — registration ended (both dates in past)</li>
  * </ul>
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class HomeFragmentTest {

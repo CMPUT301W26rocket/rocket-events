@@ -50,6 +50,8 @@ import static org.mockito.Mockito.doAnswer;
  *   These don't need mocking because validation runs before any Firebase call.
  * - Save tests: fill the form correctly and check the fragment behaves correctly
  *   after a successful or failed save. These mock UserRepository and EventRepository.
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class CreateEventFragmentTest {

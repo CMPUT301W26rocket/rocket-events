@@ -51,6 +51,8 @@ import static org.mockito.Mockito.verify;
  * <p>Loading is two-step: {@code entrantRepository.getUserEventHistory()} returns a list
  * of Entrants, then for each Entrant {@code eventRepository.getEventById()} fetches the
  * matching Event. Both calls are mocked via Mockito {@code doAnswer}.
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class EventHistoryFragmentTest {

@@ -59,6 +59,8 @@ import static org.mockito.Mockito.verify;
  *   <li>Click flows: join, leave, accept/decline invitation, waitlist invitation dialogs</li>
  *   <li>Comments: send button, empty/valid text, input cleared on success</li>
  * </ul>
+ *
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class EntrantEventDetailsFragmentTest {

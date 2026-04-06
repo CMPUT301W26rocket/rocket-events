@@ -55,6 +55,7 @@ import static org.mockito.Mockito.verify;
  *   <li>Delete: clicking the button shows a confirmation dialog; cancelling skips the repo call</li>
  *   <li>Correctness: getUser is called with the deviceId passed via arguments</li>
  * </ul>
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class ProfileFragmentTest {

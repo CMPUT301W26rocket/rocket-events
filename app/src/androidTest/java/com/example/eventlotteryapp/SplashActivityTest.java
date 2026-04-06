@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doAnswer;
  *
  * <p>Each test verifies that the correct destination Activity is chosen depending on
  * the result of the admin check and the user lookup.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class SplashActivityTest {

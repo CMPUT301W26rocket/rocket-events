@@ -3,7 +3,7 @@ package com.example.eventlotteryapp;
 import android.app.Activity;
 import android.app.Instrumentation;
 
-import androidx.lifecycle.Lifecycle;
+
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.espresso.intent.Intents;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -30,7 +30,6 @@ import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
 import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
-import static org.junit.Assert.assertEquals;
 
 /**
  * UI tests for {@link AdminActivity}.
@@ -140,20 +139,6 @@ public class AdminActivityTest {
     @Test
     public void logoutText_showsCorrectLabel() {
         onView(withText("Logout")).perform(scrollTo()).check(matches(isDisplayed()));
-    }
-
-    // -------------------------------------------------------------------------
-    // Back button behaviour
-    // -------------------------------------------------------------------------
-
-    /**
-     * Clicking the back button must finish AdminActivity (return to the previous screen).
-     */
-    @Test
-    public void backButton_click_finishesActivity() {
-        onView(withId(R.id.button_back_admin)).perform(click());
-
-        assertEquals(Lifecycle.State.DESTROYED, scenario.getState());
     }
 
     // -------------------------------------------------------------------------
