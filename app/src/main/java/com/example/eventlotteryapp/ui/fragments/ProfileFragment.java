@@ -58,6 +58,16 @@ public class ProfileFragment extends Fragment {
     }
 
     /**
+     * Injects a mock {@link FirebaseConnector} for testing. Must be called inside a
+     * {@link androidx.fragment.app.FragmentFactory} before the fragment attaches.
+     *
+     * @param connector the connector to use instead of creating a new one
+     */
+    public void setFirebaseConnector(FirebaseConnector connector) {
+        this.firebaseConnector = connector;
+    }
+
+    /**
      * Inflates the fragment layout, binds all input fields and buttons, reads the device ID
      * from fragment arguments, and triggers the initial profile load from Firestore.
      *

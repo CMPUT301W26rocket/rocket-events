@@ -111,6 +111,12 @@ public class EntrantEventDetailsFragment extends Fragment {
     /** Allows tests to inject a mock {@link EntrantRepository} before the fragment loads. */
     public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
 
+    /** Allows tests to inject a mock {@link CommentRepository} before the fragment loads. */
+    public void setCommentRepository(CommentRepository repo) { this.commentRepository = repo; }
+
+    /** Allows tests to inject a mock {@link UserRepository} before the fragment loads. */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
+
     /**
      * Inflates the fragment layout, binds all views, reads {@code eventId} and
      * {@code deviceId} from arguments, and triggers loading of event details and

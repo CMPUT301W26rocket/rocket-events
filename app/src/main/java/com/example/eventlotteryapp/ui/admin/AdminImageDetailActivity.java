@@ -21,7 +21,6 @@ import com.example.eventlotteryapp.repository.ImageRepository;
  * Displays the poster associated with a selected event and allows
  * the administrator to permanently remove it from both Firebase Storage
  * and the event record in Firestore.
- *
  * User Stories Implemented:
  * US 03.03.01 As an administrator, I want to be able to remove images.
  *
@@ -42,8 +41,8 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     private String title;
 
     /**
-     * Initializes the image detail screen, reads the event and poster data from
-     * the intent, displays the image, and sets up button listeners.
+     * Initializes the image detail screen, loads the poster from the intent extras,
+     * and sets up the remove button.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -81,7 +80,7 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows a confirmation dialog before removing the current event poster.
+     * Shows a confirmation dialog before removing the event poster.
      */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
@@ -93,8 +92,8 @@ public class AdminImageDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Removes the event poster by deleting the image from Firebase Storage,
-     * then clearing the poster URL from the related event document in Firestore.
+     * Deletes the poster from Firebase Storage and clears the {@code posterUrl}
+     * field on the event document in Firestore. Finishes the activity on success.
      */
     private void removeImage() {
         if (eventId == null || eventId.isEmpty()) {

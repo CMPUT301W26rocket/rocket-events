@@ -24,6 +24,7 @@
         android:paddingTop="16dp">
 
         <TextView
+            android:id="@+id/text_notifications_header"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Notifications"

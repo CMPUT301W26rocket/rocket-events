@@ -90,9 +90,12 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
                 ? "Notification Log"
                 : item.getEventTitle();
 
-        String recipient = item.getRecipientDeviceId() == null || item.getRecipientDeviceId().trim().isEmpty()
+        String recipientId = item.getRecipientDeviceId() == null || item.getRecipientDeviceId().trim().isEmpty()
                 ? "(unknown)"
                 : item.getRecipientDeviceId();
+        String recipient = item.getRecipientName() != null && !item.getRecipientName().trim().isEmpty()
+                ? item.getRecipientName() + " (ID: " + recipientId + ")"
+                : recipientId;
 
         String type = item.getType() == null || item.getType().trim().isEmpty()
                 ? "general"
@@ -163,15 +166,37 @@ public class AdminNotificationLogsActivity extends AppCompatActivity {
                         return Long.compare(vb, va);
                     });
 
-                    logAdapter.notifyDataSetChanged();
-
                     if (logItems.isEmpty()) {
                         textEmptyNotificationLogs.setVisibility(View.VISIBLE);
                         recyclerNotificationLogs.setVisibility(View.GONE);
-                    } else {
-                        textEmptyNotificationLogs.setVisibility(View.GONE);
-                        recyclerNotificationLogs.setVisibility(View.VISIBLE);
+                        logAdapter.notifyDataSetChanged();
+                        return;
                     }
+
+                    // Resolve recipient names from the users collection
+                    db.collection("users").get()
+                            .addOnSuccessListener(usersSnapshot -> {
+                                java.util.Map<String, String> nameMap = new java.util.HashMap<>();
+                                for (DocumentSnapshot userDoc : usersSnapshot.getDocuments()) {
+                                    String name = userDoc.getString("name");
+                                    if (name != null && !name.isEmpty()) {
+                                        nameMap.put(userDoc.getId(), name);
+                                    }
+                                }
+                                for (AdminNotificationLogItem item : logItems) {
+                                    String name = nameMap.get(item.getRecipientDeviceId());
+                                    if (name != null) item.setRecipientName(name);
+                                }
+                                logAdapter.notifyDataSetChanged();
+                                textEmptyNotificationLogs.setVisibility(View.GONE);
+                                recyclerNotificationLogs.setVisibility(View.VISIBLE);
+                            })
+                            .addOnFailureListener(e -> {
+                                // Show list anyway without names
+                                logAdapter.notifyDataSetChanged();
+                                textEmptyNotificationLogs.setVisibility(View.GONE);
+                                recyclerNotificationLogs.setVisibility(View.VISIBLE);
+                            });
                 })
                 .addOnFailureListener(e -> {
                     String message = e instanceof FirebaseFirestoreException

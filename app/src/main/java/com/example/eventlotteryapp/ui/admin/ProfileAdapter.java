@@ -21,16 +21,8 @@ import java.util.List;
  */
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 
-    /**
-     * Listener interface for handling clicks on a profile row.
-     */
+    /** Callback interface for profile row tap events. */
     public interface OnProfileClickListener {
-
-        /**
-         * Handles selection of a user profile from the admin list.
-         *
-         * @param user selected user
-         */
         void onProfileClick(User user);
     }
 
@@ -38,23 +30,16 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     private final OnProfileClickListener listener;
 
     /**
-     * Creates a new adapter for displaying user profiles in admin-managed lists.
+     * Creates a new adapter.
      *
-     * @param userList list of users to display
-     * @param listener click listener for profile selection
+     * @param userList the list of users to display
+     * @param listener callback invoked when a profile row is tapped
      */
     public ProfileAdapter(List<User> userList, OnProfileClickListener listener) {
         this.userList = userList;
         this.listener = listener;
     }
 
-    /**
-     * Inflates one profile row view for the RecyclerView.
-     *
-     * @param parent parent view group
-     * @param viewType RecyclerView view type
-     * @return new profile view holder
-     */
     @NonNull
     @Override
     public ProfileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -63,11 +48,11 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     }
 
     /**
-     * Binds one user's data to a displayed profile row.
-     * Fallback text is used when the user's name, email, or phone is missing.
+     * Binds user profile data to the given view holder. Falls back to placeholder
+     * strings when name, email, or phone are null or empty.
      *
-     * @param holder row view holder
-     * @param position adapter position
+     * @param holder   the view holder to bind data into
+     * @param position the position of the item in the list
      */
     @Override
     public void onBindViewHolder(@NonNull ProfileViewHolder holder, int position) {
@@ -93,9 +78,9 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     }
 
     /**
-     * Returns the total number of displayed profiles.
+     * Returns the total number of profiles in the list.
      *
-     * @return profile count
+     * @return the size of the user list
      */
     @Override
     public int getItemCount() {
@@ -103,7 +88,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
     }
 
     /**
-     * View holder for one profile row in an admin-managed list.
+     * ViewHolder for a single profile row in the admin profile list.
      */
     static class ProfileViewHolder extends RecyclerView.ViewHolder {
         TextView textProfileName;
@@ -111,9 +96,9 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         TextView textProfilePhone;
 
         /**
-         * Binds the views used in one profile row.
+         * Binds the name, email, and phone TextViews from the profile item layout.
          *
-         * @param itemView inflated row view
+         * @param itemView the inflated item view
          */
         public ProfileViewHolder(@NonNull View itemView) {
             super(itemView);

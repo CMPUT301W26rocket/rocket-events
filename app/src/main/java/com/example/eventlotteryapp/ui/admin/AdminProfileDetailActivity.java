@@ -16,7 +16,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
  * Admin screen for viewing profile details and deleting a user profile.
  * Displays the selected user's basic information and provides
  * a confirmation step before deletion.
- *
  * User Stories Implemented:
  * US 03.02.01 As an administrator, I want to be able to remove profiles.
  *
@@ -34,8 +33,7 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     private String deviceId;
 
     /**
-     * Initializes the profile detail screen, reads the selected user's
-     * information from the intent, and sets up button listeners.
+     * Initializes the profile detail screen and populates fields from intent extras.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -68,7 +66,7 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows a confirmation dialog before deleting the selected profile.
+     * Shows a confirmation dialog before permanently deleting the user profile.
      */
     private void showDeleteConfirmation() {
         new AlertDialog.Builder(this)
@@ -80,7 +78,8 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Deletes the selected user profile from Firestore if a valid device ID exists.
+     * Deletes the user's document from the {@code users} Firestore collection
+     * and finishes the activity on success.
      */
     private void deleteProfile() {
         if (deviceId == null || deviceId.isEmpty()) {
@@ -100,12 +99,11 @@ public class AdminProfileDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Returns the supplied text unless it is null or blank, in which case
-     * the fallback text is returned instead.
+     * Returns {@code value} if non-null and non-empty, otherwise returns {@code fallback}.
      *
-     * @param value value to check
-     * @param fallback fallback text to display
-     * @return safe display text
+     * @param value    the string to check
+     * @param fallback the fallback string to use if value is blank
+     * @return the display string
      */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;

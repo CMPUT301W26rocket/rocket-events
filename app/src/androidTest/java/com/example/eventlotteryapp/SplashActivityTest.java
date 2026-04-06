@@ -34,6 +34,7 @@ import static org.mockito.Mockito.doAnswer;
  *
  * <p>Each test verifies that the correct destination Activity is chosen depending on
  * the result of the admin check and the user lookup.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class SplashActivityTest {
@@ -135,6 +136,27 @@ public class SplashActivityTest {
         doAnswer(inv -> {
             UserRepository.FirestoreCallback<User> cb = inv.getArgument(1);
             cb.onSuccess(null);
+            return null;
+        }).when(mockUserRepo).getUser(anyString(), any());
+
+        launchSplash();
+
+        assertEquals(ProfileSetupActivity.class, navigatedTo);
+    }
+
+    /**
+     * When no admin session exists and the user document exists but has a null name,
+     * SplashActivity must navigate to ProfileSetupActivity so the profile can be completed.
+     */
+    @Test
+    public void noAdminSession_userWithNullName_navigatesToProfileSetup() {
+        SplashActivity.adminCheckProviderForTest = (deviceId, callback) -> callback.onResult(false);
+        SplashActivity.userRepositoryForTest = mockUserRepo;
+
+        User user = new User(); // name field defaults to null
+        doAnswer(inv -> {
+            UserRepository.FirestoreCallback<User> cb = inv.getArgument(1);
+            cb.onSuccess(user);
             return null;
         }).when(mockUserRepo).getUser(anyString(), any());
 

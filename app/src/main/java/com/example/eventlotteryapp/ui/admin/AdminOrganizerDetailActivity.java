@@ -19,7 +19,6 @@ import java.util.List;
  * Admin screen for viewing organizer information and removing organizer status.
  * In the current project structure, removing an organizer deletes all events
  * owned by that organizer so they no longer appear in organizer-derived views.
- *
  * User Stories Implemented:
  * US 03.07.01 As an administrator I want to remove organizers that violate app policy.
  *
@@ -37,8 +36,7 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     private EventRepository eventRepository;
 
     /**
-     * Initializes the organizer detail screen, reads organizer information
-     * from the intent, and sets up button listeners.
+     * Initializes the organizer detail screen and populates fields from intent extras.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -71,7 +69,7 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows a confirmation dialog before removing organizer status.
+     * Shows a confirmation dialog warning that all events owned by this organizer will be deleted.
      */
     private void showRemoveConfirmation() {
         new AlertDialog.Builder(this)
@@ -83,8 +81,8 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads all events owned by the selected organizer and removes organizer
-     * status by deleting those events.
+     * Fetches all events owned by this organizer and deletes them sequentially.
+     * Finishes the activity once all events are removed.
      */
     private void removeOrganizer() {
         if (deviceId == null || deviceId.isEmpty()) {
@@ -120,10 +118,11 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Deletes organizer-owned events one at a time until all have been removed.
+     * Recursively deletes events one at a time to avoid concurrent write issues.
+     * Called with the next index after each successful deletion.
      *
-     * @param events organizer-owned event list
-     * @param index current event index being deleted
+     * @param events the list of events to delete
+     * @param index  the current position in the list
      */
     private void deleteEventsSequentially(List<Event> events, int index) {
         if (index >= events.size()) {
@@ -158,12 +157,11 @@ public class AdminOrganizerDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Returns the supplied text unless it is null or blank, in which case
-     * the fallback text is returned instead.
+     * Returns {@code value} if non-null and non-empty, otherwise returns {@code fallback}.
      *
-     * @param value value to check
-     * @param fallback fallback text to display
-     * @return safe display text
+     * @param value    the string to check
+     * @param fallback the fallback string to use if value is blank
+     * @return the display string
      */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;

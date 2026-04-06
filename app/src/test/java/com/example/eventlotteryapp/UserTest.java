@@ -9,6 +9,7 @@ import static org.junit.Assert.*;
 
 /**
  * Unit tests for the {@link User} model class.
+ * @author Leyla
  */
 public class UserTest {
 

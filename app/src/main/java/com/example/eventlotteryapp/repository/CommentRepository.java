@@ -11,53 +11,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Handles Firestore operations for comment subcollections under
- * events/{eventId}/comments/{commentId}.
- * This merged version keeps support for both the newer comment UI
- * and the admin comment-removal flow.
- *
- * @author Mazen
+ *  Handles all Firestore operations for comment subcollections stored at
+ *  {@code events/{eventId}/comments/{commentId}}.
+ *  User Stories Implemented:
+ *  US 01.08.01 As an entrant, I want to post a comment on an event so that I can share feedback, ask questions, or engage with other users about the event.
+ *  US 01.08.02 As an entrant, I want to view comments on an event so that I can read feedback, questions, or discussion related to that event.
+ *  US 02.08.01 As an organizer, I want to view and delete entrant comments on my event.
+ *  US 02.08.02 As an organizer, I want to comment on my events so that I can share updates, answer questions, or engage with entrants in the event discussion.
+ * @author Daniel
+ * @co-author Mazen
  */
 public class CommentRepository {
 
     private final FirebaseFirestore db;
 
-    /**
-     * Creates a new comment repository using the shared Firebase connector.
-     */
     public CommentRepository() {
         db = new FirebaseConnector().getDb();
     }
 
-    /**
-     * Generic callback interface for asynchronous Firestore operations.
-     *
-     * @param <T> result type returned on success
-     */
     public interface FirestoreCallback<T> {
-
-        /**
-         * Called when the Firestore operation completes successfully.
-         *
-         * @param result operation result
-         */
         void onSuccess(T result);
-
-        /**
-         * Called when the Firestore operation fails.
-         *
-         * @param e exception describing the failure
-         */
         void onFailure(Exception e);
     }
 
     /**
-     * Adds a new comment to the given event's comments subcollection.
-     * If the comment has no timestamp, the current time is assigned before saving.
+     * Adds a new comment to the event's comments subcollection.
+     * Automatically sets the {@code commentId} and {@code eventId} fields on the comment after creation.
      *
-     * @param eventId event ID that owns the comment
-     * @param comment comment to add
-     * @param callback callback receiving success or failure
+     * @param eventId  the ID of the event to post the comment on
+     * @param comment  the comment to add
+     * @param callback receives {@code null} on success
      */
     public void addComment(String eventId, Comment comment, FirestoreCallback<Void> callback) {
         if (eventId == null || eventId.isEmpty()) {
@@ -91,10 +74,11 @@ public class CommentRepository {
     }
 
     /**
-     * Retrieves all comments for a given event ordered by timestamp ascending.
+     * Fetches all comments for an event as a one-time read, ordered by timestamp ascending.
+     * Used by the admin comment screen.
      *
-     * @param eventId event ID whose comments should be loaded
-     * @param callback callback receiving the loaded comment list or an error
+     * @param eventId  the ID of the event whose comments to fetch
+     * @param callback receives the list of {@link Comment} objects on success
      */
     public void getCommentsForEvent(String eventId, FirestoreCallback<List<Comment>> callback) {
         db.collection("events")
@@ -120,11 +104,13 @@ public class CommentRepository {
     }
 
     /**
-     * Registers a realtime listener for comments on a given event ordered by timestamp ascending.
+     * Attaches a real-time listener that fires whenever comments change for the event.
+     * Comments are ordered by timestamp ascending. The caller must call
+     * {@link ListenerRegistration#remove()} when done to avoid memory leaks.
      *
-     * @param eventId event ID whose comments should be observed
-     * @param callback callback receiving updated comment lists or errors
-     * @return Firestore listener registration that can be removed later
+     * @param eventId  the ID of the event to watch
+     * @param callback receives the updated list of comments on each change
+     * @return a {@link ListenerRegistration} that must be removed when no longer needed
      */
     public ListenerRegistration listenForComments(String eventId, FirestoreCallback<List<Comment>> callback) {
         return db.collection("events")
@@ -152,24 +138,23 @@ public class CommentRepository {
                     callback.onSuccess(comments);
                 });
     }
-
     /**
-     * Alias for {@link #listenForComments(String, FirestoreCallback)} kept for compatibility.
+     * Alias for {@link #listenForComments(String, FirestoreCallback)}.
+     * Provided for compatibility with call sites that use the {@code listenToComments} name.
      *
-     * @param eventId event ID whose comments should be observed
-     * @param callback callback receiving updated comment lists or errors
-     * @return Firestore listener registration that can be removed later
+     * @param eventId  the ID of the event to watch
+     * @param callback receives the updated list of comments on each change
+     * @return a {@link ListenerRegistration} that must be removed when no longer needed
      */
     public ListenerRegistration listenToComments(String eventId, FirestoreCallback<List<Comment>> callback) {
         return listenForComments(eventId, callback);
     }
-
     /**
-     * Deletes a specific comment from an event's comments subcollection.
+     * Deletes a single comment from the event's comments subcollection.
      *
-     * @param eventId event ID that owns the comment
-     * @param commentId comment document ID to delete
-     * @param callback callback receiving success or failure
+     * @param eventId   the ID of the event the comment belongs to
+     * @param commentId the ID of the comment to delete
+     * @param callback  receives {@code null} on success
      */
     public void deleteComment(String eventId, String commentId, FirestoreCallback<Void> callback) {
         if (eventId == null || eventId.isEmpty()) {

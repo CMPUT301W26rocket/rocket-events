@@ -15,24 +15,15 @@ import com.example.eventlotteryapp.models.Event;
 import java.util.List;
 
 /**
- * RecyclerView adapter for displaying event poster images in the admin image browsing screen.
- * Each row shows one event poster and allows the administrator to open the
- * corresponding image detail screen.
+ * RecyclerView adapter for displaying event poster thumbnails in a grid
+ * on the admin image browser screen.
  *
  * @author Mazen
  */
 public class AdminImageAdapter extends RecyclerView.Adapter<AdminImageAdapter.AdminImageViewHolder> {
 
-    /**
-     * Listener interface for handling clicks on an image row.
-     */
+    /** Callback interface for image tap events. */
     public interface OnImageClickListener {
-
-        /**
-         * Handles selection of an event image from the admin image grid.
-         *
-         * @param event selected event
-         */
         void onImageClick(Event event);
     }
 
@@ -40,23 +31,16 @@ public class AdminImageAdapter extends RecyclerView.Adapter<AdminImageAdapter.Ad
     private final OnImageClickListener listener;
 
     /**
-     * Creates a new adapter for displaying admin image rows.
+     * Creates a new adapter.
      *
-     * @param events list of events whose poster images will be displayed
-     * @param listener click listener for image selection
+     * @param events   the list of events whose posters should be displayed
+     * @param listener callback invoked when a poster thumbnail is tapped
      */
     public AdminImageAdapter(List<Event> events, OnImageClickListener listener) {
         this.events = events;
         this.listener = listener;
     }
 
-    /**
-     * Inflates one image row view for the RecyclerView.
-     *
-     * @param parent parent view group
-     * @param viewType RecyclerView view type
-     * @return new admin image view holder
-     */
     @NonNull
     @Override
     public AdminImageViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -66,11 +50,11 @@ public class AdminImageAdapter extends RecyclerView.Adapter<AdminImageAdapter.Ad
     }
 
     /**
-     * Binds one event poster image to a displayed RecyclerView row.
-     * If the event has no poster URL, a placeholder image is shown instead.
+     * Loads the event's poster URL into the thumbnail using Glide.
+     * Falls back to a placeholder image if no poster URL is set.
      *
-     * @param holder row view holder
-     * @param position adapter position
+     * @param holder   the view holder to bind data into
+     * @param position the position of the item in the list
      */
     @Override
     public void onBindViewHolder(@NonNull AdminImageViewHolder holder, int position) {
@@ -91,9 +75,9 @@ public class AdminImageAdapter extends RecyclerView.Adapter<AdminImageAdapter.Ad
     }
 
     /**
-     * Returns the total number of image items displayed by the adapter.
+     * Returns the total number of poster items in the list.
      *
-     * @return image item count
+     * @return the size of the events list
      */
     @Override
     public int getItemCount() {
@@ -101,15 +85,15 @@ public class AdminImageAdapter extends RecyclerView.Adapter<AdminImageAdapter.Ad
     }
 
     /**
-     * View holder for one image row in the admin image grid.
+     * ViewHolder for a single poster thumbnail in the image grid.
      */
     static class AdminImageViewHolder extends RecyclerView.ViewHolder {
         ImageView imagePoster;
 
         /**
-         * Binds the views used in one admin image row.
+         * Binds the poster ImageView from the item layout.
          *
-         * @param itemView inflated row view
+         * @param itemView the inflated item view
          */
         public AdminImageViewHolder(@NonNull View itemView) {
             super(itemView);

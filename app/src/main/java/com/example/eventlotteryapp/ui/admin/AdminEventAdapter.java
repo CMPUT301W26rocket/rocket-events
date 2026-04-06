@@ -15,24 +15,15 @@ import com.example.eventlotteryapp.models.Event;
 import java.util.List;
 
 /**
- * RecyclerView adapter for displaying events in the admin event browsing screen.
- * Each row shows the event title, organizer name, and description, and supports
- * opening the selected event in the admin detail screen.
+ * RecyclerView adapter for displaying events in the admin event browser.
+ * Each row shows the event title, organizer name, and a short description.
  *
  * @author Mazen
  */
 public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.AdminEventViewHolder> {
 
-    /**
-     * Listener interface for handling clicks on an event row.
-     */
+    /** Callback interface for event row tap events. */
     public interface OnEventClickListener {
-
-        /**
-         * Handles selection of an event from the admin event list.
-         *
-         * @param event selected event
-         */
         void onEventClick(Event event);
     }
 
@@ -40,23 +31,16 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
     private final OnEventClickListener listener;
 
     /**
-     * Creates a new adapter for displaying admin event rows.
+     * Creates a new adapter.
      *
-     * @param events list of events to display
-     * @param listener click listener for event selection
+     * @param events   the list of events to display
+     * @param listener callback invoked when an event row is tapped
      */
     public AdminEventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
     }
 
-    /**
-     * Inflates one event row view for the RecyclerView.
-     *
-     * @param parent parent view group
-     * @param viewType RecyclerView view type
-     * @return new admin event view holder
-     */
     @NonNull
     @Override
     public AdminEventViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -66,11 +50,11 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
     }
 
     /**
-     * Binds one event's data to a displayed RecyclerView row.
-     * Fallback text is used when title, organizer name, or description is missing.
+     * Binds event data to the given view holder. Falls back to placeholder strings
+     * when title, organizer, or description are null or empty.
      *
-     * @param holder row view holder
-     * @param position adapter position
+     * @param holder   the view holder to bind data into
+     * @param position the position of the item in the list
      */
     @Override
     public void onBindViewHolder(@NonNull AdminEventViewHolder holder, int position) {
@@ -96,9 +80,9 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
     }
 
     /**
-     * Returns the total number of events displayed by the adapter.
+     * Returns the total number of events in the list.
      *
-     * @return event count
+     * @return the size of the events list
      */
     @Override
     public int getItemCount() {
@@ -106,7 +90,7 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
     }
 
     /**
-     * View holder for one event row in the admin event list.
+     * ViewHolder for a single event row in the admin event list.
      */
     static class AdminEventViewHolder extends RecyclerView.ViewHolder {
         TextView textEventTitle;
@@ -115,9 +99,9 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
         ImageView imageArrow;
 
         /**
-         * Binds the views used in one admin event row.
+         * Binds all views from the event row item layout.
          *
-         * @param itemView inflated row view
+         * @param itemView the inflated item view
          */
         public AdminEventViewHolder(@NonNull View itemView) {
             super(itemView);

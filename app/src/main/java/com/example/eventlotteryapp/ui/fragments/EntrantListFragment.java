@@ -105,6 +105,9 @@ public class EntrantListFragment extends Fragment {
     /** Injects a mock {@link NotificationRepository} for testing. */
     public void setNotificationRepository(NotificationRepository repo) { this.notificationRepository = repo; }
 
+    /** Injects a mock {@link EventRepository} for testing. */
+    public void setEventRepository(EventRepository repo) { this.eventRepository = repo; }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -307,28 +310,45 @@ public class EntrantListFragment extends Fragment {
      * Uses MediaStore on API 29+ (no permission needed) and direct file write on older APIs.
      * US 02.06.05 As an organizer I want to export a final list of entrants who enrolled for the event in CSV format.
      */
+    /**
+     * Builds the CSV content string for a list of enrolled entrants.
+     *
+     * <p>The output has a header row {@code Name,Device ID} followed by one row per entrant.
+     * Names that contain commas are wrapped in double-quotes; literal double-quotes inside
+     * names are escaped by doubling them, following RFC 4180.
+     * If a name cannot be resolved from the names map, the entrant's device ID is used instead.
+     *
+     * @param enrolled the list of enrolled entrants
+     * @param names    map of deviceId → display name; may be null
+     * @return the full CSV string including header
+     */
+    public static String buildEnrolledCsv(List<Entrant> enrolled, Map<String, String> names) {
+        StringBuilder csv = new StringBuilder("Name,Device ID\n");
+        for (Entrant e : enrolled) {
+            String name = names != null
+                    ? names.getOrDefault(e.getDeviceId(), e.getDeviceId())
+                    : e.getDeviceId();
+            // Escape any commas or quotes inside the name (RFC 4180)
+            name = name.replace("\"", "\"\"");
+            if (name.contains(",")) name = "\"" + name + "\"";
+            csv.append(name).append(",").append(e.getDeviceId()).append("\n");
+        }
+        return csv.toString();
+    }
+
     private void exportEnrolledToCsv(List<Entrant> enrolled, Map<String, String> names, Context ctx) {
         if (enrolled.isEmpty()) {
             Toast.makeText(ctx, "No enrolled entrants to export.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        StringBuilder csv = new StringBuilder("Name,Device ID\n");
-        for (Entrant e : enrolled) {
-            String name = names != null
-                    ? names.getOrDefault(e.getDeviceId(), e.getDeviceId())
-                    : e.getDeviceId();
-            // Escape any commas or quotes inside the name
-            name = name.replace("\"", "\"\"");
-            if (name.contains(",")) name = "\"" + name + "\"";
-            csv.append(name).append(",").append(e.getDeviceId()).append("\n");
-        }
+        String csv = buildEnrolledCsv(enrolled, names);
 
         String safeName = eventTitle.replaceAll("[^a-zA-Z0-9_\\- ]", "").trim().replace(" ", "_");
         if (safeName.isEmpty()) safeName = "entrants";
         String baseName = "enrolled_" + safeName;
         String fileName = baseName + ".csv";
-        byte[] bytes = csv.toString().getBytes();
+        byte[] bytes = csv.getBytes();
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -532,6 +552,10 @@ public class EntrantListFragment extends Fragment {
             List<Entrant> entrants = tabData.get(tabIndex);
 
             holder.recycler.setLayoutManager(new LinearLayoutManager(holder.recycler.getContext()));
+            if (holder.recycler.getItemDecorationCount() == 0) {
+                holder.recycler.addItemDecoration(new androidx.recyclerview.widget.DividerItemDecoration(
+                        holder.recycler.getContext(), androidx.recyclerview.widget.DividerItemDecoration.VERTICAL));
+            }
 
             NamesAdapter.OnItemClickListener clickListener = null;
             if (tabIndex == TAB_INVITED) clickListener = (entrant, pos) -> {

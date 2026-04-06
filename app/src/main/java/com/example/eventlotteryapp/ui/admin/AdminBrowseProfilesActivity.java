@@ -22,7 +22,6 @@ import java.util.List;
  * Admin screen for browsing all user profiles in the system.
  * Allows an administrator to review basic profile information
  * and open the profile detail screen.
- *
  * User Stories Implemented:
  * US 03.05.01 As an administrator, I want to be able to browse profiles.
  *
@@ -38,8 +37,8 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
     private ProfileAdapter profileAdapter;
 
     /**
-     * Initializes the profile browsing screen, sets up the RecyclerView,
-     * and loads all user profiles from Firestore.
+     * Initializes the profile browser screen, connects the profile adapter,
+     * and loads all user profiles for administrator review.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -73,9 +72,7 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
     }
 
     /**
-     * Reloads the profile list when the activity returns to the foreground.
-     * This keeps the displayed profile data current after returning from
-     * the profile detail screen.
+     * Reloads the profile list whenever the screen returns to the foreground.
      */
     @Override
     protected void onResume() {
@@ -84,8 +81,8 @@ public class AdminBrowseProfilesActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads all user documents from Firestore, converts them into {@link User}
-     * objects, and updates the RecyclerView and empty-state visibility.
+     * Fetches all user documents from the {@code users} Firestore collection
+     * and populates the profile list. Displays an empty-state message when no profiles are found.
      */
     private void loadProfiles() {
         db.collection("users")

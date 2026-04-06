@@ -36,8 +36,13 @@ import static androidx.test.espresso.matcher.ViewMatchers.isDisplayed;
 import static androidx.test.espresso.matcher.ViewMatchers.withHint;
 import static androidx.test.espresso.matcher.ViewMatchers.withId;
 import static androidx.test.espresso.matcher.ViewMatchers.withText;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.verify;
+import static androidx.test.espresso.matcher.ViewMatchers.isEnabled;
 
 /**
  * UI tests for {@link ProfileSetupActivity}.
@@ -48,6 +53,7 @@ import static org.mockito.Mockito.doAnswer;
  * which cannot be mocked since {@code db} is used directly in the activity rather than
  * through a repository. Full intent testing for this flow will be covered in Part 4
  * using the Firebase Emulator Suite.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class ProfileSetupActivityTest {
@@ -168,10 +174,10 @@ public class ProfileSetupActivityTest {
     @Test
     public void saveProfile_success_navigatesToMainActivity() {
         doAnswer(invocation -> {
-            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(4);
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
             cb.onSuccess(null);
             return null;
-        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), any());
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
 
         ActivityScenario<ProfileSetupActivity> scenario = launchActivity();
         // Replace the real repo with our mock before clicking Save
@@ -211,5 +217,95 @@ public class ProfileSetupActivityTest {
 
         // Setup screen is still visible — navigation did not happen
         onView(withId(R.id.buttonSaveProfile)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * While the repository call is in-flight (callback never fires), the save button
+     * must be disabled and show "Saving..." to prevent duplicate submissions.
+     */
+    @Test
+    public void saveButton_isDisabled_andShowsSaving_whilePosting() {
+        // Default Mockito behaviour: saveUserProfile never calls the callback — simulates in-flight
+        ActivityScenario<ProfileSetupActivity> scenario = launchActivity();
+        scenario.onActivity(activity -> activity.setUserRepository(mockUserRepo));
+
+        onView(withId(R.id.editTextName)).perform(replaceText("Leyla Ahmed"), closeSoftKeyboard());
+        onView(withId(R.id.editTextEmail)).perform(replaceText("leyla@email.com"), closeSoftKeyboard());
+        onView(withId(R.id.buttonSaveProfile)).perform(click());
+
+        onView(withId(R.id.buttonSaveProfile))
+                .check(matches(not(isEnabled())))
+                .check(matches(withText("Saving...")));
+    }
+
+    /**
+     * When the repository fires onFailure, the save button must be re-enabled
+     * and its label reset to "Save Profile" so the user can try again.
+     */
+    @Test
+    public void saveProfile_onFailure_buttonIsReEnabled() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
+            cb.onFailure(new Exception("Network error"));
+            return null;
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
+
+        ActivityScenario<ProfileSetupActivity> scenario = launchActivity();
+        scenario.onActivity(activity -> activity.setUserRepository(mockUserRepo));
+
+        onView(withId(R.id.editTextName)).perform(replaceText("Leyla Ahmed"), closeSoftKeyboard());
+        onView(withId(R.id.editTextEmail)).perform(replaceText("leyla@email.com"), closeSoftKeyboard());
+        onView(withId(R.id.buttonSaveProfile)).perform(click());
+
+        onView(withId(R.id.buttonSaveProfile))
+                .check(matches(isEnabled()))
+                .check(matches(withText("Save Profile")));
+    }
+
+    /**
+     * Clicking Cancel on the admin login dialog must dismiss it and leave
+     * the setup screen visible — no navigation should occur.
+     */
+    @Test
+    public void adminDialog_cancel_dismissesDialogAndStaysOnScreen() {
+        launchActivity();
+
+        onView(withId(R.id.textAdminLogin)).perform(click());
+        onView(withText("Cancel")).perform(click());
+
+        onView(withId(R.id.buttonSaveProfile)).check(matches(isDisplayed()));
+    }
+
+    /**
+     * {@link UserRepository#saveUserProfile} must be called with the exact deviceId,
+     * name, email, and phone values the user typed.
+     */
+    @Test
+    public void saveProfile_callsRepository_withCorrectArguments() {
+        doAnswer(invocation -> {
+            UserRepository.FirestoreCallback<Void> cb = invocation.getArgument(5);
+            cb.onSuccess(null);
+            return null;
+        }).when(mockUserRepo).saveUserProfile(any(), any(), any(), any(), anyBoolean(), any());
+
+        ActivityScenario<ProfileSetupActivity> scenario = launchActivity();
+        scenario.onActivity(activity -> activity.setUserRepository(mockUserRepo));
+
+        Intents.init();
+        try {
+            intending(hasComponent(MainActivity.class.getName()))
+                    .respondWith(new Instrumentation.ActivityResult(Activity.RESULT_OK, null));
+
+            onView(withId(R.id.editTextName)).perform(replaceText("Leyla Ahmed"), closeSoftKeyboard());
+            onView(withId(R.id.editTextEmail)).perform(replaceText("leyla@email.com"), closeSoftKeyboard());
+            onView(withId(R.id.editTextPhone)).perform(replaceText("780-555-0123"), closeSoftKeyboard());
+            onView(withId(R.id.buttonSaveProfile)).perform(click());
+
+            verify(mockUserRepo).saveUserProfile(
+                    eq("test_device_123"), eq("Leyla Ahmed"), eq("leyla@email.com"),
+                    eq("780-555-0123"), anyBoolean(), any());
+        } finally {
+            Intents.release();
+        }
     }
 }

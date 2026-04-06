@@ -1,7 +1,13 @@
 package com.example.eventlotteryapp;
 
+import android.content.ContentUris;
+import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.net.Uri;
+import android.provider.MediaStore;
 
+import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
 import com.example.eventlotteryapp.utils.QRCodeUtils;
@@ -20,10 +26,10 @@ import static org.junit.Assert.assertTrue;
  * <p>These run as instrumented tests (not src/test/) because {@link Bitmap}
  * is an Android SDK class and cannot be instantiated on the plain JVM.
  *
- * <p>Note: {@link QRCodeUtils#saveQrToGallery} is not tested here because it
- * writes to the device's MediaStore and requires storage permissions that are
- * outside the scope of unit testing. Full integration testing of gallery saving
- * will be covered in Part 4.
+ * <p>{@link QRCodeUtils#saveQrToGallery} is tested at the bottom of this file.
+ * It performs a real MediaStore write (no special permission needed on API 29+)
+ * and cleans up the inserted file in the same test.
+ * @author Leyla
  */
 @RunWith(AndroidJUnit4.class)
 public class QRCodeUtilsTest {
@@ -150,6 +156,32 @@ public class QRCodeUtilsTest {
         assertEquals(1024, result.getHeight());
     }
 
+    /**
+     * The generated bitmap must contain at least one black pixel and at least one
+     * white pixel, confirming that real QR content was encoded and the result is
+     * not a blank canvas.
+     */
+    @Test
+    public void generateQrBitmap_containsBothBlackAndWhitePixels() {
+        Bitmap result = QRCodeUtils.generateQrBitmap(VALID_CONTENT, SIZE);
+        assertNotNull(result);
+
+        boolean foundBlack = false;
+        boolean foundWhite = false;
+        outer:
+        for (int x = 0; x < result.getWidth(); x++) {
+            for (int y = 0; y < result.getHeight(); y++) {
+                int pixel = result.getPixel(x, y);
+                if (pixel == 0xFF000000) foundBlack = true;
+                if (pixel == 0xFFFFFFFF) foundWhite = true;
+                if (foundBlack && foundWhite) break outer;
+            }
+        }
+
+        assertTrue("Expected at least one black pixel", foundBlack);
+        assertTrue("Expected at least one white pixel", foundWhite);
+    }
+
     // -----------------------------------------------------------------------
     // generateQrBitmap — edge cases
     // -----------------------------------------------------------------------
@@ -164,4 +196,63 @@ public class QRCodeUtilsTest {
 
         assertNull(result);
     }
+
+    /**
+     * Passing an empty content string must return null rather than crashing.
+     * ZXing throws a WriterException for empty input which is caught and returns null.
+     */
+    @Test
+    public void generateQrBitmap_returnsNull_forEmptyContent() {
+        Bitmap result = QRCodeUtils.generateQrBitmap("", SIZE);
+
+        assertNull(result);
+    }
+
+    /**
+     * Passing zero as the size must return null rather than crashing.
+     * ZXing or Bitmap.createBitmap throws an exception for zero dimensions
+     * which is caught and returns null.
+     */
+    @Test
+    public void generateQrBitmap_returnsNull_forZeroSize() {
+        Bitmap result = QRCodeUtils.generateQrBitmap(VALID_CONTENT, 0);
+
+        assertNull(result);
+    }
+
+    // -----------------------------------------------------------------------
+    // saveQrToGallery
+    // -----------------------------------------------------------------------
+
+    /**
+     * Saving a valid QR bitmap to the gallery must return {@code true}.
+     * No special permission is needed on API 29+ (RELATIVE_PATH is used).
+     * The test cleans up the inserted file from MediaStore after asserting.
+     */
+    @Test
+    public void saveQrToGallery_returnsTrue_forValidBitmap() {
+        Context context = ApplicationProvider.getApplicationContext();
+        Bitmap bitmap = QRCodeUtils.generateQrBitmap(VALID_CONTENT, SIZE);
+        assertNotNull(bitmap);
+
+        boolean result = QRCodeUtils.saveQrToGallery(context, bitmap, "test event");
+
+        assertTrue(result);
+
+        // Clean up: remove the file we just wrote so it does not litter the device gallery
+        try (Cursor cursor = context.getContentResolver().query(
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[]{MediaStore.Images.Media._ID},
+                MediaStore.Images.Media.DISPLAY_NAME + " LIKE ?",
+                new String[]{"QR_test_event_%.png"},
+                MediaStore.Images.Media.DATE_ADDED + " DESC")) {
+            if (cursor != null && cursor.moveToFirst()) {
+                long id = cursor.getLong(0);
+                Uri uri = ContentUris.withAppendedId(
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI, id);
+                context.getContentResolver().delete(uri, null, null);
+            }
+        }
+    }
+
 }

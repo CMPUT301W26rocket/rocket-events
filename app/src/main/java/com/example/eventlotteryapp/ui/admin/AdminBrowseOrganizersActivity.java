@@ -25,9 +25,8 @@ import java.util.Set;
 /**
  * Admin screen for browsing all organizers currently represented by event ownership.
  * Organizers are derived from event organizer IDs rather than a separate organizer table.
- *
  * User Stories Implemented:
- * US 03.07.01 As an administrator, I want to remove organizers that violate app policy.
+ * US 03.07.01 As an administrator I want to remove organizers that violate app policy.
  *
  * @author Mazen
  */
@@ -42,8 +41,8 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     private ProfileAdapter profileAdapter;
 
     /**
-     * Initializes the organizer browsing screen, sets up the RecyclerView,
-     * and loads all organizers derived from existing event ownership.
+     * Initializes the organizer browser screen, connects the profile adapter,
+     * and loads all organizers for administrator review.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -78,9 +77,7 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     }
 
     /**
-     * Reloads the organizer list when the activity returns to the foreground.
-     * This keeps the displayed organizer data current after returning from
-     * the organizer detail screen.
+     * Reloads the organizer list whenever the screen returns to the foreground.
      */
     @Override
     protected void onResume() {
@@ -89,9 +86,9 @@ public class AdminBrowseOrganizersActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads all events, extracts unique organizer device IDs, then fetches
-     * matching user records from Firestore to build the organizer list.
-     * Updates the RecyclerView and empty-state visibility based on the result.
+     * Loads all events to extract unique organizer IDs, then fetches matching
+     * user profiles from Firestore and populates the organizer list.
+     * Displays an empty-state message when no organizers are found.
      */
     private void loadOrganizers() {
         eventRepository.getAllEvents(new EventRepository.FirestoreCallback<List<Event>>() {

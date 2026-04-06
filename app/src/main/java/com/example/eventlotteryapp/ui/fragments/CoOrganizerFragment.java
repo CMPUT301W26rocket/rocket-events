@@ -66,6 +66,15 @@ public class CoOrganizerFragment extends Fragment {
     /** Required empty public constructor. */
     public CoOrganizerFragment() {}
 
+    /** Allows tests to inject a mock {@link UserRepository} before the fragment loads. */
+    public void setUserRepository(UserRepository repo) { this.userRepository = repo; }
+
+    /** Allows tests to inject a mock {@link EntrantRepository} before the fragment loads. */
+    public void setEntrantRepository(EntrantRepository repo) { this.entrantRepository = repo; }
+
+    /** Allows tests to inject a mock {@link NotificationRepository} before the fragment loads. */
+    public void setNotificationRepository(NotificationRepository repo) { this.notificationRepository = repo; }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -80,9 +89,9 @@ public class CoOrganizerFragment extends Fragment {
             organizerDeviceId = getArguments().getString("organizerDeviceId");
         }
 
-        userRepository         = new UserRepository();
-        entrantRepository      = new EntrantRepository();
-        notificationRepository = new NotificationRepository();
+        if (userRepository == null)         userRepository         = new UserRepository();
+        if (entrantRepository == null)      entrantRepository      = new EntrantRepository();
+        if (notificationRepository == null) notificationRepository = new NotificationRepository();
 
         editSearch      = view.findViewById(R.id.edit_search);
         textStatus      = view.findViewById(R.id.text_status);

@@ -23,10 +23,11 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Admin detail screen for viewing one event, reviewing its comments,
- * deleting individual comments, and deleting the event itself.
- *
+ * Admin detail screen for a single event.
+ * Displays event metadata, lists all comments, and allows the administrator
+ * to delete individual comments or the entire event.
  * User Stories Implemented:
+ * US 03.04.01 As an administrator, I want to be able to browse events.
  * US 03.01.01 As an administrator, I want to be able to remove events.
  * US 03.10.01 As an administrator, I want to remove event comments that violate app policy.
  *
@@ -36,7 +37,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
     private TextView textDetailTitle;
     private TextView textDetailOrganizerName;
-    private TextView textDetailOrganizerId;
     private TextView textDetailDescription;
     private TextView textDetailEventId;
     private TextView textNoComments;
@@ -49,11 +49,14 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     private EventRepository eventRepository;
     private CommentRepository commentRepository;
 
+    /** Set by tests to replace the real CommentRepository. Cleared in {@code @After}. */
+    public static CommentRepository commentRepositoryForTest = null;
+
     private String eventId;
 
     /**
-     * Initializes the admin event detail screen, reads event data from the intent,
-     * sets up button listeners, and loads the latest event details and comments.
+     * Initializes the event detail screen, populates fields from intent extras,
+     * and loads fresh event details and comments from Firestore.
      *
      * @param savedInstanceState saved Android instance state
      */
@@ -64,7 +67,6 @@ public class AdminEventDetailActivity extends AppCompatActivity {
 
         textDetailTitle = findViewById(R.id.text_detail_title);
         textDetailOrganizerName = findViewById(R.id.text_detail_organizer_name);
-        textDetailOrganizerId = findViewById(R.id.text_detail_organizer_id);
         textDetailDescription = findViewById(R.id.text_detail_description);
         textDetailEventId = findViewById(R.id.text_detail_event_id);
         textNoComments = findViewById(R.id.text_no_comments);
@@ -75,7 +77,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         btnDeleteEvent = findViewById(R.id.btnDeleteEvent);
 
         eventRepository = new EventRepository();
-        commentRepository = new CommentRepository();
+        commentRepository = (commentRepositoryForTest != null)
+                ? commentRepositoryForTest : new CommentRepository();
 
         eventId = getIntent().getStringExtra("eventId");
         String title = getIntent().getStringExtra("title");
@@ -84,8 +87,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         String organizerName = getIntent().getStringExtra("organizerName");
 
         textDetailTitle.setText(displayText(title, "Untitled Event"));
-        textDetailOrganizerName.setText(displayText(organizerName, "Unknown organizer"));
-        textDetailOrganizerId.setText("Organizer ID: " + displayText(organizerId, "(empty)"));
+        textDetailOrganizerName.setText("Organizer: " + displayText(organizerName, "Unknown")
+                + " (ID: " + displayText(organizerId, "(empty)") + ")");
         textDetailDescription.setText(displayText(description, "No description"));
         textDetailEventId.setText(displayText(eventId, "(empty)"));
 
@@ -97,8 +100,7 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads the latest event details from the repository and updates the displayed fields.
-     * Returns immediately if the event ID is missing.
+     * Fetches the latest event data from Firestore and refreshes the detail fields.
      */
     private void loadEventDetails() {
         if (eventId == null || eventId.isEmpty()) {
@@ -113,8 +115,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
                 }
 
                 textDetailTitle.setText(displayText(event.getTitle(), "Untitled Event"));
-                textDetailOrganizerName.setText(displayText(event.getOrganizerName(), "Unknown organizer"));
-                textDetailOrganizerId.setText("Organizer ID: " + displayText(event.getOrganizerId(), "(empty)"));
+                textDetailOrganizerName.setText("Organizer: " + displayText(event.getOrganizerName(), "Unknown")
+                        + " (ID: " + displayText(event.getOrganizerId(), "(empty)") + ")");
                 textDetailDescription.setText(displayText(event.getDescription(), "No description"));
                 textDetailEventId.setText(displayText(eventId, "(empty)"));
             }
@@ -131,9 +133,8 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Loads all comments for the current event and displays them in the comments container.
-     * Shows a status message if the event ID is missing, there are no comments,
-     * or loading fails.
+     * Fetches all comments for the event from Firestore and renders them in the comments container.
+     * Shows a placeholder message while loading and when no comments exist.
      */
     private void loadComments() {
         if (eventId == null || eventId.isEmpty()) {
@@ -183,10 +184,10 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Creates and returns a view for one comment entry in the admin comments list.
+     * Inflates a comment row view and binds the given comment's author, timestamp, and text.
      *
-     * @param comment comment to display
-     * @return inflated and populated comment view
+     * @param comment the comment to display
+     * @return the inflated and bound comment row view
      */
     private View createCommentView(Comment comment) {
         View commentView = LayoutInflater.from(this).inflate(
@@ -200,7 +201,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
         TextView textCommentBody = commentView.findViewById(R.id.textCommentBody);
         Button btnDeleteComment = commentView.findViewById(R.id.btnDeleteComment);
 
-        textCommentAuthor.setText("Author ID: " + displayCommentAuthor(comment));
+        String authorName = displayText(comment.getAuthorName(), "Unknown");
+        String authorId = displayText(comment.getAuthorId(), "(empty)");
+        textCommentAuthor.setText(authorName + " (ID: " + authorId + ")");
         textCommentTime.setText("Time: " + formatTimestamp(comment));
         textCommentBody.setText(displayText(comment.getText(), "(empty)"));
 
@@ -210,9 +213,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows a confirmation dialog before deleting a selected comment.
+     * Shows a confirmation dialog before deleting a comment.
      *
-     * @param comment comment selected for deletion
+     * @param comment the comment to delete on confirmation
      */
     private void showDeleteCommentConfirmation(Comment comment) {
         new AlertDialog.Builder(this)
@@ -224,10 +227,9 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Deletes the selected comment from the current event if both the event ID
-     * and comment ID are available.
+     * Deletes the given comment from Firestore and reloads the comments list on success.
      *
-     * @param comment comment to delete
+     * @param comment the comment to delete
      */
     private void deleteComment(Comment comment) {
         if (eventId == null || eventId.isEmpty()) {
@@ -264,7 +266,7 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows a confirmation dialog before deleting the current event.
+     * Shows a confirmation dialog before deleting the event.
      */
     private void showDeleteEventConfirmation() {
         new AlertDialog.Builder(this)
@@ -276,7 +278,7 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Deletes the current event if a valid event ID is available.
+     * Deletes the current event from Firestore and finishes the activity on success.
      */
     private void deleteEvent() {
         if (eventId == null || eventId.isEmpty()) {
@@ -303,35 +305,22 @@ public class AdminEventDetailActivity extends AppCompatActivity {
     }
 
     /**
-     * Returns the supplied text unless it is null or blank, in which case
-     * the fallback text is returned instead.
+     * Returns {@code value} if non-null and non-empty, otherwise returns {@code fallback}.
      *
-     * @param value value to check
-     * @param fallback fallback text to display
-     * @return safe display text
+     * @param value    the string to check
+     * @param fallback the fallback string to use if value is blank
+     * @return the display string
      */
     private String displayText(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
     }
-    private String displayCommentAuthor(Comment comment) {
-        if (comment == null) {
-            return "(unknown)";
-        }
 
-        String name = displayText(comment.getAuthorName(), "");
-        String id = displayText(comment.getAuthorId(), "(empty)");
-
-        if (!name.isEmpty()) {
-            return name + " (ID: " + id + ")";
-        }
-
-        return id;
-    }
     /**
-     * Formats a comment timestamp for display in the admin event detail screen.
+     * Formats a comment's timestamp as {@code yyyy-MM-dd HH:mm}.
+     * Returns {@code "Unknown time"} if the timestamp is null.
      *
-     * @param comment comment containing the timestamp
-     * @return formatted timestamp string, or a fallback label if unavailable
+     * @param comment the comment whose timestamp to format
+     * @return formatted timestamp string
      */
     private String formatTimestamp(Comment comment) {
         if (comment == null || comment.getTimestamp() == null || comment.getTimestamp().toDate() == null) {

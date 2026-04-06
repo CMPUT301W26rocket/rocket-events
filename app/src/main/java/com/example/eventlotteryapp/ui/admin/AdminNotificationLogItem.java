@@ -11,6 +11,7 @@ import com.google.firebase.Timestamp;
 public class AdminNotificationLogItem {
 
     private final String recipientDeviceId;
+    private String recipientName;
     private final String eventTitle;
     private final String type;
     private final String message;
@@ -25,7 +26,6 @@ public class AdminNotificationLogItem {
      * @param message notification message body
      * @param createdAt time the notification was created
      */
-
     public AdminNotificationLogItem(String recipientDeviceId,
                                     String eventTitle,
                                     String type,
@@ -44,6 +44,24 @@ public class AdminNotificationLogItem {
      */
     public String getRecipientDeviceId() {
         return recipientDeviceId;
+    }
+
+    /**
+     * Returns the display name of the recipient, or {@code null} if not yet resolved.
+     *
+     * @return recipient name
+     */
+    public String getRecipientName() {
+        return recipientName;
+    }
+
+    /**
+     * Sets the display name of the recipient after resolving from Firestore.
+     *
+     * @param recipientName the resolved display name
+     */
+    public void setRecipientName(String recipientName) {
+        this.recipientName = recipientName;
     }
     /**
      * Returns the title of the event associated with this notification.
